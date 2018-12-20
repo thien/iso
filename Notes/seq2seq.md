@@ -33,6 +33,7 @@ This doesn't keep the order. This can be fixed with a different setup:
 	- would help with translation, captioning, summarisation etc.
 - We'll need a many-to-many RNN:
 	- ![](imgs/rnn_diagrams.png)
+- **We're looking at encoder-decoder setups.**
 - We want something like this:
 - ![](imgs/autoregressive.png)
 - For the decoder, we want to feed the output of the previous state to the input to the next recurrent state; this is a **autoregressive decoder**. (18:12).
@@ -65,3 +66,12 @@ This doesn't keep the order. This can be fixed with a different setup:
 - Scheduled Sampling Algorithm
 	- You could add noise sampled from the previous inputs during training (whilst retaining the correct output) and it'll learn to combat garbage outputs and make it more robust when predicting. (30:00)
 - There's an algorithm that figures out the diversity of the beams based on some heuristic that's not discussed in the video. (He demonstrates the utility on the Inbox app for Android).
+- You don't need to do any post-processing on the grammar after beams are produced.
+- No embedding layers. It depends entirely on the emails, and the replies.
+- He has two algorithms to determine whether it's appropiate to autoreply to some email or not (it's not appropiate for especially long emails.)
+
+## Attention Mechanisms
+
+- Presently we have fixed length representations of inputs which are a litle awkward for sentences that aren't necessarily the same length. (Since emails could be 1000 words or just 5 words.)
+- **You want to use an attention mechanism.**
+- It'll look at all 

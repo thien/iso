@@ -16,7 +16,8 @@ These logs are used to indicate progress of the project as I work on it through 
 
 - Initial completion of Goldberg's NLP paper walkthrough. There is some content that is ignored based on the premise of the ISO (e.g Recursive Neural Networks), and the more relevant contents should be covered in more detail.
 - Brief cover of implementing Autoencoders in Keras
-- Covered the Seq2Seq primer on [youtube](https://www.youtube.com/watch?v=oF0Rboc4IJw).
+- Covered the Seq2Seq primer on [youtube](https://www.youtube.com/watch?v=oF0Rboc4IJw). This did not provide sufficent information (it was too brief and was mostly preliminary knowledge).
+- Covered Quoc Le's Seminar on `seq2seq`. It's a lot more thorough and provided a lot of relevant detail. Notes are [here](Notes/seq2seq.md).
 
 
 ### 2018/12/19 (Wednesday)
