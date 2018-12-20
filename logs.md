@@ -15,6 +15,8 @@ These logs are used to indicate progress of the project as I work on it through 
 ### 2018/12/20 (Thursday)
 
 - Initial completion of Goldberg's NLP paper walkthrough. There is some content that is ignored based on the premise of the ISO (e.g Recursive Neural Networks), and the more relevant contents should be covered in more detail.
+- Brief cover of implementing Autoencoders in Keras
+- Covered the Seq2Seq primer on [youtube](https://www.youtube.com/watch?v=oF0Rboc4IJw).
 
 
 ### 2018/12/19 (Wednesday)
@@ -24,10 +26,9 @@ These logs are used to indicate progress of the project as I work on it through 
 - Reviewed [Word Embeddings](https://www.youtube.com/watch?v=5PL0TmQhItY) video.
 - Reviewed the dataset, relatively fast storage will be needed to store the relevant dataset ([Amazon product reviews on Electronics](http://jmcauley.ucsd.edu/data/amazon/)) as it is quite large; I will also need to contact Julain McAuley (julian.mcauley@gmail.com) to obtain a link for the whole review data as you can only retrieve a small sample on the website.
 
-
 #### Reading Material
 - Undergraduates at Imperial College wrote a brief but strong primer on autoencoders and NLP [here](https://www.doc.ic.ac.uk/~js4416/163/website/nlp/).
-- An okay review of `seq2seq` in the form of a [youtube video](https://www.youtube.com/watch?v=oF0Rboc4IJw).
+- An okay primer of `seq2seq` in the form of a [youtube video](https://www.youtube.com/watch?v=oF0Rboc4IJw).
 - A tutorial on [Implementing Autoencoders in Keras](https://blog.keras.io/building-autoencoders-in-keras.html).
 - Quoc Le's [seminar on seq2seq](https://www.youtube.com/watch?v=G5RY_SUJih4).
 - Google's [seq2seq documentation](https://google.github.io/seq2seq/).
