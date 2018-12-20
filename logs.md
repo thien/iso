@@ -2,7 +2,20 @@
 
 These logs are used to indicate progress of the project as I work on it through the year. It also serves as a scratchpad for things that may be useful/relevant for the ISO.
 
+## To-Do
+
+- Brief read of Goldberg's NLP Paper
+- Summary of Baselines:
+    - Concise summary of seq2seq paper
+    - Concise summary of Transformer paper
+- Cover Controllable Stody Generation paper
+
 ----
+
+### 2018/12/20 (Thursday)
+
+- Initial completion of Goldberg's NLP paper walkthrough. There is some content that is ignored based on the premise of the ISO (e.g Recursive Neural Networks), and the more relevant contents should be covered in more detail.
+
 
 ### 2018/12/19 (Wednesday)
 
