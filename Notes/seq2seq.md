@@ -74,4 +74,44 @@ This doesn't keep the order. This can be fixed with a different setup:
 
 - Presently we have fixed length representations of inputs which are a litle awkward for sentences that aren't necessarily the same length. (Since emails could be 1000 words or just 5 words.)
 - **You want to use an attention mechanism.**
-- It'll look at all 
+- Before you make a prediction, you'll want to look at all the inputs from the hidden states of the inputs so far.
+- You have a variable $c$ that is the same dimension of the $h_i$ where $0\leq i \leq n$ (i.e it's the same length of the hidden states of the inputs.) You'll want do do a dot product of $C$ with the all the $h_i$ values. This creates the coefficents $a_j$ with $j = 0...n$. You then create a $b_j$ component where $b_i = \frac{exp(a_i)}{\sum^n_{k=0} exp(a_k)}$. You take those $b_i$'s and sum them to create the output probability, i.e $sum(b_i \cdot h_i)$ and use this as an additional signal to help with the output.
+- It looks a little awkward, but here's a diagram:
+	- ![](imgs/attention_mechanism.png)
+- He explains a good intuition of why this is a thing at (41:30).
+- You can normalise your text at input or output to improve training.
+
+## Slapping in Deep Learning
+
+- Stack the recurrent neural networks together to improve results.
+- If you're trying to do `seq2seq` with Attention:
+	1. Use word segments instead of just words.
+	2. Gradient clipping to prevent explosions. (Should be standard-practice however.)
+	3. Use LSTMs.
+
+- Quoc then explains what LSTM cells look like but this was covered in the original NLP primer by Goldberg.
+- LSTMs are also already integrated into tensorflow.
+
+## Alternative Applications
+
+- Summarization
+- Image Captioning
+- Speech Transcription
+- Q&A
+
+## Optional: Seq2Seq for Speech
+
+- I thought this was cool so I continued.
+- He splits a waveform into sections and put it into `seq2seq`.
+- You can divide the input into layers which can help improve backpropagation performance.
+- Implicit language models are derived.
+- You have to performing decoding offline (i.e you send everything at once but only once you've finished computing the foward propagation.)
+- There are algorithms for online but they're really complicated.
+
+## The Big Picture
+
+- `seq2seq` is an "End-to-End Deep Learning" platform.
+- It should work with most NLP related tasks _when you have a lot of data_.
+- If you don't have enough data, then you can:
+	- split your problem into smaller problems and train `seq2seq` on each of them.
+	- Train `seq2seq` jointly with other tasks.
