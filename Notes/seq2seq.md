@@ -115,3 +115,8 @@ This doesn't keep the order. This can be fixed with a different setup:
 - If you don't have enough data, then you can:
 	- split your problem into smaller problems and train `seq2seq` on each of them.
 	- Train `seq2seq` jointly with other tasks.
+
+## Interesting Answers
+
+- You can use generative adversarial networks to handle loss.
+- You can condition the beam based on the first outputs.
