@@ -4,21 +4,25 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ## To-Do
 
-- Brief read of Goldberg's NLP Paper
+- Create notes on Goldberg's NLP Paper
 - Summary of Baselines:
-    - Concise summary of seq2seq paper
+    - Concise summary of seq2seq
     - Concise summary of Transformer paper
-- Cover Controllable Stody Generation paper
+- Cover Controllable Story Generation paper
+- Browse around for variational autoencoder implementations
 
 ----
+
+### 2018/12/21 (Friday)
+
+- Reviewed [Attention in Neural Networks](https://www.youtube.com/watch?v=W2rWgXJBZhU) video.
 
 ### 2018/12/20 (Thursday)
 
 - Initial completion of Goldberg's NLP paper walkthrough. There is some content that is ignored based on the premise of the ISO (e.g Recursive Neural Networks), and the more relevant contents should be covered in more detail.
-- Brief cover of implementing Autoencoders in Keras
-- Covered the Seq2Seq primer on [youtube](https://www.youtube.com/watch?v=oF0Rboc4IJw). This did not provide sufficent information (it was too brief and was mostly preliminary knowledge).
+- Brief cover of implementing Autoencoders in Keras. However this is on a different problem (working on the MNIST dataset) but it provided a good idea on how to whip up autoencoders using machine learning libraries.
+- Covered the Seq2Seq primer on [youtube](https://www.youtube.com/watch?v=oF0Rboc4IJw). This did not provide sufficent information (it was too shallow and was mostly preliminary knowledge).
 - Covered Quoc Le's Seminar on `seq2seq`. It's a lot more thorough and provided a lot of relevant detail. Notes are [here](Notes/seq2seq.md).
-
 
 ### 2018/12/19 (Wednesday)
 
@@ -44,6 +48,10 @@ These logs are used to indicate progress of the project as I work on it through 
     - To have a plan of the report ready to show
     - To start planning and writing the theoretical aspects of the report (around 10 pages for this section)
     - To provide some code indicating the understanding of the problem at hand.
+
+### 2018/12/14-17
+
+- Well deserved break from education.
 
 ### 2018/12/13 (Thursday)
 
