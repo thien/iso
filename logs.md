@@ -9,13 +9,18 @@ These logs are used to indicate progress of the project as I work on it through 
     - Concise summary of seq2seq
     - Concise summary of Transformer paper
 - Cover Controllable Story Generation paper
-- Browse around for variational autoencoder implementations
+- Buy storage so you can fit the amazon dataset
+- Browse around for variational autoencoder implementations?
 
 ----
 
 ### 2018/12/21 (Friday)
 
 - Reviewed [Attention in Neural Networks](https://www.youtube.com/watch?v=W2rWgXJBZhU) video.
+- Used a guide to implement `seq2seq` in PyTorch that translates english to french, which can be found [here](Samples/seq2seq.ipynb). This model can be adapted to our problem, which we can use as our baseline. It will also help show the problems with this particular model as described in the variational autoregressive decoders paper.
+- *Note to self:* I'll want to have a further look at different PyTorch tutorials. It's a lot more hands on than Keras (you define your own training mechanism, which I guess makes it more appropiate for this kind of task).
+- The keras implementation for autoencoders becomes less useful now.
+- I kind of understand GRUs but I'd want to look into why it's more efficent than LSTMS. In Quoc's seminar he used a LSTM but GRUs were introduced a few months before the `seq2seq` paper (according to the ArXiv dates).
 
 ### 2018/12/20 (Thursday)
 
@@ -51,7 +56,7 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ### 2018/12/14-17
 
-- Well deserved break from education.
+- Well deserved break.
 
 ### 2018/12/13 (Thursday)
 
