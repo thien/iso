@@ -4,6 +4,7 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ## To-Do
 
+- Blitz through [this 60 minute tutorial](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html) on PyTorch.
 - Create notes on Goldberg's NLP Paper
 - Summary of Baselines:
     - Concise summary of seq2seq
