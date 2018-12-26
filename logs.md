@@ -12,6 +12,7 @@ These logs are used to indicate progress of the project as I work on it through 
 - Cover Controllable Story Generation paper
 - Buy storage so you can fit the amazon dataset
 - Browse around for variational autoencoder implementations?
+- Model the implemented `seq2seq` code around the ISO problem so we can use it as a benchmark.
 
 ----
 
