@@ -16,6 +16,17 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 
+### 2018/12/27 (Thursday)
+
+- Initial writeup for the theorical aspects of the paper. Lots of more reading is needed.
+- The difference between VAEs and CVAEs does not look huge. I'll want to look into this in more detail.
+- I'll need to make diagrams for regular autoencoders, LSTMs, RNNs, GRUs, Seq2seq, CVAEs, and VADs.
+
+### 2018/12/26 (Wednesday)
+
+- Retrieved large dataset from Julain McAuley (julian.mcauley@gmail.com).
+- Talked to Julia about the most appropiate method for structuring the theoretical part of the ISO writeup.
+
 ### 2018/12/21 (Friday)
 
 - Reviewed [Attention in Neural Networks](https://www.youtube.com/watch?v=W2rWgXJBZhU) video.

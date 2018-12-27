@@ -1,0 +1,12 @@
+\BOOKMARK [0][]{chapter.1}{1 Literature Survey}{}% 1
+\BOOKMARK [1][]{section.2}{1.1 Background}{chapter.1}% 2
+\BOOKMARK [2][]{subsection.3}{1.1.1 Neural Networks}{section.2}% 3
+\BOOKMARK [2][]{subsection.4}{1.1.2 Backpropagation}{section.2}% 4
+\BOOKMARK [2][]{subsection.5}{1.1.3 Autoencoders}{section.2}% 5
+\BOOKMARK [2][]{subsection.6}{1.1.4 Recurrent Neural Networks}{section.2}% 6
+\BOOKMARK [1][]{section.10}{1.2 Related Work}{chapter.1}% 7
+\BOOKMARK [2][]{subsection.11}{1.2.1 Seq2Seq}{section.10}% 8
+\BOOKMARK [2][]{subsection.12}{1.2.2 Transformers}{section.10}% 9
+\BOOKMARK [2][]{subsection.13}{1.2.3 Variational Autoencoders}{section.10}% 10
+\BOOKMARK [2][]{subsection.15}{1.2.4 Conditional Variational Autoencoders}{section.10}% 11
+\BOOKMARK [2][]{subsection.16}{1.2.5 Variational Autoregressive Decoders}{section.10}% 12
