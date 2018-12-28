@@ -1,0 +1,24 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\astroncite{Du et~al.}{2018}]{du_variational_2018}
+Du, J., Li, W., He, Y., Xu, R., Bing, L., and Wang, X. (2018).
+\newblock Variational {Autoregressive} {Decoder} for {Neural} {Response}
+  {Generation}.
+\newblock In {\em Proceedings of the 2018 {Conference} on {Empirical} {Methods}
+  in {Natural} {Language} {Processing}}, pages 3154--3163, Brussels, Belgium.
+  Association for Computational Linguistics.
+
+\bibitem[\protect\astroncite{Sutskever et~al.}{2014}]{sutskever_sequence_2014}
+Sutskever, I., Vinyals, O., and Le, Q.~V. (2014).
+\newblock Sequence to {Sequence} {Learning} with {Neural} {Networks}.
+\newblock {\em arXiv:1409.3215 [cs]}.
+\newblock arXiv: 1409.3215.
+
+\bibitem[\protect\astroncite{Vaswani et~al.}{2017}]{vaswani_attention_2017}
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.~N.,
+  Kaiser, L., and Polosukhin, I. (2017).
+\newblock Attention {Is} {All} {You} {Need}.
+\newblock {\em arXiv:1706.03762 [cs]}.
+\newblock arXiv: 1706.03762.
+
+\end{thebibliography}

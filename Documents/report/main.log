@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.10.25)  27 DEC 2018 19:46
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.10.25)  28 DEC 2018 20:05
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -239,7 +239,69 @@ File: pgflibraryarrows.meta.code.tex 2015/05/13 v3.0.1a (rcs-revision 1.13)
 \pgfarrowlength=\dimen152
 \pgfarrowwidth=\dimen153
 \pgfarrowlinewidth=\dimen154
-) (./includes.tex (/usr/local/texlive/2018/texmf-dist/tex/latex/geometry/geometry.sty
+) (/usr/local/texlive/2018/texmf-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2017/09/02 v2.17a AMS math features
+\@mathmargin=\skip43
+
+For additional information on amsmath, use the `?' option.
+(/usr/local/texlive/2018/texmf-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2000/06/29 v2.01 AMS text
+ (/usr/local/texlive/2018/texmf-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks27
+\ex@=\dimen155
+)) (/usr/local/texlive/2018/texmf-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen156
+) (/usr/local/texlive/2018/texmf-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 2016/03/08 v2.02 operator names
+)
+\inf@bad=\count108
+LaTeX Info: Redefining \frac on input line 213.
+\uproot@=\count109
+\leftroot@=\count110
+LaTeX Info: Redefining \overline on input line 375.
+\classnum@=\count111
+\DOTSCASE@=\count112
+LaTeX Info: Redefining \ldots on input line 472.
+LaTeX Info: Redefining \dots on input line 475.
+LaTeX Info: Redefining \cdots on input line 596.
+\Mathstrutbox@=\box37
+\strutbox@=\box38
+\big@size=\dimen157
+LaTeX Font Info:    Redeclaring font encoding OML on input line 712.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 713.
+\macc@depth=\count113
+\c@MaxMatrixCols=\count114
+\dotsspace@=\muskip10
+\c@parentequation=\count115
+\dspbrk@lvl=\count116
+\tag@help=\toks28
+\row@=\count117
+\column@=\count118
+\maxfields@=\count119
+\andhelp@=\toks29
+\eqnshift@=\dimen158
+\alignsep@=\dimen159
+\tagshift@=\dimen160
+\tagwidth@=\dimen161
+\totwidth@=\dimen162
+\lineht@=\dimen163
+\@envbody=\toks30
+\multlinegap=\skip44
+\multlinetaggap=\skip45
+\mathdisplay@stack=\toks31
+LaTeX Info: Redefining \[ on input line 2817.
+LaTeX Info: Redefining \] on input line 2818.
+) (/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+ (/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+)) (./includes.tex (/usr/local/texlive/2018/texmf-dist/tex/latex/geometry/geometry.sty
 Package: geometry 2018/03/24 v5.7 Page Geometry
  (/usr/local/texlive/2018/texmf-dist/tex/generic/oberdiek/ifpdf.sty
 Package: ifpdf 2017/03/15 v3.2 Provides the ifpdf switch
@@ -249,112 +311,112 @@ Package ifvtex Info: VTeX not detected.
 ) (/usr/local/texlive/2018/texmf-dist/tex/generic/ifxetex/ifxetex.sty
 Package: ifxetex 2010/09/12 v0.6 Provides ifxetex conditional
 )
-\Gm@cnth=\count108
-\Gm@cntv=\count109
-\c@Gm@tempcnt=\count110
-\Gm@bindingoffset=\dimen155
-\Gm@wd@mp=\dimen156
-\Gm@odd@mp=\dimen157
-\Gm@even@mp=\dimen158
-\Gm@layoutwidth=\dimen159
-\Gm@layoutheight=\dimen160
-\Gm@layouthoffset=\dimen161
-\Gm@layoutvoffset=\dimen162
-\Gm@dimlist=\toks27
+\Gm@cnth=\count120
+\Gm@cntv=\count121
+\c@Gm@tempcnt=\count122
+\Gm@bindingoffset=\dimen164
+\Gm@wd@mp=\dimen165
+\Gm@odd@mp=\dimen166
+\Gm@even@mp=\dimen167
+\Gm@layoutwidth=\dimen168
+\Gm@layoutheight=\dimen169
+\Gm@layouthoffset=\dimen170
+\Gm@layoutvoffset=\dimen171
+\Gm@dimlist=\toks32
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/textpos/textpos.sty
 Package: textpos 2016/06/07 v1.8
 
 Package: textpos 2016/06/07 1.8, absolute positioning of text on the page
-\TP@textbox=\box37
-\TPHorizModule=\dimen163
-\TPVertModule=\dimen164
-\TP@margin=\dimen165
-\TP@absmargin=\dimen166
+\TP@textbox=\box39
+\TPHorizModule=\dimen172
+\TPVertModule=\dimen173
+\TP@margin=\dimen174
+\TP@absmargin=\dimen175
 Grid set 16 x 16 = 37.34424pt x 52.81541pt
-\TPboxrulesize=\dimen167
-\TP@tbargs=\toks28
-\TP@prevdepth=\dimen168
+\TPboxrulesize=\dimen176
+\TP@tbargs=\toks33
+\TP@prevdepth=\dimen177
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/natbib/natbib.sty
 Package: natbib 2010/09/13 8.31b (PWD, AO)
-\bibhang=\skip43
-\bibsep=\skip44
+\bibhang=\skip46
+\bibsep=\skip47
 LaTeX Info: Redefining \cite on input line 694.
-\c@NAT@ctr=\count111
+\c@NAT@ctr=\count123
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/tools/tabularx.sty
 Package: tabularx 2016/02/03 v2.11b `tabularx' package (DPC)
  (/usr/local/texlive/2018/texmf-dist/tex/latex/tools/array.sty
 Package: array 2018/04/07 v2.4g Tabular extension package (FMi)
-\col@sep=\dimen169
-\ar@mcellbox=\box38
-\extrarowheight=\dimen170
-\NC@list=\toks29
-\extratabsurround=\skip45
-\backup@length=\skip46
-\ar@cellbox=\box39
+\col@sep=\dimen178
+\ar@mcellbox=\box40
+\extrarowheight=\dimen179
+\NC@list=\toks34
+\extratabsurround=\skip48
+\backup@length=\skip49
+\ar@cellbox=\box41
 )
-\TX@col@width=\dimen171
-\TX@old@table=\dimen172
-\TX@old@col=\dimen173
-\TX@target=\dimen174
-\TX@delta=\dimen175
-\TX@cols=\count112
-\TX@ftn=\toks30
+\TX@col@width=\dimen180
+\TX@old@table=\dimen181
+\TX@old@col=\dimen182
+\TX@target=\dimen183
+\TX@delta=\dimen184
+\TX@cols=\count124
+\TX@ftn=\toks35
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/tools/longtable.sty
 Package: longtable 2014/10/28 v4.11 Multi-page Table package (DPC)
-\LTleft=\skip47
-\LTright=\skip48
-\LTpre=\skip49
-\LTpost=\skip50
-\LTchunksize=\count113
-\LTcapwidth=\dimen176
-\LT@head=\box40
-\LT@firsthead=\box41
-\LT@foot=\box42
-\LT@lastfoot=\box43
-\LT@cols=\count114
-\LT@rows=\count115
-\c@LT@tables=\count116
-\c@LT@chunks=\count117
-\LT@p@ftn=\toks31
+\LTleft=\skip50
+\LTright=\skip51
+\LTpre=\skip52
+\LTpost=\skip53
+\LTchunksize=\count125
+\LTcapwidth=\dimen185
+\LT@head=\box42
+\LT@firsthead=\box43
+\LT@foot=\box44
+\LT@lastfoot=\box45
+\LT@cols=\count126
+\LT@rows=\count127
+\c@LT@tables=\count128
+\c@LT@chunks=\count129
+\LT@p@ftn=\toks36
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/multirow/multirow.sty
 Package: multirow 2016/11/25 v2.2 Span multiple rows of a table
-\multirow@colwidth=\skip51
-\multirow@cntb=\count118
-\multirow@dima=\skip52
-\bigstrutjot=\dimen177
+\multirow@colwidth=\skip54
+\multirow@cntb=\count130
+\multirow@dima=\skip55
+\bigstrutjot=\dimen186
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/subfigure/subfigure.sty
 Package: subfigure 2002/03/15 v2.1.5 subfigure package
-\subfigtopskip=\skip53
-\subfigcapskip=\skip54
-\subfigcaptopadj=\dimen178
-\subfigbottomskip=\skip55
-\subfigcapmargin=\dimen179
-\subfiglabelskip=\skip56
-\c@subfigure=\count119
-\c@lofdepth=\count120
-\c@subtable=\count121
-\c@lotdepth=\count122
+\subfigtopskip=\skip56
+\subfigcapskip=\skip57
+\subfigcaptopadj=\dimen187
+\subfigbottomskip=\skip58
+\subfigcapmargin=\dimen188
+\subfiglabelskip=\skip59
+\c@subfigure=\count131
+\c@lofdepth=\count132
+\c@subtable=\count133
+\c@lotdepth=\count134
 
 ****************************************
 * Local config file subfigure.cfg used *
 ****************************************
 (/usr/local/texlive/2018/texmf-dist/tex/latex/subfigure/subfigure.cfg)
-\subfig@top=\skip57
-\subfig@bottom=\skip58
+\subfig@top=\skip60
+\subfig@bottom=\skip61
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/caption/caption.sty
 Package: caption 2016/02/21 v3.3-144 Customizing captions (AR)
  (/usr/local/texlive/2018/texmf-dist/tex/latex/caption/caption3.sty
 Package: caption3 2016/05/22 v1.7-166 caption3 kernel (AR)
 Package caption3 Info: TeX engine: e-TeX on input line 67.
-\captionmargin=\dimen180
-\captionmargin@=\dimen181
-\captionwidth=\dimen182
-\caption@tempdima=\dimen183
-\caption@indent=\dimen184
-\caption@parindent=\dimen185
-\caption@hangindent=\dimen186
+\captionmargin=\dimen189
+\captionmargin@=\dimen190
+\captionwidth=\dimen191
+\caption@tempdima=\dimen192
+\caption@indent=\dimen193
+\caption@parindent=\dimen194
+\caption@hangindent=\dimen195
 )
-\c@ContinuedFloat=\count123
+\c@ContinuedFloat=\count135
 Package caption Info: longtable package is loaded.
  (/usr/local/texlive/2018/texmf-dist/tex/latex/caption/ltcaption.sty
 Package: ltcaption 2013/06/09 v1.4-94 longtable captions (AR)
@@ -362,17 +424,17 @@ Package: ltcaption 2013/06/09 v1.4-94 longtable captions (AR)
 Package caption Info: subfigure package is loaded.
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/fncylab/fncylab.sty) (/usr/local/texlive/2018/texmf-dist/tex/latex/fancyhdr/fancyhdr.sty
 Package: fancyhdr 2017/06/30 v3.9a Extensive control of page headers and footers
-\f@nch@headwidth=\skip59
-\f@nch@O@elh=\skip60
-\f@nch@O@erh=\skip61
-\f@nch@O@olh=\skip62
-\f@nch@O@orh=\skip63
-\f@nch@O@elf=\skip64
-\f@nch@O@erf=\skip65
-\f@nch@O@olf=\skip66
-\f@nch@O@orf=\skip67
+\f@nch@headwidth=\skip62
+\f@nch@O@elh=\skip63
+\f@nch@O@erh=\skip64
+\f@nch@O@olh=\skip65
+\f@nch@O@orh=\skip66
+\f@nch@O@elf=\skip67
+\f@nch@O@erf=\skip68
+\f@nch@O@olf=\skip69
+\f@nch@O@orf=\skip70
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/url/url.sty
-\Urlmuskip=\muskip10
+\Urlmuskip=\muskip11
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 ) (/usr/local/texlive/2018/texmf-dist/tex/generic/babel/babel.sty
 Package: babel 2018/02/14 3.18 The Babel package
@@ -382,69 +444,15 @@ File: switch.def 2018/02/14 3.18 Babel switching mechanism
 Language: english 2017/06/06 v3.3r English support from the babel system
  (/usr/local/texlive/2018/texmf-dist/tex/generic/babel/babel.def
 File: babel.def 2018/02/14 3.18 Babel common definitions
-\babel@savecnt=\count124
-\U@D=\dimen187
+\babel@savecnt=\count136
+\U@D=\dimen196
  (/usr/local/texlive/2018/texmf-dist/tex/generic/babel/txtbabel.def)
-\bbl@dirlevel=\count125
+\bbl@dirlevel=\count137
 )
 \l@canadian = a dialect from \language\l@american 
 \l@australian = a dialect from \language\l@british 
 \l@newzealand = a dialect from \language\l@british 
-)) (/usr/local/texlive/2018/texmf-dist/tex/latex/amsmath/amsmath.sty
-Package: amsmath 2017/09/02 v2.17a AMS math features
-\@mathmargin=\skip68
-
-For additional information on amsmath, use the `?' option.
-(/usr/local/texlive/2018/texmf-dist/tex/latex/amsmath/amstext.sty
-Package: amstext 2000/06/29 v2.01 AMS text
- (/usr/local/texlive/2018/texmf-dist/tex/latex/amsmath/amsgen.sty
-File: amsgen.sty 1999/11/30 v2.0 generic functions
-\@emptytoks=\toks32
-\ex@=\dimen188
-)) (/usr/local/texlive/2018/texmf-dist/tex/latex/amsmath/amsbsy.sty
-Package: amsbsy 1999/11/29 v1.2d Bold Symbols
-\pmbraise@=\dimen189
-) (/usr/local/texlive/2018/texmf-dist/tex/latex/amsmath/amsopn.sty
-Package: amsopn 2016/03/08 v2.02 operator names
-)
-\inf@bad=\count126
-LaTeX Info: Redefining \frac on input line 213.
-\uproot@=\count127
-\leftroot@=\count128
-LaTeX Info: Redefining \overline on input line 375.
-\classnum@=\count129
-\DOTSCASE@=\count130
-LaTeX Info: Redefining \ldots on input line 472.
-LaTeX Info: Redefining \dots on input line 475.
-LaTeX Info: Redefining \cdots on input line 596.
-\Mathstrutbox@=\box44
-\strutbox@=\box45
-\big@size=\dimen190
-LaTeX Font Info:    Redeclaring font encoding OML on input line 712.
-LaTeX Font Info:    Redeclaring font encoding OMS on input line 713.
-\macc@depth=\count131
-\c@MaxMatrixCols=\count132
-\dotsspace@=\muskip11
-\c@parentequation=\count133
-\dspbrk@lvl=\count134
-\tag@help=\toks33
-\row@=\count135
-\column@=\count136
-\maxfields@=\count137
-\andhelp@=\toks34
-\eqnshift@=\dimen191
-\alignsep@=\dimen192
-\tagshift@=\dimen193
-\tagwidth@=\dimen194
-\totwidth@=\dimen195
-\lineht@=\dimen196
-\@envbody=\toks35
-\multlinegap=\skip69
-\multlinetaggap=\skip70
-\mathdisplay@stack=\toks36
-LaTeX Info: Redefining \[ on input line 2817.
-LaTeX Info: Redefining \] on input line 2818.
-) (/usr/local/texlive/2018/texmf-dist/tex/latex/doublestroke/dsfont.sty
+)) (/usr/local/texlive/2018/texmf-dist/tex/latex/doublestroke/dsfont.sty
 Package: dsfont 1995/08/01 v0.1 Double stroke roman fonts
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/oberdiek/epstopdf.sty
 Package: epstopdf 2016/05/15 v2.6 Conversion with epstopdf on the fly (HO)
@@ -500,7 +508,7 @@ Package: bigintcalc 2016/05/16 v1.4 Expandable calculations on big integers (HO)
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 282.
 )) (/usr/local/texlive/2018/texmf-dist/tex/latex/base/latexsym.sty
 Package: latexsym 1998/08/17 v2.2e Standard LaTeX package (lasy symbols)
-\symlasy=\mathgroup4
+\symlasy=\mathgroup6
 LaTeX Font Info:    Overwriting symbol font `lasy' in version `bold'
 (Font)                  U/lasy/m/n --> U/lasy/b/n on input line 52.
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/hyperref/hyperref.sty
@@ -591,21 +599,21 @@ Package: hypcap 2016/05/16 v1.12 Adjusting the anchors of captions (HO)
 )) (./notation.tex) (./main.aux)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Try loading font information for OT1+bch on input line 26.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Try loading font information for OT1+bch on input line 27.
  (/usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/ot1bch.fd
 File: ot1bch.fd 2004/10/18 font definitions for OT1/bch.
 ) ABD: EveryShipout initializing macros (/usr/local/texlive/2018/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
@@ -660,9 +668,9 @@ Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: hyperref package is loaded.
 Package caption Info: hypcap package is loaded.
 Package caption Info: End \AtBeginDocument code.
-Package backref Info: ** backref set up for natbib ** on input line 26.
+Package backref Info: ** backref set up for natbib ** on input line 27.
 \AtBeginShipoutBox=\box47
-Package hyperref Info: Link coloring ON on input line 26.
+Package hyperref Info: Link coloring ON on input line 27.
 (/usr/local/texlive/2018/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
  (/usr/local/texlive/2018/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
@@ -670,14 +678,15 @@ Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
 \c@section@level=\count154
 )
-LaTeX Info: Redefining \ref on input line 26.
-LaTeX Info: Redefining \pageref on input line 26.
-LaTeX Info: Redefining \nameref on input line 26.
+LaTeX Info: Redefining \ref on input line 27.
+LaTeX Info: Redefining \pageref on input line 27.
+LaTeX Info: Redefining \nameref on input line 27.
+ (./main.out) (./main.out)
 \@outlinefile=\write4
 \openout4 = `main.out'.
 
  (./titlepage.tex
-<./figures/imperial.pdf, id=7, 362.35374pt x 95.35625pt>
+<./figures/imperial.pdf, id=55, 362.35374pt x 95.35625pt>
 File: ./figures/imperial.pdf Graphic file (type pdf)
 <use ./figures/imperial.pdf>
 Package pdftex.def Info: ./figures/imperial.pdf  used on input line 11.
@@ -689,93 +698,82 @@ Underfull \hbox (badness 10000) in paragraph at lines 11--12
 
 LaTeX Font Info:    Font shape `OT1/bch/bx/n' in size <24.88> not available
 (Font)              Font shape `OT1/bch/b/n' tried instead on input line 27.
+LaTeX Font Info:    Try loading font information for U+msa on input line 39.
+(/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 39.
+ (/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
 LaTeX Font Info:    Try loading font information for U+lasy on input line 39.
-(/usr/local/texlive/2018/texmf-dist/tex/latex/base/ulasy.fd
+ (/usr/local/texlive/2018/texmf-dist/tex/latex/base/ulasy.fd
 File: ulasy.fd 1998/08/17 v2.2e LaTeX symbol font definitions
 ) [1
 
 {/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map} <./figures/imperial.pdf>])
 Chapter 1.
 LaTeX Font Info:    Font shape `OT1/bch/bx/n' in size <17.28> not available
-(Font)              Font shape `OT1/bch/b/n' tried instead on input line 77.
+(Font)              Font shape `OT1/bch/b/n' tried instead on input line 78.
 LaTeX Font Info:    Font shape `OT1/bch/bx/n' in size <14.4> not available
-(Font)              Font shape `OT1/bch/b/n' tried instead on input line 79.
-LaTeX Font Info:    Font shape `OT1/bch/bx/n' in size <12> not available
-(Font)              Font shape `OT1/bch/b/n' tried instead on input line 97.
-LaTeX Font Info:    Font shape `OT1/bch/bx/n' in size <10.95> not available
-(Font)              Font shape `OT1/bch/b/n' tried instead on input line 149.
+(Font)              Font shape `OT1/bch/b/n' tried instead on input line 80.
 [1
 
 
 
 ]
-
-Package natbib Warning: Citation `sutskever_sequence_2014' on page 2 undefined on input line 162.
-
-<diagrams/variational_autoencoders.pdf, id=33, 484.97786pt x 218.55653pt>
+LaTeX Font Info:    Font shape `OT1/bch/bx/n' in size <12> not available
+(Font)              Font shape `OT1/bch/b/n' tried instead on input line 107.
+LaTeX Font Info:    Font shape `OT1/bch/bx/n' in size <10.95> not available
+(Font)              Font shape `OT1/bch/b/n' tried instead on input line 159.
+ [2]
+<diagrams/transformers.png, id=88, 485.815pt x 702.625pt>
+File: diagrams/transformers.png Graphic file (type png)
+<use diagrams/transformers.png>
+Package pdftex.def Info: diagrams/transformers.png  used on input line 181.
+(pdftex.def)             Requested size: 170.71652pt x 246.89806pt.
+<diagrams/variational_autoencoders.pdf, id=96, 484.97786pt x 218.55653pt>
 File: diagrams/variational_autoencoders.pdf Graphic file (type pdf)
 <use diagrams/variational_autoencoders.pdf>
-Package pdftex.def Info: diagrams/variational_autoencoders.pdf  used on input line 175.
+Package pdftex.def Info: diagrams/variational_autoencoders.pdf  used on input line 194.
 (pdftex.def)             Requested size: 426.79134pt x 192.33699pt.
-[2]
-Runaway argument?
-{CVAEs are an improved model of the original VAE architecture by cond\ETC.
-/Users/t/Documents/Github/iso/Documents/report/main.tex:191: Paragraph ended before \@citex was complete.
-<to be read again> 
-                   \par 
-l.191 
-      
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
+ [3 <./diagrams/transformers.png>]
+<diagrams/conditional_variational_autoencoders.pdf, id=104, 500.71968pt x 225.29971pt>
+File: diagrams/conditional_variational_autoencoders.pdf Graphic file (type pdf)
+<use diagrams/conditional_variational_autoencoders.pdf>
+Package pdftex.def Info: diagrams/conditional_variational_autoencoders.pdf  used on input line 224.
+(pdftex.def)             Requested size: 426.79134pt x 192.04538pt.
+ [4 <./diagrams/variational_autoencoders.pdf>] (./main.bbl (./main.brf)
+\tf@brf=\write5
+\openout5 = `main.brf'.
 
+ [5 <./diagrams/conditional_variational_autoencoders.pdf>]) [6
 
-Package natbib Warning: Citation `du_variational_2018' on page 3 undefined on input line 192.
-
-
-Package natbib Warning: Citation `du_variational_2018' on page 3 undefined on input line 196.
-
-No file main.bbl.
-
-Package natbib Warning: There were undefined citations.
-
-[3 <./diagrams/variational_autoencoders.pdf>] [4]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 214.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 214.
+]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 254.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 254.
  (./main.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 214.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 214.
-
-
-Package rerunfilecheck Warning: File `main.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `main.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  41C6BF6B8F8D1147AB787F5193334DE9;832.
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 214.
- )
-(\end occurred inside a group at level 1)
-
-### semi simple group (level 1) entered at line 190 (\begingroup)
-### bottom level 
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 254.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 254.
+Package rerunfilecheck Info: File `main.out' has not changed.
+(rerunfilecheck)             Checksum: A36F78E820395A1B2F7439D12179DD65;832.
+Package rerunfilecheck Info: File `main.brf' has not changed.
+(rerunfilecheck)             Checksum: 02127558CA72992003AF406F946FA8CE;315.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 254.
+ ) 
 Here is how much of TeX's memory you used:
- 19243 strings out of 492649
- 357889 string characters out of 6129621
- 443844 words of memory out of 5000000
- 22706 multiletter control sequences out of 15000+600000
- 34478 words of font info for 61 fonts, out of 8000000 for 9000
+ 19590 strings out of 492649
+ 362405 string characters out of 6129621
+ 443931 words of memory out of 5000000
+ 23015 multiletter control sequences out of 15000+600000
+ 37551 words of font info for 69 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 55i,11n,71p,618b,908s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/texlive/2018/texmf-dist/fonts/type1/adobe/sourcesanspro/SourceSansPro-Semibold.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/bitstrea/charter/bchb8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/bitstrea/charter/bchr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/bitstrea/charter/bchr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/bitstrea/charter/bchri8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmss8.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb>
-Output written on main.pdf (5 pages, 954788 bytes).
+ 55i,11n,71p,845b,908s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/texlive/2018/texmf-dist/fonts/type1/adobe/sourcesanspro/SourceSansPro-Semibold.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/bitstrea/charter/bchb8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/bitstrea/charter/bchr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/bitstrea/charter/bchr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/bitstrea/charter/bchri8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmss8.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on main.pdf (7 pages, 2010462 bytes).
 PDF statistics:
- 150 PDF objects out of 1000 (max. 8388607)
- 99 compressed objects within 1 object stream
- 22 named destinations out of 1000 (max. 500000)
- 23 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 318 PDF objects out of 1000 (max. 8388607)
+ 204 compressed objects within 3 object streams
+ 30 named destinations out of 1000 (max. 500000)
+ 129 words of extra memory for PDF output out of 10000 (max. 10000000)
 

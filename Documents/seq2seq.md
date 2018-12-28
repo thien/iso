@@ -14,7 +14,7 @@ Autoreply:
 	- for each sentence:
 		- count the occurences of the word in the sentence
 	- Have a token for words not in the vocab.
-
+ 
 - Formulate the dataset of input output pairs. Eg:
 
 		- [0,0,0,1,2,0,1] -> 1

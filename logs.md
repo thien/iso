@@ -16,6 +16,10 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 
+### 2018/12/28 (Friday)
+- Updated writeup and included appropiate references.
+- Added diagrams of the CVAE architecture and expanded on the different autoencoders.
+
 ### 2018/12/27 (Thursday)
 
 - Initial writeup for the theorical aspects of the paper. Lots of more reading is needed.

@@ -1,6 +1,7 @@
 \documentclass[12pt,twoside]{report}
 \usepackage{tikz}
 \usetikzlibrary{positioning, fit, arrows.meta}
+\usepackage{amsmath,amssymb}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -84,15 +85,24 @@ Neural Networks are non-linear statistical models that generate complex relation
 
 \subsection{Autoencoders}
 
-Autoencoders are a specialised form of MLPs where the model attempts to recreate the inputs on the output. Autoencoders typically have a neural network layer in the model where its dimension is smaller than the input space, therefore representing a dimensionality reduction in the data. Autoencoders are composed of two different networks, an encoder $\alpha$ and a decoder $\beta$, such that $\alpha : X \rightarrow F$ and $\beta : F \rightarrow X$. The two networks are trained together in a manner that allows them to preserve the input as much as possible.
+Autoencoders are a specialised form of MLPs where the model attempts to recreate the inputs on the output. Autoencoders typically have a neural network layer in the model where its dimension is smaller than the input space, therefore representing a dimensionality reduction in the data. Autoencoders are composed of two different principal components, an encoder network $\alpha$ and a decoder network $\beta$, such that $\alpha : X \rightarrow F$ and $\beta : F \rightarrow X$. Measuring the success of the reconstruction is deduced by a reconstruction loss formula. This reconstruction loss comapres the output of the decoder and compares it against the input of the encoder. The two networks are trained together in a manner that allows them to preserve the input as much as possible.
 
-Increasing the robustness of Autoencoders typically includes the introduction of noise (that the Autoencoder would attempt to ignore - this particular model is described as a Denoising Autoencoder), and experimentation of 
+% what is it good for?
 
 Autoencoders are popularised through their use in Machine Translation, Word Embeddings, and document clustering.
+
+% tricks on the autoencoder
+
+denoising autoencoders, where the input is a noisy representation of some input data, and it'll try and remove the noise (by comparing the reconstruction loss against a clean representation of the input).
+
+also shown to have success in reconstructing images via neural inpainting.
 
 \subsection{Recurrent Neural Networks}
 
 Recurrent neural networks (CNNs) are a particular class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). CNNs essentially operate over a sequence of vectors, making them popular in contempoary NLP problems. Given a sequence of inputs $(x_1, ..., x_T)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_T)$ by iterating the following equation:
+
+The semantics, structure and 
+It becomes very difficult for RNNs to leverage this; this is described as a long range dependency problem.
 
 \subsubsection{LSTM}
 
@@ -165,18 +175,31 @@ Traditionally, Seq2seq would be the most common method of tackling this particul
 
 \subsection{Transformers}
 
+\begin{figure}[!ht]
+      
+	\centering
+	\includegraphics[width=60mm]{diagrams/transformers.png}
+	\caption{The transformer model architecture.\cite{vaswani_attention_2017} \label{transformer}}
+  \end{figure}
+
+\cite{vaswani_attention_2017} introduced the idea that it is possible to avoid the use of RNNs altogether and focus on leveraging the attention mechanism introduced in seq2seq. The resulting network architecture utilises stacked layers of residual networks 
 
 \subsection{Variational Autoencoders}
 
-Variational Autoencoders (VAEs) introduce a constraint on the encoding network that forces the model to generate latent vectors that roughly follow a gaussian distribution. The architecture of a VAE looks relatively different:
+Variational Autoencoders (VAEs) introduce a constraint on the encoding network that forces the model to generate latent vectors that roughly follow a gaussian distribution, as opposed to creating a fixed latent vector. Consequently, VAEs introduce two extra vectors, a mean vector and a standard distribution vector, which is fed from the encoder. A sample is taken from the distribution and that is then fed into the decoder.
+
 \begin{figure}[!ht]
       
 	\centering
 	\includegraphics[width=150mm]{diagrams/variational_autoencoders.pdf}
-	\caption{A simplified model diagram for a variational autoencoder, which takes as input some text, and it's predicted output being the same text as the input.\label{cum_growth}}
+	\caption{A simplified model architecture for a variational autoencoder, which takes as input some text, and it's predicted output being the same text as the input.\label{vae}}
   \end{figure}
 
-Due to the stochastic nature of the network, The loss function used for VAEs is specifically the Kullback–Leibler (KL) Divergence. KL measures the relative difference of two probability distributions.
+  Note that the decoder receives samples from a non-standard normal distribution produced by the encoder. The average of the samples of the different distributions should approximate to a standard normal.
+  
+  Due to the stochastic nature of the network, we use a reconstruction loss that involves an expection of the output; but we also use the KL divergence, which  measures the relative difference of two probability distributions. In this particular case, we will be comparing the distribution of the decoder outputs against a standard gaussian $ \mathcal{N}(0,1)$).
+  
+  $$\mathcal{L}(\theta, \phi, x, z) = \mathbb{E}_{q \phi (z|x)}[log \thinspace p_{\theta}(x|z)] - D_{KL}(q_{\phi}(z|x)\thinspace||\thinspace p(z)) $$
 
 $$
 D_{KL}(P ||Q) = \sum_{x \subset X} P(x) \cdot log (\frac{P(x)}{Q(x)})
@@ -185,15 +208,32 @@ $$
 In other words, it is the expectation of the logarithmic difference between the probabilities $P$ and $Q$, where the expectation of $P$ is understood.
 
 
+- You'll need to perform a reparameterisation trick (since you can't calculate derivatives of samples.) in order to perform backpropagation. (you can't push gradients through a sampling node.)
+  
+$$z = \mu + \sigma \cdot \epsilon $$ where $\epsilon \sim \mathcal{N}(0,1)$. You want to learn $\mu, \sigma$.
+
+
+
 \subsection{Conditional Variational Autoencoders}
 
-Introduced by \cite{CVAEs are an improved model of the original VAE architecture by  conditioning on another description of the data, $y$. Samples can be generated from the conditional distribution $p(x|y)$. By changing the value of $y$, such as numbers of labels in MNIST, we can get corresponding samples $x \sim p(x|y)$.
+Although VAEs are more robust when compared to their original autoencoder counterparts, the decoder class cannot produce outputs of a particular class on demand. CVAEs are an improved model of the original VAE architecture by conditioning on another description of the data, a class descriptor $y$. 
 
-However, it was found by \cite{du_variational_2018} that since the responses were generated from the same latent variable, it was not necessarily sufficent to model high-variability in responses. 
+\begin{figure}[!ht]
+      
+	\centering
+	\includegraphics[width=150mm]{diagrams/conditional_variational_autoencoders.pdf}
+	\caption{A model architecture for a CVAE, which includes the label being fed into the encoder and decoder networks. \label{cvae_diagram}}
+  \end{figure}
+
+During training time, a class (represented by some arbitary vector) is fed at the same time to the encoder and decoder. To generate an output that depends on $y$ we feed that number to the decoder along with a random point in the latent space sampled from a standard normal distribution.
+
+Samples can be generated from the conditional distribution $p(x|y)$. By changing the value of $y$, we can get corresponding samples $x \sim p(x|y)$. The system no longer relies on the latent space to encode what output is necessary; instead the latent space encodes other information that can distinguish itself based on the differing $y$ values.
+
+However, it was found by \cite{du_variational_2018} that since the responses were generated from the same latent variable (induced by the class), it was not necessarily sufficent to model high-variability in responses.
 
 \subsection{Variational Autoregressive Decoders}
 
-Introduced by \cite{du_variational_2018}, Variational Autoregressive Decoders (VADs) attempt to circumvent the sampling problem introduced from CVAEs by introducing latent variables in a autoregressive Decoder. At different time-steps, this allows the decoder to produce a multimodal distribution of text sequences, allowing a variety of responses to be produced.
+Introduced by \cite{du_variational_2018}, Variational Autoregressive Decoders (VADs) attempt to circumvent the sampling problem introduced from CVAEs by introducing latent variables in a autoregressive Decoder. At different time-steps, this allows the decoder to produce a multimodal distribution of text sequences, allowing a variety of responses to be produced. It applies bayesian statistics to 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \chapter{Contribution}

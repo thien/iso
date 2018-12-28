@@ -50,10 +50,11 @@
 	file = {Le - A Tutorial on Deep Learning Part 2 Autoencoders, .pdf:/Users/t/Zotero/storage/395HSEH4/Le - A Tutorial on Deep Learning Part 2 Autoencoders, .pdf:application/pdf}
 }
 
-@misc{noauthor_unreasonable_nodate,
+@misc{karpathy_unreasonable_nodate,
 	title = {The {Unreasonable} {Effectiveness} of {Recurrent} {Neural} {Networks}},
 	url = {https://karpathy.github.io/2015/05/21/rnn-effectiveness/},
 	urldate = {2018-12-27},
+	author = {Karpathy, Andrej},
 	file = {The Unreasonable Effectiveness of Recurrent Neural Networks:/Users/t/Zotero/storage/KWU3I4E9/rnn-effectiveness.html:text/html}
 }
 
@@ -69,4 +70,98 @@
 	note = {arXiv: 1409.3215},
 	keywords = {Computer Science - Computation and Language, Computer Science - Machine Learning},
 	file = {arXiv\:1409.3215 PDF:/Users/t/Zotero/storage/TKB5QRV5/Sutskever et al. - 2014 - Sequence to Sequence Learning with Neural Networks.pdf:application/pdf;arXiv.org Snapshot:/Users/t/Zotero/storage/VPP3FLY2/1409.html:text/html}
+}
+
+@article{kingma_auto-encoding_2013,
+	title = {Auto-{Encoding} {Variational} {Bayes}},
+	url = {http://arxiv.org/abs/1312.6114},
+	abstract = {How can we perform efficient inference and learning in directed probabilistic models, in the presence of continuous latent variables with intractable posterior distributions, and large datasets? We introduce a stochastic variational inference and learning algorithm that scales to large datasets and, under some mild differentiability conditions, even works in the intractable case. Our contributions is two-fold. First, we show that a reparameterization of the variational lower bound yields a lower bound estimator that can be straightforwardly optimized using standard stochastic gradient methods. Second, we show that for i.i.d. datasets with continuous latent variables per datapoint, posterior inference can be made especially efficient by fitting an approximate inference model (also called a recognition model) to the intractable posterior using the proposed lower bound estimator. Theoretical advantages are reflected in experimental results.},
+	urldate = {2018-12-27},
+	journal = {arXiv:1312.6114 [cs, stat]},
+	author = {Kingma, Diederik P. and Welling, Max},
+	month = dec,
+	year = {2013},
+	note = {arXiv: 1312.6114},
+	keywords = {Computer Science - Machine Learning, Statistics - Machine Learning},
+	file = {arXiv\:1312.6114 PDF:/Users/t/Zotero/storage/7R5U4ZCG/Kingma and Welling - 2013 - Auto-Encoding Variational Bayes.pdf:application/pdf;arXiv.org Snapshot:/Users/t/Zotero/storage/GY6WVJJT/1312.html:text/html}
+}
+
+@misc{noauthor_opennmt_nodate,
+	title = {{OpenNMT} - {Open}-{Source} {Neural} {Machine} {Translation}},
+	url = {http://opennmt.net/},
+	urldate = {2018-12-27},
+	file = {OpenNMT - Open-Source Neural Machine Translation:/Users/t/Zotero/storage/LS8GXSRX/opennmt.net.html:text/html}
+}
+
+@incollection{kingma_semi-supervised_2014,
+	title = {Semi-supervised {Learning} with {Deep} {Generative} {Models}},
+	url = {http://papers.nips.cc/paper/5352-semi-supervised-learning-with-deep-generative-models.pdf},
+	urldate = {2018-12-27},
+	booktitle = {Advances in {Neural} {Information} {Processing} {Systems} 27},
+	publisher = {Curran Associates, Inc.},
+	author = {Kingma, Durk P and Mohamed, Shakir and Jimenez Rezende, Danilo and Welling, Max},
+	editor = {Ghahramani, Z. and Welling, M. and Cortes, C. and Lawrence, N. D. and Weinberger, K. Q.},
+	year = {2014},
+	pages = {3581--3589},
+	file = {NIPS Full Text PDF:/Users/t/Zotero/storage/DJ27AES2/Kingma et al. - 2014 - Semi-supervised Learning with Deep Generative Mode.pdf:application/pdf;NIPS Snapshot:/Users/t/Zotero/storage/TXNHD7DH/5352-semi-supervised-learning-with-deep-generative-models.html:text/html}
+}
+
+@misc{chromiak_transformer_2017,
+	title = {The {Transformer} – {Attention} is all you need.},
+	url = {https://mchromiak.github.io/articles/2017/Sep/12/Transformer-Attention-is-all-you-need/},
+	abstract = {Transformer - more than meets the eye! Are we there yet? Well... not really, but... How about eliminating recurrence and convolution from transduction? Sequence modeling and transduction (e.g. language modeling, machine translation) problems solutions has been dominated by RNN (especially gated RNN) or LSTM, additionally employing the attention mechanism. Main sequence transduction models are based on RNN or CNN including encoder and decoder. The new transformer architecture is claimed however, to be more parallelizable and requiring significantly less time to train, solely focusing on attention mechanisms.},
+	language = {en},
+	urldate = {2018-12-28},
+	journal = {Michał Chromiak's blog},
+	author = {Chromiak, Michał},
+	month = sep,
+	year = {2017},
+	file = {Snapshot:/Users/t/Zotero/storage/WNHDIXJS/Transformer-Attention-is-all-you-need.html:text/html}
+}
+
+@article{vaswani_attention_2017,
+	title = {Attention {Is} {All} {You} {Need}},
+	url = {http://arxiv.org/abs/1706.03762},
+	abstract = {The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.},
+	urldate = {2018-12-28},
+	journal = {arXiv:1706.03762 [cs]},
+	author = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and Kaiser, Lukasz and Polosukhin, Illia},
+	month = jun,
+	year = {2017},
+	note = {arXiv: 1706.03762},
+	keywords = {Computer Science - Computation and Language, Computer Science - Machine Learning},
+	file = {arXiv\:1706.03762 PDF:/Users/t/Zotero/storage/9NZR54JH/Vaswani et al. - 2017 - Attention Is All You Need.pdf:application/pdf;arXiv.org Snapshot:/Users/t/Zotero/storage/HG9EWFTT/1706.html:text/html}
+}
+
+@inproceedings{peng_towards_2018,
+	address = {New Orleans, Louisiana},
+	title = {Towards {Controllable} {Story} {Generation}},
+	url = {http://www.aclweb.org/anthology/W18-1505},
+	abstract = {We present a general framework of analyzing existing story corpora to generate controllable and creative new stories. The proposed framework needs little manual annotation to achieve controllable story generation. It creates a new interface for humans to interact with computers to generate personalized stories. We apply the framework to build recurrent neural network (RNN)-based generation models to control story ending valence and storyline. Experiments show that our methods successfully achieve the control and enhance the coherence of stories through introducing storylines. with additional control factors, the generation model gets lower perplexity, and yields more coherent stories that are faithful to the control factors according to human evaluation.},
+	urldate = {2018-12-28},
+	booktitle = {Proceedings of the {First} {Workshop} on {Storytelling}},
+	publisher = {Association for Computational Linguistics},
+	author = {Peng, Nanyun and Ghazvininejad, Marjan and May, Jonathan and Knight, Kevin},
+	month = jun,
+	year = {2018},
+	pages = {43--49},
+	file = {Full Text PDF:/Users/t/Zotero/storage/FPXDFHHI/Peng et al. - 2018 - Towards Controllable Story Generation.pdf:application/pdf}
+}
+
+@misc{dykeman_conditional_nodate,
+	title = {Conditional {Variational} {Autoencoders}},
+	url = {http://ijdykeman.github.io/ml/2016/12/21/cvae.html},
+	urldate = {2018-12-28},
+	author = {Dykeman, Issac},
+	file = {Conditional Variational Autoencoders:/Users/t/Zotero/storage/YJ3GML4T/cvae.html:text/html}
+}
+
+@misc{normandin_conditional_2018,
+	title = {Conditional {Variational} {Autoencoder}},
+	url = {https://web.archive.org/web/20180417081246/http://nnormandin.com/science/2017/07/01/cvae.html},
+	urldate = {2018-12-28},
+	author = {Normandin, Nick},
+	month = apr,
+	year = {2018},
+	file = {Conditional Variational Autoencoder:/Users/t/Zotero/storage/9CKR5TRI/cvae.html:text/html}
 }
