@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex main"] 1546026734 "main.aux" "main.bbl" "main" 1546027521
+["bibtex main"] 1546094150 "main.aux" "main.bbl" "main" 1546094152
   "/usr/local/texlive/2018/texmf-dist/bibtex/bst/beebe/apa.bst" 1480098434 23582 e3c8338eb1efb7432441aa8861285f53 ""
-  "main.aux" 1546027521 4283 686cb534d94e8a4eadd323c8a3d6307c ""
-  "ref.bib" 1546025768 13712 7dee33250df0eb34e82a22f39baf0cd1 ""
+  "main.aux" 1546094152 5026 fc7047712fcd48b01fe21a32491870b1 ""
+  "ref.bib" 1546093264 16726 246b98e545b4736f260ba1e8948f5484 ""
   (generated)
   "main.blg"
   "main.bbl"
-["pdflatex"] 1546027519 "/Users/t/Documents/Github/iso/Documents/report/main.tex" "main.pdf" "main" 1546027521
-  "/Users/t/Documents/Github/iso/Documents/report/main.tex" 1546027518 12195 ec564f8ceb8df811165c00fec022ee0c ""
+["pdflatex"] 1546094150 "/Users/t/Documents/Github/iso/Documents/report/main.tex" "main.pdf" "main" 1546094152
+  "/Users/t/Documents/Github/iso/Documents/report/main.tex" 1546094148 13336 2e85ffdd0b3a2f97b2c0c78ce2fabf3d ""
   "/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc" 1480098666 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2018/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/bitstrea/charter/bchb7t.tfm" 1480098691 2732 006d846b4d54f9b40899c7c3eecd771a ""
@@ -207,16 +207,16 @@
   "diagrams/variational_autoencoders.pdf" 1546026603 830355 b8c30408a010406082b881e3d61dd3a5 ""
   "figures/imperial.pdf" 1439887876 14992 7f9429838e925fcd04acfa4d283703b5 ""
   "includes.tex" 1439987844 2982 94e3c51e3874ecbcf3cf3ddf0a89e382 ""
-  "main.aux" 1546027521 4283 686cb534d94e8a4eadd323c8a3d6307c ""
-  "main.bbl" 1546026734 1048 88106863ee9c73d6e3dd3df6fc678f4d "bibtex main"
-  "main.brf" 1546027521 315 02127558ca72992003af406f946fa8ce ""
-  "main.out" 1546027521 832 a36f78e820395a1b2f7439d12179dd65 ""
-  "main.tex" 1546027518 12195 ec564f8ceb8df811165c00fec022ee0c ""
+  "main.aux" 1546094152 5026 fc7047712fcd48b01fe21a32491870b1 ""
+  "main.bbl" 1546094150 1660 ed6e8bd8fbc121ca228acc7bcb43058f "bibtex main"
+  "main.brf" 1546094152 425 fad0b60be34210be5c13922374827750 ""
+  "main.out" 1546094152 826 8a9a0d35a91266667f731e0fce3b9959 ""
+  "main.tex" 1546094148 13336 2e85ffdd0b3a2f97b2c0c78ce2fabf3d ""
   "notation.tex" 1439987954 362 dde8d17bdd645c497ea48e05d51963bd ""
   "titlepage.tex" 1440160028 1995 b33c89e3a284110d3cc1b5b405785394 ""
   (generated)
-  "main.pdf"
-  "main.out"
-  "main.log"
-  "main.aux"
   "main.brf"
+  "main.aux"
+  "main.out"
+  "main.pdf"
+  "main.log"

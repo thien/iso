@@ -327,10 +327,10 @@ INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/bitstrea/charter/bchro7t.vf
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/bitstrea/charter/bchro8r.tfm
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/bitstrea/charter/bchb7t.vf
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/bitstrea/charter/bchb8r.tfm
-INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/bitstrea/charter/bchr7t.vf
-INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/bitstrea/charter/bchr8r.tfm
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/bitstrea/charter/bchb7t.vf
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/bitstrea/charter/bchb8r.tfm
+INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/bitstrea/charter/bchr7t.vf
+INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/bitstrea/charter/bchr8r.tfm
 INPUT diagrams/transformers.png
 INPUT ./diagrams/transformers.png
 INPUT ./diagrams/transformers.png

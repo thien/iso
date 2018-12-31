@@ -99,14 +99,16 @@ also shown to have success in reconstructing images via neural inpainting.
 
 \subsection{Recurrent Neural Networks}
 
-Recurrent neural networks (CNNs) are a particular class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). CNNs essentially operate over a sequence of vectors, making them popular in contempoary NLP problems. Given a sequence of inputs $(x_1, ..., x_T)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_T)$ by iterating the following equation:
+Recurrent neural networks (CNNs) are a particular class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). CNNs essentially operate over a sequence of variable-length vectors, making them popular in contempoary NLP problems. Given a sequence of inputs $(x_1, ..., x_T)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_T)$ by iterating the following equation:
 
-The semantics, structure and 
-It becomes very difficult for RNNs to leverage this; this is described as a long range dependency problem.
+\subsubsection{Backpropagation through Time}
+	something
+
+Theoretically, RNNs showed promise but there existed a multitude of problems. Firstly, It became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that could facilitate this feature. This is described as a long range dependency problem. Furthermore, they were especially impractical due to the vanishing and exploding gradient problems having a larger effect on training. This is by design, as the architecture of the network.
 
 \subsubsection{LSTM}
 
-\begin{figure}
+\begin{figure}[!ht]
 	\centering
 	\begin{tikzpicture}[
 		prod/.style={circle, draw, inner sep=0pt},
@@ -159,11 +161,14 @@ It becomes very difficult for RNNs to leverage this; this is described as a long
 	\caption{A diagram of the LSTM model.}
 \end{figure}
 
-LSTM (Long Short Term Memory) is a type of Recurrent Neural Network that attempts to retain information based on the previous inputs through the introduction of gated architectures.
+LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain information based on the previous inputs through the introduction of gated architectures.
 
-\subsubsection{Gated Recurrent Networks}
+\subsubsection{Gated Recurrent Units}
 
-GRUs are used to solve the common issue with LSTMs where the training time was relatively slow due to the number of derivatives necessary to compute. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time.
+Introduced by \cite{cho_properties_2014}, GRUs are used to solve the common issue with LSTMs where the training time was relatively slow due to the number of derivatives necessary to compute. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time. 
+
+They are unable to clearly distinguish between the performance of the two gated units they tested.
+However, research from \cite{chung_empirical_2014} that GRUs were found to perform better than LSTMs on smaller datasets. 
 
 \section{Related Work}
 
@@ -229,11 +234,24 @@ During training time, a class (represented by some arbitary vector) is fed at th
 
 Samples can be generated from the conditional distribution $p(x|y)$. By changing the value of $y$, we can get corresponding samples $x \sim p(x|y)$. The system no longer relies on the latent space to encode what output is necessary; instead the latent space encodes other information that can distinguish itself based on the differing $y$ values.
 
-However, it was found by \cite{du_variational_2018} that since the responses were generated from the same latent variable (induced by the class), it was not necessarily sufficent to model high-variability in responses.
+However, it was found by \cite{du_variational_2018} that since the responses were generated from the same latent variable (induced by the class), it was difficult to model high-variability in responses.
 
-\subsection{Variational Autoregressive Decoders}
+\section{Variational Autoregressive Decoders}
 
-Introduced by \cite{du_variational_2018}, Variational Autoregressive Decoders (VADs) attempt to circumvent the sampling problem introduced from CVAEs by introducing latent variables in a autoregressive Decoder. At different time-steps, this allows the decoder to produce a multimodal distribution of text sequences, allowing a variety of responses to be produced. It applies bayesian statistics to 
+Introduced by \cite{du_variational_2018}, Variational Autoregressive Decoders (VADs) attempt to circumvent the sampling problem introduced from CVAEs by introducing multiple latent variables into the autoregressive Decoder. At different time-steps, this allows the decoder to produce a multimodal distribution of text sequences, allowing a variety of responses to be produced. 
+
+VADs use the seq2seq architecture as the base (specifically comprised of a RNN with GRUs for both the encoder and decoder), with variable-length queries $x = \{x_1, x_2, ..., x_n\}$, and $y = \{y_1, y_2, ..., y_n\}$ representing the input and output responses respectively. 
+
+\subsubsection{Sequential Model}
+
+\subsubsection{Prior Model}
+
+\subsubsection{Sequential Bag of Words}
+
+\subsubsection{Learning Mechanism}
+
+
+VAD's propose 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \chapter{Contribution}

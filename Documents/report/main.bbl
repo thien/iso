@@ -1,5 +1,19 @@
 \begin{thebibliography}{}
 
+\bibitem[\protect\astroncite{Cho et~al.}{2014}]{cho_properties_2014}
+Cho, K., van Merrienboer, B., Bahdanau, D., and Bengio, Y. (2014).
+\newblock On the {Properties} of {Neural} {Machine} {Translation}:
+  {Encoder}-{Decoder} {Approaches}.
+\newblock {\em arXiv:1409.1259 [cs, stat]}.
+\newblock arXiv: 1409.1259.
+
+\bibitem[\protect\astroncite{Chung et~al.}{2014}]{chung_empirical_2014}
+Chung, J., Gulcehre, C., Cho, K., and Bengio, Y. (2014).
+\newblock Empirical {Evaluation} of {Gated} {Recurrent} {Neural} {Networks} on
+  {Sequence} {Modeling}.
+\newblock {\em arXiv:1412.3555 [cs]}.
+\newblock arXiv: 1412.3555.
+
 \bibitem[\protect\astroncite{Du et~al.}{2018}]{du_variational_2018}
 Du, J., Li, W., He, Y., Xu, R., Bing, L., and Wang, X. (2018).
 \newblock Variational {Autoregressive} {Decoder} for {Neural} {Response}
