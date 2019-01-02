@@ -16,6 +16,14 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 
+### 2019/01/02 (Wednesday)
+- Read through this [approachable description on VAEs](https://jaan.io/what-is-variational-autoencoder-vae-tutorial/).
+- There's this other topic on [using VAEs to draw pictures](http://blog.otoro.net/2016/04/01/generating-large-images-from-latent-vectors/) that I should look into.
+
+### 2018/12/31 (Monday)
+- Initial skim through of the VAD paper.
+- Attempting to understand the VAD model (Figure 2 in the paper) which involves combining VAEs with seq2seq networks.
+
 ### 2018/12/28 (Friday)
 - Updated writeup and included appropiate references.
 - Added diagrams of the CVAE architecture and expanded on the different autoencoders.
