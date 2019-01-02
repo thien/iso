@@ -1,5 +1,6 @@
 Videos/*
 Datasets/*
+Samples/data/*
 *.aux
 *.bbl
 *.blg

@@ -176,7 +176,9 @@ However, research from \cite{chung_empirical_2014} that GRUs were found to perfo
 
 \subsection{Seq2Seq}
 
-Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation of the encoder model, by providing an attention mechanism. The attention mechanism looks at all of the inputs from the hidden states of the encoders so far. 
+Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation of the autoencoder model, by providing an attention mechanism. The attention mechanism looks at all of the inputs from the hidden states of the encoders so far. This allows the decoder network to "attend" to different parts of the source input at each step of the output generation. This circumvents the need to encode the full source input into a fixed-length vector, helping it deal with long-range dependency problems.
+
+Furthermore, this attention mechanism allows the model to learn what to attend to based on the input sequence and what it has so far, represented through a weighted combination of the two. Research from \cite{bahdanau_neural_2014} has found this to work especially well in machine translation problems where languages which are relatively well aligned (such as English and German) - The decoder is most likely able to choose to attend to the response generation sequentially, such that the first output from the decoder can be generated based on the properties of the first input of the encoder and so on.
 
 Traditionally, Seq2seq would be the most common method of tackling this particular problem, but it also presents problems that make it suboptimal. Firstly, it's discrete nature suggests that it is prone to noise in a similar fashion to how linear regression is not necessarily optimal as opposed to 
 
@@ -212,13 +214,11 @@ $$
 D_{KL}(P ||Q) = \sum_{x \subset X} P(x) \cdot log (\frac{P(x)}{Q(x)})
 $$
 
-In other words, it is the expectation of the logarithmic difference between the probabilities $P$ and $Q$, where the expectation of $P$ is understood.
-
+In other words, it is the expectation of the logarithmic difference between the probabilities $P$ and $Q$, where the expectation of $P$ is already known.
 
 - You'll need to perform a reparameterisation trick (since you can't calculate derivatives of samples.) in order to perform backpropagation. (you can't push gradients through a sampling node.)
   
 $$z = \mu + \sigma \cdot \epsilon $$ where $\epsilon \sim \mathcal{N}(0,1)$. You want to learn $\mu, \sigma$.
-
 
 
 \subsection{Conditional Variational Autoencoders}
@@ -242,9 +242,11 @@ However, it was found by \cite{du_variational_2018} that since the responses wer
 
 Introduced by \cite{du_variational_2018}, Variational Autoregressive Decoders (VADs) attempt to circumvent the sampling problem introduced from CVAEs by introducing multiple latent variables into the autoregressive Decoder. At different time-steps, this allows the decoder to produce a multimodal distribution of text sequences, allowing a variety of responses to be produced. 
 
-VADs use the seq2seq architecture as the base (specifically comprised of a RNN with GRUs for both the encoder and decoder), with variable-length queries $x = \{x_1, x_2, ..., x_n\}$, and $y = \{y_1, y_2, ..., y_n\}$ representing the input and output responses respectively. 
+VADs use the seq2seq architecture as the base with variable-length queries $x = \{x_1, x_2, ..., x_n\}$, and $y = \{y_1, y_2, ..., y_n\}$ representing the input and output responses respectively. The encoder network is a Bidirectional RNN with GRUs. The decoder network is an unidirectional RNN with GRUs. For each timestep $t$, each GRU in the decoder network is encoded with hidden state $h^d_t$.
 
 \subsubsection{Sequential Model}
+
+Sequential
 
 \subsubsection{Prior Model}
 
