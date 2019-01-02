@@ -102,13 +102,13 @@ also shown to have success in reconstructing images via neural inpainting.
 Recurrent neural networks (CNNs) are a particular class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). CNNs essentially operate over a sequence of variable-length vectors, making them popular in contempoary NLP problems. Given a sequence of inputs $(x_1, ..., x_T)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_T)$ by iterating the following equation:
 
 \subsubsection{Backpropagation through Time}
-	something
+
 
 \subsubsection{Problems}
 
 Theoretically, RNNs showed promise but there existed a multitude of problems. Firstly, It became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that could facilitate this feature. This is described as a long range dependency problem. Furthermore, they were especially impractical due to the vanishing and exploding gradient problems having a larger effect on training. This is by design, as the architecture of the network.
 
-\subsubsection{LSTM}
+\subsection{}{LSTM}
 
 \begin{figure}[!ht]
 	\centering
@@ -165,7 +165,7 @@ Theoretically, RNNs showed promise but there existed a multitude of problems. Fi
 
 LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain information based on the previous inputs through the introduction of gated architectures.
 
-\subsubsection{Gated Recurrent Units}
+\subsection{Gated Recurrent Units}
 
 Introduced by \cite{cho_properties_2014}, GRUs are used to solve the common issue with LSTMs where the training time was relatively slow due to the number of derivatives necessary to compute. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time. 
 
@@ -177,6 +177,15 @@ However, research from \cite{chung_empirical_2014} that GRUs were found to perfo
 \subsection{Seq2Seq}
 
 Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation of the autoencoder model, by providing an attention mechanism. The attention mechanism looks at all of the inputs from the hidden states of the encoders so far. This allows the decoder network to "attend" to different parts of the source input at each step of the output generation. This circumvents the need to encode the full source input into a fixed-length vector, helping it deal with long-range dependency problems.
+
+
+\begin{figure}[!ht]
+      
+	\centering
+	\includegraphics[width=100mm]{diagrams/seq2seq.pdf}
+	\caption{An abstracted model of the seq2seq rchitecture. \label{seq2seq}}
+  \end{figure}
+
 
 Furthermore, this attention mechanism allows the model to learn what to attend to based on the input sequence and what it has so far, represented through a weighted combination of the two. Research from \cite{bahdanau_neural_2014} has found this to work especially well in machine translation problems where languages which are relatively well aligned (such as English and German) - The decoder is most likely able to choose to attend to the response generation sequentially, such that the first output from the decoder can be generated based on the properties of the first input of the encoder and so on.
 
