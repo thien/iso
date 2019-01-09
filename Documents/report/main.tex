@@ -75,33 +75,49 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Literature Survey}
 
-\section{Background}
+% Text generation is a 
 
-\subsection{Neural Networks}
+% - introduce the problem of text generation
+% 	- large problem
+% 	- lots of components
+% 	- present solutions are relatively rudimentary in terms of their throughput.
 
-Neural Networks are non-linear statistical models that generate complex relationships between input and output vectors. Note that the input and output vectors are of a fixed dimension, which becomes a problem for our task at hand.
 
-\subsection{Backpropagation}
+% - we want to increase the lexical variety of the generated texts.
+% 	- why? because we want to create data that looks similar to the original data, so we can use it as interim to other organisations that wish to request data. (That way, we don't reveal the original data in it's entirety.)
 
-\subsection{Autoencoders}
+% - talk about the fact that this is an understudied problem; the described tools are commonly used in other areas of contempoary computer science.
 
-Autoencoders are a specialised form of MLPs where the model attempts to recreate the inputs on the output. Autoencoders typically have a neural network layer in the model where its dimension is smaller than the input space, therefore representing a dimensionality reduction in the data. Autoencoders are composed of two different principal components, an encoder network $\alpha$ and a decoder network $\beta$, such that $\alpha : X \rightarrow F$ and $\beta : F \rightarrow X$. Measuring the success of the reconstruction is deduced by a reconstruction loss formula. This reconstruction loss comapres the output of the decoder and compares it against the input of the encoder. The two networks are trained together in a manner that allows them to preserve the input as much as possible.
 
-% what is it good for?
+\section{Language Modelling}
 
-Autoencoders are popularised through their use in Machine Translation, Word Embeddings, and document clustering.
+% Language modelling is the task of predicting the next word in a text given the previous words. It is probably the simplest language processing task with concrete practical applications such as intelligent keyboards and email response suggestion (Kannan et al., 2016)
 
-% tricks on the autoencoder
+Language modelling is the task of predicting a word $w_i$ in a text $w$ given some sequence of previous words $(w_1, w_2, ..., w_{i-1})$. More formally, an unconditional language model assigns a probaility to a sequence of words,  $w = (w_1, w_2, ..., w_{i-1})$. This probability can be decomposed using the chain rule:
 
-denoising autoencoders, where the input is a noisy representation of some input data, and it'll try and remove the noise (by comparing the reconstruction loss against a clean representation of the input).
+\begin{align}
+p(w) = &{} p(w_1) \times p(w_2|w_1) \times p(w_3|w_1, w_2) \times ... \times p(w_i|w_1, w_2, ..., w_{i-1}) \\
+p(w) = &{} \prod^{|w|}_{t=1}p(w_t|w_1, ..., w_{t-1})
+\end{align}
 
-also shown to have success in reconstructing images via neural inpainting.
+Traditionally, assigning words to probabilities may conflate syntactically dubious sentences but it remains to be a useful method for representing texts. It is one of the core natural language processing problems, and it used in a variety of contempoary applications, ranging from machine translation, to email response generation, to document summarisation.
+
+In particular, we are more interested in conditional language modelling. This slightly differs from the definition described above - A conditional language model assigns probabilities to sequences of words, $w = (w_1, w_2, ..., w_{i-1})$, given a conditioning variable, $x$. 
+
+
+\begin{align}
+	p(\boldmath{w}|x) = &{} \prod^{|w|}_{t=1}p(w_t|x,w_1, ..., w_{t-1})
+\end{align}
+	
+
+Modern language models revolve around the use of neural networks, which was started by bengio in 2003, with a simple MLP that encoded words. Neural Networks are non-linear statistical models that generate complex relationships between input and output vectors. Note that the input and output vectors are of a fixed dimension, which becomes a problem for our task at hand.
+Consequently, neural language models took off and has become the go to approach, giving rise to the introduction to RNNs being used to solve language model problems.
 
 \subsection{Recurrent Neural Networks}
 
-Recurrent neural networks (CNNs) are a particular class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). CNNs essentially operate over a sequence of variable-length vectors, making them popular in contempoary NLP problems. Given a sequence of inputs $(x_1, ..., x_T)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_T)$ by iterating the following equation:
 
-\subsubsection{Backpropagation through Time}
+Recurrent neural networks (CNNs) are a particular class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). 
+The architecture of RNNs are especially important in NLP related problems as words in sentences are typically conditioned on the previous words. RNNs  operate over a sequence of variable-length vectors, making them popular in contempoary NLP problems. Given a sequence of inputs $(x_1, ..., x_T)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_T)$ by iterating the following equation:
 
 
 \subsubsection{Problems}
@@ -174,9 +190,25 @@ However, research from \cite{chung_empirical_2014} that GRUs were found to perfo
 
 \section{Related Work}
 
+
+\subsection{Autoencoders}
+
+Autoencoders are a specialised form of MLPs where the model attempts to recreate the inputs on the output. Autoencoders typically have a neural network layer in the model where its dimension is smaller than the input space, therefore representing a dimensionality reduction in the data. Autoencoders are composed of two different principal components, an encoder network $\alpha$ and a decoder network $\beta$, such that $\alpha : X \rightarrow F$ and $\beta : F \rightarrow X$. Measuring the success of the reconstruction is deduced by a reconstruction loss formula. This reconstruction loss comapres the output of the decoder and compares it against the input of the encoder. The two networks are trained together in a manner that allows them to preserve the input as much as possible.
+
+% what is it good for?
+
+Autoencoders are popularised through their use in Machine Translation, Word Embeddings, and document clustering.
+
+% tricks on the autoencoder
+
+denoising autoencoders, where the input is a noisy representation of some input data, and it'll try and remove the noise (by comparing the reconstruction loss against a clean representation of the input).
+
 \subsection{Seq2Seq}
 
-Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation of the autoencoder model, by providing an attention mechanism. The attention mechanism looks at all of the inputs from the hidden states of the encoders so far. This allows the decoder network to "attend" to different parts of the source input at each step of the output generation. This circumvents the need to encode the full source input into a fixed-length vector, helping it deal with long-range dependency problems.
+Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation of the autoencoder model,
+
+
+Further work by XXX improved the original seq2seq model by providing an attention mechanism. The attention mechanism looks at all of the inputs from the hidden states of the encoders so far. This allows the decoder network to "attend" to different parts of the source input at each step of the output generation. This circumvents the need to encode the full source input into a fixed-length vector, helping it deal with long-range dependency problems.
 
 
 \begin{figure}[!ht]
@@ -191,6 +223,8 @@ Furthermore, this attention mechanism allows the model to learn what to attend t
 
 Traditionally, Seq2seq would be the most common method of tackling this particular problem, but it also presents problems that make it suboptimal. Firstly, it's discrete nature suggests that it is prone to noise in a similar fashion to how linear regression is not necessarily optimal as opposed to 
 
+\subsection{Attention}
+
 \subsection{Transformers}
 
 \begin{figure}[!ht]
@@ -204,7 +238,7 @@ Traditionally, Seq2seq would be the most common method of tackling this particul
 
 \subsection{Variational Autoencoders}
 
-Variational Autoencoders (VAEs) introduce a constraint on the encoding network that forces the model to generate latent vectors that roughly follow a gaussian distribution, as opposed to creating a fixed latent vector. Consequently, VAEs introduce two extra vectors, a mean vector and a standard distribution vector, which is fed from the encoder. A sample is taken from the distribution and that is then fed into the decoder.
+Our proposed solution revolves around the use of Variational Autoencoders. Variational Autoencoders (VAEs) introduce a constraint on the encoding network that forces the model to generate latent vectors that roughly follow a gaussian distribution, as opposed to creating a fixed latent vector. Consequently, VAEs introduce two extra vectors, a mean vector and a standard distribution vector, which is fed from the encoder. A sample is taken from the distribution and that is then fed into the decoder.
 
 \begin{figure}[!ht]
       
@@ -245,7 +279,7 @@ During training time, a class (represented by some arbitary vector) is fed at th
 
 Samples can be generated from the conditional distribution $p(x|y)$. By changing the value of $y$, we can get corresponding samples $x \sim p(x|y)$. The system no longer relies on the latent space to encode what output is necessary; instead the latent space encodes other information that can distinguish itself based on the differing $y$ values.
 
-However, it was found by \cite{du_variational_2018} that since the responses were generated from the same latent variable (induced by the class), it was difficult to model high-variability in responses.
+% However, it was found by \cite{du_variational_2018} that since the responses were generated from the same latent variable (induced by the class), it was difficult to model high-variability in responses.
 
 \section{Variational Autoregressive Decoders}
 
