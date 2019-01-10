@@ -133,7 +133,7 @@ The intuition of n-grams was that statistical inference can be applied on the fr
 
 Modern language models revolve around the use of neural networks, which was introduced by \cite{bengio_neural_2001}, with a simple MLP that encoded words. The use of neural networks in language modelling is often called Neural Language Modelling, of NLM for short.
 
-Neural Networks are non-linear statistical models that generate complex relationships between input and output vectors. Note that the input and output vectors are of a fixed dimension, which becomes a problem for our task at hand. Neural Networks evaluate an input using forward propagation, to produce an output. Traditionally, neural networks are trained to produce optimal outputs via the use of backpropagation. 
+Neural Networks are non-linear statistical models that generate complex relationships between input and output vectors. (This type of neural network architecture is commonly described as the multi-layer perceptron). Note that the input and output vectors are of a fixed dimension, which becomes a problem for our task at hand. Neural Networks evaluate an input using forward propagation, to produce an output. Traditionally, neural networks are trained to produce optimal outputs via the use of backpropagation. 
 
 % something on neural language models being popular.
 
@@ -141,11 +141,18 @@ Neural Networks are non-linear statistical models that generate complex relation
 
 Recurrent neural networks (RNNs) are a class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). RNNs operate over a sequence of variable-length vectors, and produces an output of similarly variable-length vectors. This circumvents a problem introduced with using an MLP, where sentences are not typically fixed length. RNNs can XXXXXXXXXXXXXXX.
 
+
+\begin{figure}[!ht]
+      
+	\centering
+	\includegraphics[width=100mm]{diagrams/rnn.jpeg}
+	\caption{Rectangles represent vectors, with red being the input, blue the output, and green representing the state of the RNNs. Arrows represent  functions. From left to right: (1) an MLP. (2,3,4,5) are examples of different styles of recurrent neural networks, describing the different types of input and output combinations. (Diagram from \cite{karpathy_unreasonable_2015}) \label{rnn}}
+  \end{figure}
 % we need a diagram of the 4 different RNN architectures.
 
-The architecture of RNNs make it favourable in NLP related problems as words in sentences are typically conditioned on the previous words. Given a sequence of inputs $(x_1, ..., x_T)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_T)$ by iterating the following equation:
+The architecture of RNNs make it favourable in NLP related problems as words in sentences are typically conditioned on the previous words. Given a sequence of inputs $(x_1, ..., x_M)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_N)$ by performing forward-propagation in a similar to fashion to MLPs, but outputs are chained together as an additional input to other neural networks. This can be visualised best in Figure \ref{rnn}. RNNs are trained using backpropagation-through-time.
 
-Theoretically, RNNs showed promise but there existed a multitude of problems. Firstly, It became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that would facilitate this feature. This is described as a long range dependency problem. Furthermore, they were especially impractical due to the vanishing and exploding gradient problems having a larger effect on training. This is by design, as the architecture of the network does not provide the affordance to represent relationships between arbitary cells in the network.
+RNNs showed promise but there existed a multitude of problems. Firstly, It became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that would facilitate this feature. This is described as a long range dependency problem. Furthermore, they were especially impractical due to the vanishing and exploding gradient problems having a larger effect on training. This is by design, as the architecture of the network does not provide the affordance to represent relationships between arbitary cells in the network.
 
 \subsection{LSTM}
 
