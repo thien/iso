@@ -137,7 +137,7 @@ Neural Networks are non-linear statistical models that generate complex relation
 
 % something on neural language models being popular.
 
-\subsection{Recurrent Neural Networks}
+\section{Recurrent Neural Networks}
 
 Recurrent neural networks (RNNs) are a class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). RNNs operate over a sequence of variable-length vectors, and produces an output of similarly variable-length vectors. This circumvents a problem introduced with using an MLP, where sentences are not typically fixed length. RNNs can XXXXXXXXXXXXXXX.
 
@@ -148,9 +148,10 @@ Recurrent neural networks (RNNs) are a class of neural networks such that the ou
 	\includegraphics[width=100mm]{diagrams/rnn.jpeg}
 	\caption{Rectangles represent vectors, with red being the input, blue the output, and green representing the state of the RNNs. Arrows represent  functions. From left to right: (1) an MLP. (2,3,4,5) are examples of different styles of recurrent neural networks, describing the different types of input and output combinations. (Diagram from \cite{karpathy_unreasonable_2015}) \label{rnn}}
   \end{figure}
-% we need a diagram of the 4 different RNN architectures.
-
+  
 The architecture of RNNs make it favourable in NLP related problems as words in sentences are typically conditioned on the previous words. Given a sequence of inputs $(x_1, ..., x_M)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_N)$ by performing forward-propagation in a similar to fashion to MLPs, but outputs are chained together as an additional input to other neural networks. This can be visualised best in Figure \ref{rnn}. RNNs are trained using backpropagation-through-time.
+
+% talk about how much has been done with RNNs
 
 RNNs showed promise but there existed a multitude of problems. Firstly, It became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that would facilitate this feature. This is described as a long range dependency problem. Furthermore, they were especially impractical due to the vanishing and exploding gradient problems having a larger effect on training. This is by design, as the architecture of the network does not provide the affordance to represent relationships between arbitary cells in the network.
 
@@ -216,14 +217,15 @@ LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain info
 Introduced by \cite{cho_properties_2014}, GRUs are used to solve the common issue with LSTMs where the training time was relatively slow due to the number of derivatives necessary to compute. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time. They are unable to clearly distinguish between the performance of the two gated units they tested.
 However, research from \cite{chung_empirical_2014} that GRUs were found to perform better than LSTMs on smaller datasets. 
 
-
-\subsection{Autoencoders}
+\section{Autoencoders}
 
 Autoencoders are a specialised form of MLPs where the model attempts to recreate the inputs on the output. Autoencoders typically have a neural network layer in the model where its dimension is smaller than the input space, therefore representing a dimensionality reduction in the data. Autoencoders are composed of two different principal components, an encoder network $\alpha$ and a decoder network $\beta$, such that $\alpha : X \rightarrow F$ and $\beta : F \rightarrow X$. Measuring the success of the reconstruction is deduced by a reconstruction loss formula. This reconstruction loss comapres the output of the decoder and compares it against the input of the encoder. The two networks are trained together in a manner that allows them to preserve the input as much as possible.
 
 % what is it good for?
 
 Autoencoders are popularised through their use in Machine Translation, Word Embeddings, and document clustering.
+
+% talk about how important this is in the context of the task.
 
 \section{Related Work}
 
@@ -248,7 +250,6 @@ Further work by \cite{bahdanau_neural_2014} improved the original seq2seq model 
 
 
 Furthermore, this attention mechanism allows the model to learn what to attend to based on the input sequence and what it has so far, represented through a weighted combination of the two. \cite{bahdanau_neural_2014} have found this to work especially well in machine translation problems where languages which are relatively well aligned (such as English and German) - The decoder is most likely able to choose to attend to the response generation sequentially, such that the first output from the decoder can be generated based on the properties of the first input of the encoder and so on.
-
 
 % mention the limitations of Seq2seq for your problem and ways they could be addressed (VAEs, etc.), describe the VAE approach and your motivation to pick it, introduce the VAE paper you work with in details.
 
