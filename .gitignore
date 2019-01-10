@@ -2,6 +2,7 @@ Samples/.ipynb_checkpoints/*
 Videos/*
 Datasets/*
 Samples/data/*
+*.swp
 *.aux
 *.bbl
 *.blg
