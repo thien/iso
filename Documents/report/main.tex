@@ -73,7 +73,13 @@
 % Figure~\ref{fig:logo} is an example of a figure. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% So I would suggest go straight to the point: starting with describing the problem first, positioning it in the range of the related problems (as you mentioned yourself), introducing in details just the Seq2seq solution with some necessary background (as your baseline), mention the limitations of Seq2seq for your problem and ways they could be addressed (VAEs, etc.), describe the VAE approach and your motivation to pick it, introduce the VAE paper you work with in details.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Literature Survey}
+
+\section{Background}
 
 % Text generation is a 
 
@@ -88,41 +94,58 @@
 
 % - talk about the fact that this is an understudied problem; the described tools are commonly used in other areas of contempoary computer science.
 
+Text generation is a a type of Language Modelling problem, which in itself, is one of the core natural language processing problems, and it used in a variety of contempoary applications, ranging from machine translation, to email response generation, to document summarisation.
+
+In our particular case we imagine a scenario where a client requests the use of our dataset. We would permit them access to said data, but it would reveal the identities of the users in the data. The objective is to have some alternative dataset to ours such that value can be deduced from the data, but the privacy of the users in our original dataset is maintained.
+
+This can be accomplished by creating a language model that would increase the lexical variety of our original dataset. This language model would train on our original dataset, and would produce data that is semantically and lexically similar to our original data, but diverges enough such that it could potentially be seen as an entirely new and independent dataset. This new dataset can be assigned to other clients.
+
+The premise of this literature survey is to describe the relevant components necessary to construct our solution, and to also discuss alternative approaches to the problem. 
 
 \section{Language Modelling}
 
 % Language modelling is the task of predicting the next word in a text given the previous words. It is probably the simplest language processing task with concrete practical applications such as intelligent keyboards and email response suggestion (Kannan et al., 2016)
-
-Language modelling is the task of predicting a word $w_i$ in a text $w$ given some sequence of previous words $(w_1, w_2, ..., w_{i-1})$. More formally, an unconditional language model assigns a probaility to a sequence of words,  $w = (w_1, w_2, ..., w_{i-1})$. This probability can be decomposed using the chain rule:
+Language modelling is the task of predicting a word $w_i$ in a text $w$ given some sequence of previous words $(w_1, w_2, ..., w_{i-1})$. More formally, \cite{dyer_conditional_2017} describes an unconditional language model as assigning a probability to a sequence of words,  $w = (w_1, w_2, ..., w_{i-1})$. This probability can be decomposed using the chain rule:
 
 \begin{align}
 p(w) = &{} p(w_1) \times p(w_2|w_1) \times p(w_3|w_1, w_2) \times ... \times p(w_i|w_1, w_2, ..., w_{i-1}) \\
 p(w) = &{} \prod^{|w|}_{t=1}p(w_t|w_1, ..., w_{t-1})
 \end{align}
 
-Traditionally, assigning words to probabilities may conflate syntactically dubious sentences but it remains to be a useful method for representing texts. It is one of the core natural language processing problems, and it used in a variety of contempoary applications, ranging from machine translation, to email response generation, to document summarisation.
+Traditionally, assigning words to probabilities may conflate syntactically dubious sentences but it remains to be a useful method for representing texts.  
 
 In particular, we are more interested in conditional language modelling. This slightly differs from the definition described above - A conditional language model assigns probabilities to sequences of words, $w = (w_1, w_2, ..., w_{i-1})$, given a conditioning variable, $x$. 
-
 
 \begin{align}
 	p(\boldmath{w}|x) = &{} \prod^{|w|}_{t=1}p(w_t|x,w_1, ..., w_{t-1})
 \end{align}
-	
 
-Modern language models revolve around the use of neural networks, which was started by bengio in 2003, with a simple MLP that encoded words. Neural Networks are non-linear statistical models that generate complex relationships between input and output vectors. Note that the input and output vectors are of a fixed dimension, which becomes a problem for our task at hand.
-Consequently, neural language models took off and has become the go to approach, giving rise to the introduction to RNNs being used to solve language model problems.
+\cite{le_recurrent_2018} says the most fundamental language model is the n-gram model. An n-gram is a chunk of n consecutive words. For instance, given the sentence "the quick brown fox \ldots", the respective n-grams are: 
+
+\begin{itemize}  
+	\item unigrams: "the", "quick", "brown", "fox"
+	\item bigrams: "the quick", "quick brown", "brown fox"
+	\item trigrams: "the quick brown", "quick brown fox"
+	\item 4-grams: "the quick brown fox"
+\end{itemize}
+
+The intuition of n-grams was that statistical inference can be applied on the frequency and distribution of of the n-grams, which could be used to predict the next word. However, sparsity is not captured.
+
+Modern language models revolve around the use of neural networks, which was introduced by \cite{bengio_neural_2001}, with a simple MLP that encoded words. The use of neural networks in language modelling is often called Neural Language Modelling, of NLM for short.
+
+Neural Networks are non-linear statistical models that generate complex relationships between input and output vectors. Note that the input and output vectors are of a fixed dimension, which becomes a problem for our task at hand. Neural Networks evaluate an input using forward propagation, to produce an output. Traditionally, neural networks are trained to produce optimal outputs via the use of backpropagation. 
+
+% something on neural language models being popular.
 
 \subsection{Recurrent Neural Networks}
 
+Recurrent neural networks (RNNs) are a class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). RNNs operate over a sequence of variable-length vectors, and produces an output of similarly variable-length vectors. This circumvents a problem introduced with using an MLP, where sentences are not typically fixed length. RNNs can XXXXXXXXXXXXXXX.
 
-Recurrent neural networks (CNNs) are a particular class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). 
-The architecture of RNNs are especially important in NLP related problems as words in sentences are typically conditioned on the previous words. RNNs  operate over a sequence of variable-length vectors, making them popular in contempoary NLP problems. Given a sequence of inputs $(x_1, ..., x_T)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_T)$ by iterating the following equation:
+% we need a diagram of the 4 different RNN architectures.
 
+The architecture of RNNs make it favourable in NLP related problems as words in sentences are typically conditioned on the previous words. Given a sequence of inputs $(x_1, ..., x_T)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_T)$ by iterating the following equation:
 
-\subsubsection{Problems}
-
-Theoretically, RNNs showed promise but there existed a multitude of problems. Firstly, It became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that could facilitate this feature. This is described as a long range dependency problem. Furthermore, they were especially impractical due to the vanishing and exploding gradient problems having a larger effect on training. This is by design, as the architecture of the network.
+Theoretically, RNNs showed promise but there existed a multitude of problems. Firstly, It became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that would facilitate this feature. This is described as a long range dependency problem. Furthermore, they were especially impractical due to the vanishing and exploding gradient problems having a larger effect on training. This is by design, as the architecture of the network does not provide the affordance to represent relationships between arbitary cells in the network.
 
 \subsection{LSTM}
 
@@ -183,12 +206,8 @@ LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain info
 
 \subsection{Gated Recurrent Units}
 
-Introduced by \cite{cho_properties_2014}, GRUs are used to solve the common issue with LSTMs where the training time was relatively slow due to the number of derivatives necessary to compute. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time. 
-
-They are unable to clearly distinguish between the performance of the two gated units they tested.
+Introduced by \cite{cho_properties_2014}, GRUs are used to solve the common issue with LSTMs where the training time was relatively slow due to the number of derivatives necessary to compute. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time. They are unable to clearly distinguish between the performance of the two gated units they tested.
 However, research from \cite{chung_empirical_2014} that GRUs were found to perform better than LSTMs on smaller datasets. 
-
-\section{Related Work}
 
 
 \subsection{Autoencoders}
@@ -199,17 +218,12 @@ Autoencoders are a specialised form of MLPs where the model attempts to recreate
 
 Autoencoders are popularised through their use in Machine Translation, Word Embeddings, and document clustering.
 
-% tricks on the autoencoder
+\section{Related Work}
 
-denoising autoencoders, where the input is a noisy representation of some input data, and it'll try and remove the noise (by comparing the reconstruction loss against a clean representation of the input).
 
 \subsection{Seq2Seq}
 
 Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation of the autoencoder model,
-
-
-Further work by XXX improved the original seq2seq model by providing an attention mechanism. The attention mechanism looks at all of the inputs from the hidden states of the encoders so far. This allows the decoder network to "attend" to different parts of the source input at each step of the output generation. This circumvents the need to encode the full source input into a fixed-length vector, helping it deal with long-range dependency problems.
-
 
 \begin{figure}[!ht]
       
@@ -218,12 +232,24 @@ Further work by XXX improved the original seq2seq model by providing an attentio
 	\caption{An abstracted model of the seq2seq architecture, where the encoder (pink) takes in the input sequence, and the decoder (blue) shows the output sequence.\label{seq2seq}}
   \end{figure}
 
+  Traditionally, Seq2seq would be the most common method of tackling this particular problem, but it also presents problems that make it suboptimal. Firstly, it's discrete nature suggests that it is prone to noise in a similar fashion to how linear regression is not necessarily optimal as opposed to 
 
-Furthermore, this attention mechanism allows the model to learn what to attend to based on the input sequence and what it has so far, represented through a weighted combination of the two. Research from \cite{bahdanau_neural_2014} has found this to work especially well in machine translation problems where languages which are relatively well aligned (such as English and German) - The decoder is most likely able to choose to attend to the response generation sequentially, such that the first output from the decoder can be generated based on the properties of the first input of the encoder and so on.
+\subsection{Seq2Seq with Attention}
 
-Traditionally, Seq2seq would be the most common method of tackling this particular problem, but it also presents problems that make it suboptimal. Firstly, it's discrete nature suggests that it is prone to noise in a similar fashion to how linear regression is not necessarily optimal as opposed to 
 
-\subsection{Attention}
+Further work by \cite{bahdanau_neural_2014} improved the original seq2seq model by providing an attention mechanism. The attention mechanism looks at all of the inputs from the hidden states of the encoders so far. This allows the decoder network to "attend" to different parts of the source input at each step of the output generation. This circumvents the need to encode the full source input into a fixed-length vector, helping it deal with long-range dependency problems.
+
+
+Furthermore, this attention mechanism allows the model to learn what to attend to based on the input sequence and what it has so far, represented through a weighted combination of the two. \cite{bahdanau_neural_2014} have found this to work especially well in machine translation problems where languages which are relatively well aligned (such as English and German) - The decoder is most likely able to choose to attend to the response generation sequentially, such that the first output from the decoder can be generated based on the properties of the first input of the encoder and so on.
+
+
+% mention the limitations of Seq2seq for your problem and ways they could be addressed (VAEs, etc.), describe the VAE approach and your motivation to pick it, introduce the VAE paper you work with in details.
+
+\subsection{Attention Mechanism}
+
+
+
+Attention mechanisms fhlajsdfhaljsdfhasldkjh
 
 \subsection{Transformers}
 
@@ -234,9 +260,12 @@ Traditionally, Seq2seq would be the most common method of tackling this particul
 	\caption{The transformer model architecture.\cite{vaswani_attention_2017} \label{transformer}}
   \end{figure}
 
-\cite{vaswani_attention_2017} introduced the idea that it is possible to avoid the use of RNNs altogether and focus on leveraging the attention mechanism introduced in seq2seq. The resulting network architecture utilises stacked layers of residual networks 
+\cite{vaswani_attention_2017} introduced the idea that it is possible to avoid the use of RNNs altogether and focus on leveraging the attention mechanism introduced in seq2seq. The resulting network architecture utilises stacked layers of residual networks for the encoder and the decoder.
 
-\subsection{Variational Autoencoders}
+% talk about multihead attention
+
+
+\section{Variational Autoencoders}
 
 Our proposed solution revolves around the use of Variational Autoencoders. Variational Autoencoders (VAEs) introduce a constraint on the encoding network that forces the model to generate latent vectors that roughly follow a gaussian distribution, as opposed to creating a fixed latent vector. Consequently, VAEs introduce two extra vectors, a mean vector and a standard distribution vector, which is fed from the encoder. A sample is taken from the distribution and that is then fed into the decoder.
 
