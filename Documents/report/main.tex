@@ -210,7 +210,7 @@ RNNs showed promise but there existed a multitude of problems. Firstly, It becam
 	\caption{A diagram of the LSTM model.}
 \end{figure}
 
-LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain information based on the previous inputs through the introduction of gated architectures.
+LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain information based on the previous inputs through the introduction of gated architectures. LSTMs were introduced to circumvent the issue of long range dependency problems by providing multiple avenues.
 
 \subsection{Gated Recurrent Units}
 
@@ -220,7 +220,7 @@ However, research from \cite{chung_empirical_2014} that GRUs were found to perfo
 \section{Autoencoders}
 
 Autoencoders are a specialised form of MLPs where the model attempts to recreate the inputs on the output. Autoencoders typically have a neural network layer in the model where its dimension is smaller than the input space, therefore representing a dimensionality reduction in the data. Autoencoders are composed of two different principal components, an encoder network $\alpha$ and a decoder network $\beta$, such that $\alpha : X \rightarrow F$ and $\beta : F \rightarrow X$. Measuring the success of the reconstruction is deduced by a reconstruction loss formula. This reconstruction loss comapres the output of the decoder and compares it against the input of the encoder. The two networks are trained together in a manner that allows them to preserve the input as much as possible.
-
+% definitely need a diagram for autoencoders
 % what is it good for?
 
 Autoencoders are popularised through their use in Machine Translation, Word Embeddings, and document clustering.
@@ -242,6 +242,10 @@ Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation
   \end{figure}
 
   Traditionally, Seq2seq would be the most common method of tackling this particular problem, but it also presents problems that make it suboptimal. Firstly, it's discrete nature suggests that it is prone to noise in a similar fashion to how linear regression is not necessarily optimal as opposed to 
+
+seq2seq models have shown to be effective in reponse generation, but ___, ___, ___ suggest that one of the primary causes of the lack of variability of responses could be boiled down to the lack of model variability. (serban et al 2017, zhao et al 2017).
+
+Furthermore, it was discussed by \cite{jiang_why_2018} on the lack of diversity in responses. 
 
 \subsection{Seq2Seq with Attention}
 
@@ -301,6 +305,12 @@ In other words, it is the expectation of the logarithmic difference between the 
 $$z = \mu + \sigma \cdot \epsilon $$ where $\epsilon \sim \mathcal{N}(0,1)$. You want to learn $\mu, \sigma$.
 
 
+As stochasticity is a fundamental feature to this approach, this allows us to model variability in the results. Although this alone is sufficent to produce variability in outputs, we still need to model this kind of latent variaibility in the form of our RNN model in order to encapsulate the sentences properly.
+
+% you need to talk about the fact that we can't just generate a feature on demand.
+
+Using this model alone is not sufficent. If we train the dataset on a vanilla VAE, assuming that the dataset can be encapsulated and modelled in such a manner that allows it to be processed in the model, outputs from the VAE alone will only produce some latent representive of the mean of the training data.
+
 \subsection{Conditional Variational Autoencoders}
 
 Although VAEs are more robust when compared to their original autoencoder counterparts, the decoder class cannot produce outputs of a particular class on demand. CVAEs are an improved model of the original VAE architecture by conditioning on another description of the data, a class descriptor $y$. 
@@ -320,20 +330,28 @@ Samples can be generated from the conditional distribution $p(x|y)$. By changing
 
 \section{Variational Autoregressive Decoders}
 
+To increase variability of outcomes produced by the original seq2seq model, Serban et al 2017; Zhao et al 2017 proposed the use of variational autoencoders to seq2seq models. At generation time, the latent variable $z$ can be used as a conditional signal of the decoder in the seq2seq model. Although this introduces variability in the outputs, the variability is not controlled; i.e it is produced from the randomness of $z$. The underlying seq2seq model remains suboptimal.
+
 Introduced by \cite{du_variational_2018}, Variational Autoregressive Decoders (VADs) attempt to circumvent the sampling problem introduced from CVAEs by introducing multiple latent variables into the autoregressive Decoder. At different time-steps, this allows the decoder to produce a multimodal distribution of text sequences, allowing a variety of responses to be produced. 
+
+We'll be using this model to help solve the variability of outcomes. 
 
 VADs use the seq2seq architecture as the base with variable-length queries $x = \{x_1, x_2, ..., x_n\}$, and $y = \{y_1, y_2, ..., y_n\}$ representing the input and output responses respectively. The encoder network is a Bidirectional RNN with GRUs. The decoder network is an unidirectional RNN with GRUs. For each timestep $t$, each GRU in the decoder network is encoded with hidden state $h^d_t$.
 
 \subsubsection{Sequential Model}
 
-Sequential
 
 \subsubsection{Prior Model}
 
+a simple neural net.
+
 \subsubsection{Sequential Bag of Words}
+
+An auxillary objective.
 
 \subsubsection{Learning Mechanism}
 
+VADs use ELBO.
 
 VAD's propose 
 
