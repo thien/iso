@@ -19,7 +19,13 @@ These logs are used to indicate progress of the project as I work on it through 
 ### 2019/01/10 (Thursday)
 - Updated literature survey introduction to revolve around the topic's NLP problem
 - Added section on Language Modelling
-- removed 
+- removed section on Neural Networks and merged that in language models
+- Read a topic on [VRNNs](#).
+- Added multiple notebooks on VAEs and a notebook on VRNNs. 
+- Another read through on the VAD paper; I understand a lot more than when I went through it the first time. 
+- I need to look into the auxillary objective.
+- Not sure how the backwards RNN is trained. I'll need to draw a dependency graph. I should start with looking at the re-parameterisation trick on VAEs before I do anything else.
+- Julia gave me a bunch of things I should read.	
 
 ### 2019/01/02 (Wednesday)
 - Read through this [approachable description on VAEs](https://jaan.io/what-is-variational-autoencoder-vae-tutorial/).
