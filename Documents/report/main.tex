@@ -209,7 +209,7 @@ RNNs showed promise but there existed a multitude of problems. Firstly, It becam
 	\end{tikzpicture}
 	\caption{A diagram of the LSTM model.}
 \end{figure}
-
+ 
 LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain information based on the previous inputs through the introduction of gated architectures. LSTMs were introduced to circumvent the issue of long range dependency problems by providing multiple avenues.
 
 \subsection{Gated Recurrent Units}
@@ -232,7 +232,7 @@ Autoencoders are popularised through their use in Machine Translation, Word Embe
 
 \subsection{Seq2Seq}
 
-Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation of the autoencoder model,
+Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation of the autoencoder applied to NLP problems. Seq2Seq comprises of two layers - Encoders and Decoders - which are both are represented with RNNs. This allows the architecture to take in arbitarily sized vectors, and allowing it to output similarly arbitary sized vectors.
 
 \begin{figure}[!ht]
       
@@ -241,27 +241,21 @@ Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation
 	\caption{An abstracted model of the seq2seq architecture, where the encoder (pink) takes in the input sequence, and the decoder (blue) shows the output sequence.\label{seq2seq}}
   \end{figure}
 
-  Traditionally, Seq2seq would be the most common method of tackling this particular problem, but it also presents problems that make it suboptimal. Firstly, it's discrete nature suggests that it is prone to noise in a similar fashion to how linear regression is not necessarily optimal as opposed to 
+/ something good about seq2seq.
 
-seq2seq models have shown to be effective in reponse generation, but ___, ___, ___ suggest that one of the primary causes of the lack of variability of responses could be boiled down to the lack of model variability. (serban et al 2017, zhao et al 2017).
+Traditionally, Seq2seq would be the most common method of tackling this particular problem, but it also presents problems that make it suboptimal. Seq2seq models have shown to be effective in reponse generation, but ***, ***, *** suggest that one of the primary causes of the lack of variability of responses could be boiled down to the lack of model variability. (serban et al 2017, zhao et al 2017).
 
-Furthermore, it was discussed by \cite{jiang_why_2018} on the lack of diversity in responses. 
+Furthermore, it was discussed by \cite{jiang_why_2018} on the lack of diversity in responses. something something.
 
 \subsection{Seq2Seq with Attention}
 
+/ need diagram
 
 Further work by \cite{bahdanau_neural_2014} improved the original seq2seq model by providing an attention mechanism. The attention mechanism looks at all of the inputs from the hidden states of the encoders so far. This allows the decoder network to "attend" to different parts of the source input at each step of the output generation. This circumvents the need to encode the full source input into a fixed-length vector, helping it deal with long-range dependency problems.
-
 
 Furthermore, this attention mechanism allows the model to learn what to attend to based on the input sequence and what it has so far, represented through a weighted combination of the two. \cite{bahdanau_neural_2014} have found this to work especially well in machine translation problems where languages which are relatively well aligned (such as English and German) - The decoder is most likely able to choose to attend to the response generation sequentially, such that the first output from the decoder can be generated based on the properties of the first input of the encoder and so on.
 
 % mention the limitations of Seq2seq for your problem and ways they could be addressed (VAEs, etc.), describe the VAE approach and your motivation to pick it, introduce the VAE paper you work with in details.
-
-\subsection{Attention Mechanism}
-
-
-
-Attention mechanisms fhlajsdfhaljsdfhasldkjh
 
 \subsection{Transformers}
 
@@ -340,20 +334,21 @@ VADs use the seq2seq architecture as the base with variable-length queries $x = 
 
 \subsubsection{Sequential Model}
 
+- uses a backwards RNN that represents the actual response to better create a posterior distribution.
 
 \subsubsection{Prior Model}
 
-a simple neural net.
+a simple neural net that produces an output that represents a conditional variable for our output generation.
 
-\subsubsection{Sequential Bag of Words}
+\subsubsection{Auxillary Objective}
 
-An auxillary objective.
+An auxillary objective that attempts to predict the bag of words based on the latent variable. Helps to improve the output options.
 
 \subsubsection{Learning Mechanism}
 
-VADs use ELBO.
+VADs use a weighted combination of ELBO and the log likelihood loss of the auxillary objective.
 
-VAD's propose 
+
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \chapter{Contribution}
