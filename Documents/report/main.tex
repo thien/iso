@@ -79,7 +79,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Literature Survey}
 
-\section{Background}
+\section{Artificial Data}
+
+
+The premise of this literature survey is to describe the relevant components necessary to construct our solution, and to also discuss alternative approaches to the problem. 
+
+% talk about the purpose:
+% artificial data for NLP problems.
+% why? lack of resources. datasets limited. unexplored.
+
+
+\section{Text Generation}
 
 % Text generation is a 
 
@@ -100,7 +110,8 @@ In our particular case we imagine a scenario where a client requests the use of 
 
 This can be accomplished by creating a language model that would increase the lexical variety of our original dataset. This language model would train on our original dataset, and would produce data that is semantically and lexically similar to our original data, but diverges enough such that it could potentially be seen as an entirely new and independent dataset. This new dataset can be assigned to other clients.
 
-The premise of this literature survey is to describe the relevant components necessary to construct our solution, and to also discuss alternative approaches to the problem. 
+% problematics of controllable text generation?
+% need to choose responses that are representative of the input, artificially.
 
 \section{Language Modelling}
 
@@ -120,7 +131,7 @@ In particular, we are more interested in conditional language modelling. This sl
 	p(\boldmath{w}|x) = &{} \prod^{|w|}_{t=1}p(w_t|x,w_1, ..., w_{t-1})
 \end{align}
 
-\cite{le_recurrent_2018} says the most fundamental language model is the n-gram model. An n-gram is a chunk of n consecutive words. For instance, given the sentence "the quick brown fox \ldots", the respective n-grams are: 
+There exists different types of models, but we shall start with the n-gram, argued by \cite{le_recurrent_2018} as being the most fundamental. An n-gram is a chunk of n consecutive words. For instance, given the sentence "the quick brown fox \ldots", the respective n-grams are: 
 
 \begin{itemize}  
 	\item unigrams: "the", "quick", "brown", "fox"
@@ -130,6 +141,8 @@ In particular, we are more interested in conditional language modelling. This sl
 \end{itemize}
 
 The intuition of n-grams was that statistical inference can be applied on the frequency and distribution of of the n-grams, which could be used to predict the next word. However, sparsity is not captured.
+
+% create a better flow
 
 Modern language models revolve around the use of neural networks, which was introduced by \cite{bengio_neural_2001}, with a simple MLP that encoded words. The use of neural networks in language modelling is often called Neural Language Modelling, of NLM for short.
 
@@ -141,6 +154,11 @@ Neural Networks are non-linear statistical models that generate complex relation
 
 Recurrent neural networks (RNNs) are a class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). RNNs operate over a sequence of variable-length vectors, and produces an output of similarly variable-length vectors. This circumvents a problem introduced with using an MLP, where sentences are not typically fixed length. RNNs can XXXXXXXXXXXXXXX.
 
+% we need formulas.
+
+% we need illustrations
+
+% this is an integral part of the design report
 
 \begin{figure}[!ht]
       
@@ -155,7 +173,9 @@ The architecture of RNNs make it favourable in NLP related problems as words in 
 
 RNNs showed promise but there existed a multitude of problems. Firstly, It became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that would facilitate this feature. This is described as a long range dependency problem. Furthermore, they were especially impractical due to the vanishing and exploding gradient problems having a larger effect on training. This is by design, as the architecture of the network does not provide the affordance to represent relationships between arbitary cells in the network.
 
-\subsection{LSTM}
+\subsection{LSTMs and GRUs} 
+
+Both gates were introduced to circumvent the issue of long range dependency problems by providing multiple avenues, with each one having a different approach.
 
 \begin{figure}[!ht]
 	\centering
@@ -210,12 +230,10 @@ RNNs showed promise but there existed a multitude of problems. Firstly, It becam
 	\caption{A diagram of the LSTM model.}
 \end{figure}
  
-LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain information based on the previous inputs through the introduction of gated architectures. LSTMs were introduced to circumvent the issue of long range dependency problems by providing multiple avenues.
-
-\subsection{Gated Recurrent Units}
+LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain information based on the previous inputs through the introduction of gated architectures. XXXXXXX
 
 Introduced by \cite{cho_properties_2014}, GRUs are used to solve the common issue with LSTMs where the training time was relatively slow due to the number of derivatives necessary to compute. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time. They are unable to clearly distinguish between the performance of the two gated units they tested.
-However, research from \cite{chung_empirical_2014} that GRUs were found to perform better than LSTMs on smaller datasets. 
+However, Some research from \cite{chung_empirical_2014} suggests that GRUs were found to perform better than LSTMs on smaller datasets. 
 
 \section{Autoencoders}
 
@@ -227,12 +245,24 @@ Autoencoders are popularised through their use in Machine Translation, Word Embe
 
 % talk about how important this is in the context of the task.
 
+\subsection{Measuring Performance}
+
+"Bleu measures precision: how much the words (and/or n-grams) in the machine generated summaries appeared in the human reference summaries.
+
+Rouge measures recall: how much the words (and/or n-grams) in the human reference summaries appeared in the machine generated summaries.
+
+Naturally - these results are complementing, as is often the case in precision vs recall. If you have many words from the system results appearing in the human references you will have high Bleu, and if you have many words from the human references appearing in the system results you will have high Rouge."
+
+% https://stackoverflow.com/questions/38045290/text-summarization-evaluation-bleu-vs-rouge
+
+% http://opennmt.net OPENMNT-Py has BLEU/ROUGE on it.
+
 \section{Related Work}
 
 
 \subsection{Seq2Seq}
 
-Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation of the autoencoder applied to NLP problems. Seq2Seq comprises of two layers - Encoders and Decoders - which are both are represented with RNNs. This allows the architecture to take in arbitarily sized vectors, and allowing it to output similarly arbitary sized vectors.
+Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a type of neural architecture that models relationships between sequences. In our particular scenario, this could be seen as a modern interpretation of the autoencoder. Seq2Seq comprises of two layers - Encoders and Decoders - which are both are represented with RNNs. This allows the architecture to take in arbitarily sized vectors, and allowing it to output similarly arbitary sized vectors. This flexibility makes it especially adventageous to NLP related problems.
 
 \begin{figure}[!ht]
       
@@ -243,7 +273,11 @@ Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a modern interpretation
 
 / something good about seq2seq.
 
-Traditionally, Seq2seq would be the most common method of tackling this particular problem, but it also presents problems that make it suboptimal. Seq2seq models have shown to be effective in reponse generation, but \cite{serban_hierarchical_2016}; \cite{zhao_learning_2017} suggest that one of the primary causes of the lack of variability of responses could be boiled down to the lack of model variability.
+Traditionally, Seq2seq would be the most common method of tackling this particular problem, but it also presents problems that make it suboptimal. Seq2seq models have shown to be effective in reponse generation, but XXXXX
+
+% fix this sentence. why is there lack of variabiity?
+% but \cite{serban_hierarchical_2016}; \cite{zhao_learning_2017} suggest that one of the primary causes of the lack of variability of responses could be boiled down to the lack of model variability.
+% why? remaining certain patterns?
 
 Furthermore, it was discussed by \cite{jiang_why_2018} on the lack of diversity in responses. something something.
 
@@ -253,6 +287,7 @@ Furthermore, it was discussed by \cite{jiang_why_2018} on the lack of diversity 
 
 Further work by \cite{bahdanau_neural_2014} improved the original seq2seq model by providing an attention mechanism. The attention mechanism looks at all of the inputs from the hidden states of the encoders so far. This allows the decoder network to "attend" to different parts of the source input at each step of the output generation. This circumvents the need to encode the full source input into a fixed-length vector, helping it deal with long-range dependency problems.
 
+% fix this section
 Furthermore, this attention mechanism allows the model to learn what to attend to based on the input sequence and what it has so far, represented through a weighted combination of the two. \cite{bahdanau_neural_2014} have found this to work especially well in machine translation problems where languages which are relatively well aligned (such as English and German) - The decoder is most likely able to choose to attend to the response generation sequentially, such that the first output from the decoder can be generated based on the properties of the first input of the encoder and so on.
 
 % mention the limitations of Seq2seq for your problem and ways they could be addressed (VAEs, etc.), describe the VAE approach and your motivation to pick it, introduce the VAE paper you work with in details.
@@ -270,6 +305,9 @@ Furthermore, this attention mechanism allows the model to learn what to attend t
 
 % talk about multihead attention
 
+% taalk about removing recursion/recurrentness of the network
+% mention that this will be used as the baseline
+% "for text generation techniques, we will use this as the baseline"
 
 \section{Variational Autoencoders}
 
@@ -294,6 +332,7 @@ $$
 
 In other words, it is the expectation of the logarithmic difference between the probabilities $P$ and $Q$, where the expectation of $P$ is already known.
 
+\subsection*{Reparameterisation Trick}
 - You'll need to perform a reparameterisation trick (since you can't calculate derivatives of samples.) in order to perform backpropagation. (you can't push gradients through a sampling node.)
   
 $$z = \mu + \sigma \cdot \epsilon $$ where $\epsilon \sim \mathcal{N}(0,1)$. You want to learn $\mu, \sigma$.
