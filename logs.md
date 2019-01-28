@@ -4,17 +4,27 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ## To-Do
 
-- Blitz through [this 60 minute tutorial](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html) on PyTorch.
-- Create notes on Goldberg's NLP Paper
+- [x] Blitz through [this 60 minute tutorial](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html) on PyTorch.
+- [x] Create notes on Goldberg's NLP Paper
 - Summary of Baselines:
-    - Concise summary of seq2seq
+    - [x] Concise summary of seq2seq
     - Concise summary of Transformer paper
 - Cover Controllable Story Generation paper
-- Buy storage so you can fit the amazon dataset
-- Browse around for variational autoencoder implementations?
+- [x] Buy storage so you can fit the amazon dataset
+- [x] Browse around for variational autoencoder implementations?
 - Model the implemented `seq2seq` code around the ISO problem so we can use it as a benchmark.
 
 ----
+
+### 2019/01/28 (Monday)
+- Started implementation of [seq2seq with a variational autodecoder](Samples/seq2seq%20with%20Variation.ipynb).
+- Looked into [bidirectional RNNs](https://invidio.us/watch?v=bTXGpATdKRY).
+- Short [implementation of bidirectional rnns](Samples/Bidirectional%20RNN.ipynb).
+- Looked into the [reparamerisation trick](https://www.youtube.com/watch?v=9zKuYvjFFS8).
+- Looked into [ELBO](http://edwardlib.org/tutorials/klqp) but it's still quite unintuitive so I'll most likely have to spend more time into this.
+
+### 2019/01/26 (Saturday)
+- Analysed the VAE implementations that I've managed to find to see how other people have implemented them.
 
 ### 2019/01/18 (Friday)
 
