@@ -16,7 +16,16 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 
+### 2019/01/18 (Friday)
+
+- Update literature review to reflect changes during meeting on Tuesday 2019/01/15.
+    - Changes are reflected in commented out tasks in the `.tex` document. They are yet to be written, but a shift in focus has been made and I should start working on baseline measurements (with Transformers).
+- Downloaded sample transformer code on Github and tested to check if it is up to scratch.
+    - It was not up to scratch, its performance was limited at best. I'll have to either look into why it was not so good, or build my own (which I am admittedly attempting to avoid).
+- I'll need to implement the data-extraction methods with OpenMNT-py.
+
 ### 2019/01/10 (Thursday)
+
 - Updated literature survey introduction to revolve around the topic's NLP problem
 - Added section on Language Modelling
 - removed section on Neural Networks and merged that in language models
@@ -28,10 +37,12 @@ These logs are used to indicate progress of the project as I work on it through 
 - Julia gave me a bunch of things I should read.	
 
 ### 2019/01/02 (Wednesday)
+
 - Read through this [approachable description on VAEs](https://jaan.io/what-is-variational-autoencoder-vae-tutorial/).
 - There's this other topic on [using VAEs to draw pictures](http://blog.otoro.net/2016/04/01/generating-large-images-from-latent-vectors/) that I should look into.
 
 ### 2018/12/31 (Monday)
+
 - Initial skim through of the VAD paper.
 - Attempting to understand the VAD model (Figure 2 in the paper) which involves combining VAEs with seq2seq networks.
 
