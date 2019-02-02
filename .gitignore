@@ -12,3 +12,4 @@ Samples/data/*
 *.log
 *.out
 *.synctex.gz
+data/*

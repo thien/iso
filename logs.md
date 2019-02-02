@@ -13,8 +13,25 @@ These logs are used to indicate progress of the project as I work on it through 
 - [x] Buy storage so you can fit the amazon dataset
 - [x] Browse around for variational autoencoder implementations?
 - Model the implemented `seq2seq` code around the ISO problem so we can use it as a benchmark.
+- [] Finish the literature survey writeup.
 
 ----
+
+### 2019/02/02 (Saturday)
+- [Continued working on implementation on VADs.](Samples/VAD.ipynb).
+- Looked into [BERT](https://www.youtube.com/watch?v=0EtD5ybnh_s).
+- Looked into RVAEs (to see the implementation differences).
+- Covered [KL Divergence and ELBO](https://www.youtube.com/watch?v=uaaqyVS9-rM). These are used for the decoder function for VADs.
+- The research paper in question does not post dimensions for inference and model dimensions. Because it looks like a regular autoencoder of a sort.
+- There's a bunch of neural networks in this model but they do not explicitly mention which ones are trained. For now, I'm assuming that all the networks have gradients to be pushed on them.
+    - Forward RNN Encoder
+    - Forward RNN Decoder
+    - Backwards RNN (To condition the z value)
+    - Inference Network
+    - Prior Network
+    - Auxillary Network
+- The research paper does not indicate the structure or activation functions of the neural nets for the Inference, Prior, and auxillary networks..??
+- I'm also not really sure what the conditioning variable is in the model. For now, the objective is to replicate the paper (with the dataset) so I'll need to download the glove word vectors but I'm also going to look into Bert aswell. Alternatively, I could create my own word vectors based on the Amazon dataset but that's something I should talk to the supervisors about.
 
 ### 2019/01/28 (Monday)
 - Started implementation of [seq2seq with a variational autodecoder](Samples/seq2seq%20with%20Variation.ipynb).
