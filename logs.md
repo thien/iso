@@ -20,6 +20,8 @@ These logs are used to indicate progress of the project as I work on it through 
 ### 2019/02/15 (Friday)
 - Discussed the weird auxillary function, and asked on the rationale behind using 1 layer neural networks for many of the components with supervisor.
 - Added GloVe embeddings.
+- Initial definition of all components (except for the auxillary function)
+- Reimplemented KL Divergence function
 
 ### 2019/02/02 (Saturday)
 - [Continued working on implementation on VADs.](Samples/VAD.ipynb).
