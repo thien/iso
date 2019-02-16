@@ -9,11 +9,9 @@ These logs are used to indicate progress of the project as I work on it through 
 - Summary of Baselines:
     - [x] Concise summary of seq2seq
     - Concise summary of Transformer paper
-- Cover Controllable Story Generation paper
-- [x] Buy storage so you can fit the amazon dataset
-- [x] Browse around for variational autoencoder implementations?
-- Model the implemented `seq2seq` code around the ISO problem so we can use it as a benchmark.
-- [] Finish the literature survey writeup.
+- [_] Cover Controllable Story Generation paper
+- [_] Model the implemented `seq2seq` code around the ISO problem so we can use it as a benchmark.
+- [_] Finish the literature survey writeup.
 
 ----
 
@@ -22,6 +20,9 @@ These logs are used to indicate progress of the project as I work on it through 
 - Added GloVe embeddings.
 - Initial definition of all components (except for the auxillary function)
 - Reimplemented KL Divergence function
+- Added GloVe embeddings to encoder and decoder
+- Split the attention mechanism away from the decoder s.t the context vector can be used in other components.
+- Added Xavier weight initialisation and adam optimisers.
 
 ### 2019/02/02 (Saturday)
 - [Continued working on implementation on VADs.](Samples/VAD.ipynb).
