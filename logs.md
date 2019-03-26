@@ -15,6 +15,18 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 
+### 2019/03/26 (Tuesday)
+- Used glove weights for dataset for now (reflected as changes in code)
+- Moved VAD code to dedicated python file for better debugging
+- Pickled datasets with weights
+
+### 2019/03/25 (Monday)
+- Converted dataset into form
+- Added multiprocessing and log bars to indicate progress of model updating
+- Setup code-server for remote IDE work alongside jupyter
+- I'll need a method later to split the review by sentence but for now we'll create an autoencoder style implementation.
+
+
 ### 2019/02/15 (Friday)
 - Discussed the weird auxillary function, and asked on the rationale behind using 1 layer neural networks for many of the components with supervisor.
 - Added GloVe embeddings.
