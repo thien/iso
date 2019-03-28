@@ -15,6 +15,24 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 
+## 2019/03/28 (Thursday)
+- Changed decoder output to one-hot mechanism
+- Verified that one-pass can occur with current flow (but this will be broken as we're moving to batched operations)
+- Dataset needs to be rewritten as the input is presently `[itemID, summary, rating, polarity, review]` but this does not work with PyTorch as there would exist padding in the middle of the sequence. It'll need to be rewritten as `[ItemID, rating, polarity, summary, review]`.
+    - This may actually work much better for these reasons:
+    - More space for number of words overall for review
+    - Works with PyTorch
+    - summary can be conditioned by rating and polarity.
+- Building data batching mechanism because realistically this model will take quite a long time to train compared to the other approaches. (The PyTorch tutorial on Seq2Seq is not batched!) - I'll be using [this tutorial.](https://github.com/howardyclo/pytorch-seq2seq-example/blob/master/seq2seq.ipynb)
+- Need to update data batching as the backwards model requires the output to be in reverse.
+
+### 2019/03/27 (Wednesday)
+- More bug-fixes on components
+- The paper mentions the inputs to the decoder mechanism but it is ambiguous in wording.
+    ![](Documents/log_imgs/decoder.png)
+- Presently used a dot product between the components, with a linear layer between them.
+- Focused on changing model components to fit single-case batch
+
 ### 2019/03/26 (Tuesday)
 - Used glove weights for dataset for now (reflected as changes in code)
 - Moved VAD code to dedicated python file for better debugging
