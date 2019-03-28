@@ -37,7 +37,7 @@ class Encoder(nn.Module):
     
     The hidden size is 512 as per the paper.
     """
-    def __init__(self, embeddingMatrix, vocabularySize, padding_id, hiddenSize=512, bidirectional=False):
+    def __init__(self, embeddingMatrix, vocabularySize, padding_id, hiddenSize=512, bidirectional=True):
         super(Encoder, self).__init__()
         self.hiddenSize = hiddenSize
         self.isBidirectional = bidirectional
@@ -58,19 +58,62 @@ class Encoder(nn.Module):
         # we're using pretrained labels
         self.embedding.weight.requires_grad = False
         self.embedding.to(device)
-        self.gru = nn.GRU(embeddingDim, hiddenSize, bidirectional=self.isBidirectional)
+        self.gru = nn.GRU(embeddingDim, hiddenSize,
+                          bidirectional=self.isBidirectional, batch_first=True)
     
-    def forward(self, x, hidden):
+    def forward(self, x, x_length, hidden):
         # load the input into the embedding before doing GRU computation.
-        embed = self.embedding(x).view(1,x.size()[0],-1)
-        output, hidden = self.gru(embed, hidden)
+        embed = self.embedding(x)
+        # load pack_padded_sequence so PyTorch knows when to not compute rubbish
+        packed_emb = nn.utils.rnn.pack_padded_sequence(
+            embed, x_length, batch_first=True)
+        # load it through the GRU
+        packed_outputs, hidden = self.gru(packed_emb, hidden)
+        # reverse
+        output, output_lens = nn.utils.rnn.pad_packed_sequence(packed_outputs, batch_first=True)
+
+        if self.isBidirectional:
+            # (num_layers * num_directions, batch_size, hidden_size)
+            # => (num_layers, batch_size, hidden_size * num_directions)
+            hidden = self._cat_directions(hidden)
         return output, hidden
     
-    def initHidden(self):
+    def initHidden(self, batch_size):
         numLayers = 1
         if self.isBidirectional:
             numLayers = 2 # because it's bidirectional
-        return torch.zeros(numLayers, 73, self.hiddenSize, device=device)
+        return torch.zeros(numLayers, batch_size, self.hiddenSize, device=device)
+
+    def _cat_directions(self, hidden):
+        """ If the encoder is bidirectional, do the following transformation.
+            Ref: https://github.com/IBM/pytorch-seq2seq/blob/master/seq2seq/models/DecoderRNN.py#L176
+            -----------------------------------------------------------
+            In: (num_layers * num_directions, batch_size, hidden_size)
+            (ex: num_layers=2, num_directions=2)
+
+            layer 1: forward__hidden(1)
+            layer 1: backward_hidden(1)
+            layer 2: forward__hidden(2)
+            layer 2: backward_hidden(2)
+
+            -----------------------------------------------------------
+            Out: (num_layers, batch_size, hidden_size * num_directions)
+
+            layer 1: forward__hidden(1) backward_hidden(1)
+            layer 2: forward__hidden(2) backward_hidden(2)
+        """
+        def _cat(h):
+            return torch.cat([h[0:h.size(0):2], h[1:h.size(0):2]], 2)
+
+        if isinstance(hidden, tuple):
+            # LSTM hidden contains a tuple (hidden state, cell state)
+            hidden = tuple([_cat(h) for h in hidden])
+        else:
+            # GRU hidden
+            hidden = _cat(hidden)
+
+        return hidden
+
 
 class Backwards(nn.Module):
     def __init__(self, embeddingMatrix, vocabularySize, padding_id, hidden_size=512):
@@ -88,15 +131,19 @@ class Backwards(nn.Module):
         # we're using pretrained labels
         self.embedding.weight.requires_grad = False
         self.embedding.to(device)
-        self.gru = nn.GRU(embeddingDim, hidden_size)
+        self.gru = nn.GRU(embeddingDim, hidden_size, batch_first=True)
 
-    def forward(self, x, hidden):
-        embed = self.embedding(x).view(1,x.size()[0],-1)
-        output, hidden = self.gru(embed, hidden)
+    def forward(self, x, x_length, hidden):
+        embed = self.embedding(x)
+        packed_emb = nn.utils.rnn.pack_padded_sequence(
+            embed, x_length, batch_first=True)
+        packed_outputs, hidden = self.gru(packed_emb, hidden)
+        output, output_lens = nn.utils.rnn.pad_packed_sequence(
+            packed_outputs, batch_first=True)
         return output, hidden
 
-    def initHidden(self):
-        return torch.zeros(1, 73, self.hiddenSize, device=device)
+    def initHidden(self, batchSize):
+        return torch.zeros(1, batchSize, self.hiddenSize, device=device)
 
 class Attention(nn.Module):
     """
@@ -116,26 +163,49 @@ class Attention(nn.Module):
         
         # self.attention is our tiny neural network that takes 
         # in the hidden weights and the previous hidden weights.
-        self.attention = nn.Linear(self.hiddenSize * 2, self.maxLength)
-        self.attentionCombined = nn.Linear(self.hiddenSize * 2, self.hiddenSize)
+        self.attention = nn.Linear(self.hiddenSize * maxLength, self.hiddenSize*2)
         # torch.nn.init.xavier_uniform_(self.attention)
         # torch.nn.init.xavier_uniform_(self.attentionCombined)
     
-    def forward(self, prevHidden, encoderOutputs):
+    def forward(self, encoderOut, prevDecoderH):
+        """
+        1. encoder_outputs: (batch_size,max_src_len, hidden_size * num_directions)
+        2. decoder_output: (batch_size, seq_len=1, hidden_size)
+        3. W_a(encoder_outputs): (max_src_len, batch_size, hidden_size)
+                        .transpose(0,1)  : (batch_size, max_src_len, hidden_size) 
+                        .transpose(1,2)  : (batch_size, hidden_size, max_src_len)
+        4. attention_scores: 
+                        (batch_size, seq_len=1, hidden_size) * (batch_size, hidden_size, max_src_len) 
+                        => (batch_size, seq_len=1, max_src_len)
+        """
         print("ATTENTION:---------------------------")
-        print("Encoder outputs shape:", encoderOutputs[0].shape)
-        print("Prev Hidden shape:", prevHidden[0].shape)
+        print("Encoder outputs shape:", encoderOut.shape)
+        print("Prev Hidden shape:", prevDecoderH.shape)
         # concatenate hidden layer inputs together.
-        concatenated = torch.cat((prevHidden[0], encoderOutputs[0]), 1)
-        attentionWeights = F.softmax(self.attention(concatenated), dim=1)
-        
-        # batch matrix multiplication
-        attentionApplied = torch.bmm(attentionWeights.unsqueeze(0),
-                                    encoderOutputs[0].unsqueeze(0))
+        # concatenated = torch.cat((encoderH[0], prevDecoderH), 1)
+        # torch.bmm(attentionWeights.unsqueeze(0),
+                #   encoderOutputs.unsqueeze(0))
+        # print("CONCATENATED:", concatenated.shape)
 
-        context = torch.cat((prevHidden[0], attentionApplied[0]), 1)
+        # energy = self.attn(encoder_output)
+        # energy = energy.transpose(2, 1)
+        # energy = hidden.bmm(energy)
+        # return energy
+
+        # relation = torch.mv(encoderOut, prevDecoderH)
+        # print("relation:", relation.shape)
+        
+        energy = self.attention(encoderOut).transpose(0, 1).transpose(1, 2)
+        print("ENERGY:", energy.shape)
+
+        attentionWeights = F.softmax(self.attention(encoderOut), dim=1)
+        
+        print("MAX LENGTH:",self.maxLength)
+        # batch matrix multiplication
+        print("ATTENTION WEIGHTS:", attentionWeights.shape)
+        context = torch.mm(attentionWeights.t(), prevDecoderH)
+        print("CONTEXT:", context.shape)
         # reshape to produce context vector.
-        context = self.attentionCombined(context).unsqueeze(0)
         context = F.relu(context)
         return context, attentionWeights
 
@@ -143,53 +213,28 @@ class Attention(nn.Module):
         return torch.zeros(1,1, self.hiddenSize) 
 
 class Attn(nn.Module):
-    def __init__(self, method, hidden_size):
+    def __init__(self,  hidden_size):
         super(Attn, self).__init__()
         
-        self.method = method
         self.hidden_size = hidden_size
-        
-        if self.method == 'general':
-            self.attn = nn.Linear(self.hidden_size, hidden_size)
-
-        elif self.method == 'concat':
-            self.attn = nn.Linear(self.hidden_size * 2, hidden_size)
-            self.v = nn.Parameter(torch.FloatTensor(1, hidden_size))
+        self.attn = nn.Linear(self.hidden_size * 2, self.hidden_size * 2)
 
     def forward(self, hidden, encoder_outputs):
         max_len = encoder_outputs.size(0)
         this_batch_size = encoder_outputs.size(1)
 
         # Create variable to store attention energies
-        attn_energies = Variable(torch.zeros(this_batch_size, max_len)) # B x S
-
-        if USE_CUDA:
-            attn_energies = attn_energies.cuda()
-
-        # For each batch of encoder outputs
-        for b in range(this_batch_size):
-            # Calculate energy for each encoder output
-            for i in range(max_len):
-                attn_energies[b, i] = self.score(hidden[:, b], encoder_outputs[i, b].unsqueeze(0))
+        attn_energies = self.score(hidden, encoder_outputs)
 
         # Normalize energies to weights in range 0 to 1, resize to 1 x B x S
-        return F.softmax(attn_energies).unsqueeze(1)
+        return F.softmax(attn_energies, dim=1).squeeze()
     
     def score(self, hidden, encoder_output):
-        
-        if self.method == 'dot':
-            energy = hidden.dot(encoder_output)
-            return energy
-        
-        elif self.method == 'general':
-            energy = self.attn(encoder_output)
-            energy = hidden.dot(energy)
-            return energy
-        
-        elif self.method == 'concat':
-            energy = self.attn(torch.cat((hidden, encoder_output), 1))
-            energy = self.v.dot(energy)
-            return energy
+        energy = self.attn(encoder_output)
+        energy = energy.transpose(2, 1)
+        hidden = hidden.unsqueeze(1)
+        energy = hidden.bmm(energy)
+        return energy
 
 class Decoder(nn.Module):
     def __init__(self, embeddingMatrix, vocabularySize, padding_id, outputSize, hiddenSize=512):
@@ -218,8 +263,10 @@ class Decoder(nn.Module):
         self.comb = nn.Linear(50,400)
 
     def forward(self, y, context, z, previousHidden):
+
         embedded = self.embedding(y).view(1,y.size()[0],-1) 
         print("DECODER------------------------------------")
+        print("Y:", y.shape)
         print("EMBED:",embedded[0].shape)
         print("CONTEXT:",context[0].shape)
         print("HIDDEN:", previousHidden.shape)
@@ -264,7 +311,7 @@ class Inference(nn.Module):
         super(Inference, self).__init__()
         
         # encode
-        self.fc1  = nn.Linear(hidden_size + hidden_size + hidden_size, hidden_size)
+        self.fc1  = nn.Linear(hidden_size*2 + hidden_size*2 + hidden_size, hidden_size)
         self.mean = nn.Linear(hidden_size, latent_size)
         self.var = nn.Linear(hidden_size, latent_size)
 
@@ -276,7 +323,10 @@ class Inference(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def encode(self, h_forward, c, h_backward): # Q(z|x, c)
-
+        print("ENCODE:")
+        print(h_forward.shape)
+        print(c.shape)
+        print(h_backward.shape)
         inputs = torch.cat([h_forward, c, h_backward], 1) # (bs, feature_size+class_size)
         h1 = self.relu(self.fc1(inputs))
         z_mu = self.mean(h1)
@@ -313,7 +363,7 @@ class Prior(nn.Module):
         # self.class_size = class_size
 
         # encode
-        self.fc1  = nn.Linear(hidden_size + hidden_size, hidden_size)
+        self.fc1  = nn.Linear(hidden_size*2 + hidden_size*2, hidden_size)
         self.mean = nn.Linear(hidden_size, latent_size)
         self.var = nn.Linear(hidden_size, latent_size)
 
@@ -367,6 +417,8 @@ def loss_function(y_predicted, y, z_inference, z_prior, criterion):
 
 def trainVAD(x,
              y,
+             xLength,
+             yLength,
              encoder,
              attention,
              backwards,
@@ -396,41 +448,53 @@ def trainVAD(x,
     decoderOpt.zero_grad()
     
     # initalise input and target lengths
-    inputLength = x.size(0)
-    targetLength = y.size(0)
-    
+    inputLength = x[0].size(0)
+    targetLength = y[0].size(0)
+    batchSize = x.shape[0]
+
     # set default loss
     loss = 0
     
     # set up encoder computation
-    encoderHidden  = encoder.initHidden()
-    backwardHidden = backwards.initHidden()
+    encoderHidden = encoder.initHidden(batchSize)
+    backwardHidden = backwards.initHidden(batchSize)
     
     # set up encoder outputs
-    encoderOutputs, encoderHidden = encoder(x, encoderHidden)
+    encoderOutputs, encoderHidden = encoder(x, xLength, encoderHidden)
     # compute backwards outputs
-    backwardOutput, backwardHidden = backwards(torch.flip(y, [0]), backwardHidden)
+    backwardOutput, backwardHidden = backwards(torch.flip(
+        y, [0, 1]), yLength, backwardHidden)
 
     # set up the variables for decoder computation
-    decoderInput = torch.tensor([[word2id["<eos>"]]], dtype=torch.long, device=device)
+    decoderInput = torch.tensor(
+        [[word2id["<eos>"]]] * batchSize, dtype=torch.long, device=device)
     decoderHidden = encoderHidden[-1]
     decoderOutput = None
     
-
-    print("ENCODER OUTPUTS:", encoderOutputs[:,1].shape)
+    print("ENCODER OUTPUTS:", encoderOutputs.shape)
+    print("ENCODER HIDDENS:", encoderHidden.shape)
     # Run through the decoder one step at a time. This seems to be common practice across
     # all of the seq2seq based implementations I've come across on GitHub.
     print("TARGET LENGTH",targetLength)
     for t in range(targetLength):
         # get the context vector c
-        c, _ = attention(encoderHidden, encoderOutputs)
+        # c, _ = attention(encoderOutputs, decoderHidden)
+        c = attention(decoderHidden, encoderOutputs)
         # compute the inference layer
         print("ATTENTION DIM:",c.shape)
-        z_infer, infMean, infLogvar = inference(decoderHidden, c[:,t], backwardOutput[:,t])
+
+        why = encoderOutputs
+        c = c.unsqueeze(1)
+        print("C HOW:", c.shape)
+        print("INP:", why.shape)
+        what = torch.bmm(c, why).squeeze(1)
+        print(what.shape)
+
+        z_infer, infMean, infLogvar = inference(decoderHidden, what, backwardOutput[:,t])
         # compute the prior layer
-        z_prior, priMean, priLogvar = prior(decoderHidden, c[:,t])
+        z_prior, priMean, priLogvar = prior(decoderHidden, what)
         # compute the output of each decoder state
-        DecoderOut = decoder(decoderInput, c[t], z_infer, decoderHidden)
+        DecoderOut = decoder(decoderInput, what, z_infer, decoderHidden)
         decoderOutput, decoderHidden = DecoderOut
         
         # calculate the loss
@@ -480,49 +544,86 @@ def trainIteration(
     
     for i in range(1, iterations + 1):
         # set up variables needed for training.
-        entry = random.choice(dataset)
-        x, y = entry, entry
+        for batch in dataset:
+            # each batch is composed of the 
+            # reviews, and a sentence length.
+            entry, length = batch
+            x, y = entry, entry
+            xLength, yLength = length, length
 
-        # calculate loss.
-        loss = trainVAD(x, y, 
-             encoder,
-             attention,
-             backwards,
-             inference,
-             prior,
-             decoder,
-             encoderOpt,
-             attentionOpt,
-             backwardsOpt,
-             inferenceOpt,
-             priorOpt,
-             decoderOpt,
-             word2id,
-             criterion
-            )
-        # increment our print and plot.
-        printLossTotal += loss
-        plotLossTotal += loss
-        
-        # print mechanism
-        if i % printEvery == 0:
-            printLossAvg = printLossTotal / printEvery
-            # reset the print loss.
-            printLossTotal = 0
-            print('%s (%d %d%%) %.4f' % (timeSince(start, i / iterations),
-                                         i, i / iterations * 100, printLossAvg))
-        # plot mechanism
-        if i % plotEvery == 0:
-            plotLossAvg = plotLossTotal / plotEvery
-            plotLosses.append(plotLossAvg)
-            plotLossTotal = 0
+            # calculate loss.
+            loss = trainVAD(x, y, 
+                xLength,  
+                yLength,
+                encoder,
+                attention,
+                backwards,
+                inference,
+                prior,
+                decoder,
+                encoderOpt,
+                attentionOpt,
+                backwardsOpt,
+                inferenceOpt,
+                priorOpt,
+                decoderOpt,
+                word2id,
+                criterion
+                )
+            # increment our print and plot.
+            printLossTotal += loss
+            plotLossTotal += loss
+            
+            # print mechanism
+            if i % printEvery == 0:
+                printLossAvg = printLossTotal / printEvery
+                # reset the print loss.
+                printLossTotal = 0
+                print('%s (%d %d%%) %.4f' % (timeSince(start, i / iterations),
+                                            i, i / iterations * 100, printLossAvg))
+            # plot mechanism
+            # if i % plotEvery == 0:
+            #     plotLossAvg = plotLossTotal / plotEvery
+            #     plotLosses.append(plotLossAvg)
+            #     plotLossTotal = 0
+
+
+"""
+Dataset batching mechanism
+"""
+def batchData(dataset, eos, batchsize=32):
+    """
+    Splits the dataset into batches.
+    Each batch needs to be sorted by 
+    the length of their sequence in order
+    for `pack_padded_sequence` to be used.
+    """
+    datasize = len(dataset)
+    batches = []
+    # split data into batches.
+    for i in range(0, datasize, batchsize):
+        batches.append(dataset[i:i+batchsize])
+    # within each batch, sort the entries.
+    for i in range(len(batches)):
+        batch = batches[i]
+        # get lengths of each review in the batch
+        # based on the postion of the EOS tag.
+        lengths = (batch==eos).nonzero()[:,1]
+        # sort the lengths
+        ordered = torch.argsort(lengths, descending=True)
+        # get the reviews based on the sorted batch lengths
+        reviews = batch[ordered]
+        # re-allocate values.
+        batches[i] = (reviews, lengths[ordered])
+    return batches
+
 
 if __name__ == "__main__":
     print("Loading parameters..", end=" ")
     hiddenSize = 512
     featureSize = 512
     iterations = 1
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = "cpu"
     print("Done.")
 
@@ -540,26 +641,31 @@ if __name__ == "__main__":
     dataset = torch.tensor(dataset, dtype=torch.long, device=device)
     weightMatrix = torch.tensor(weightMatrix, dtype=torch.float)
     print("Done.")
+
+    # batching data
+    print("Batching Data..",end=" ")
+    dataset = batchData(dataset, word2id['<eos>'])
+    print("Done.")
     
-    
-    max_length = len(dataset[0])
+    # setup variables for model components initialisation
+    maxReviewLength = dataset[0][0].shape[1]
     vocabularySize = len(id2word)
     embeddingDim = weightMatrix.shape[1]
     embedding_shape = weightMatrix.shape
     paddingID = word2id['<pad>']
 
-    print("Embedding shape:", embedding_shape)
-    print("Padding ID:", paddingID)
-
     print("Initialising model components..", end=" ")
     modelEncoder   = Encoder(weightMatrix, vocabularySize, paddingID, hiddenSize).to(device)
-    modelAttention = Attention(maxLength=max_length).to(device)
+    # modelAttention = Attention(maxLength=maxReviewLength).to(device)
+    modelAttention = Attn(hiddenSize).to(device)
     modelBackwards = Backwards(weightMatrix, vocabularySize, paddingID, hiddenSize).to(device)
     modelInference = Inference(hidden_size=hiddenSize).to(device)
     modelPrior     = Prior(hidden_size=hiddenSize).to(device)
-    modelDecoder   = Decoder(weightMatrix, vocabularySize, paddingID, max_length, hiddenSize).to(device)
+    modelDecoder = Decoder(weightMatrix, vocabularySize,
+                           paddingID, maxReviewLength, hiddenSize).to(device)
     print("Done.")
 
+    print()
     trainIteration(dataset,
                    modelEncoder,
                    modelAttention,
