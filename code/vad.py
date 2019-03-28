@@ -114,7 +114,6 @@ class Encoder(nn.Module):
 
         return hidden
 
-
 class Backwards(nn.Module):
     def __init__(self, embeddingMatrix, vocabularySize, padding_id, hidden_size=512):
         super(Backwards, self).__init__()
@@ -237,13 +236,14 @@ class Attn(nn.Module):
         return energy
 
 class Decoder(nn.Module):
-    def __init__(self, embeddingMatrix, vocabularySize, padding_id, outputSize, hiddenSize=512):
+    def __init__(self, embeddingMatrix, vocabularySize, padding_id, batchSize, outputSize, hiddenSize, latentSize, encoderBidirectional):
         """
         # dropout omitted
         """
         super(Decoder, self).__init__()
         self.hiddenSize = hiddenSize
         self.outputSize = outputSize
+        self.latentSize = latentSize
 
         embeddingDim = embeddingMatrix.shape[1]
         self.embedding = nn.Embedding(
@@ -256,21 +256,24 @@ class Decoder(nn.Module):
         self.embedding.weight.requires_grad = False
         self.embedding.to(device)
 
-        self.gru = nn.GRU(self.hiddenSize, self.hiddenSize)
-        self.out = nn.Linear(self.hiddenSize * 2, vocabularySize)
+        encoderDim = self.hiddenSize
+        if encoderBidirectional:
+            encoderDim *= 2
 
-        # dubious entry
-        self.comb = nn.Linear(50,400)
+        self.gru = nn.GRU(encoderDim +
+                          embeddingDim + self.latentSize, encoderDim, batch_first=True)
+        self.out = nn.Linear(encoderDim * 2, vocabularySize)
 
     def forward(self, y, context, z, previousHidden):
 
-        embedded = self.embedding(y).view(1,y.size()[0],-1) 
-        print("DECODER------------------------------------")
-        print("Y:", y.shape)
-        print("EMBED:",embedded[0].shape)
-        print("CONTEXT:",context[0].shape)
+        embedded = self.embedding(y).squeeze(1)
+        print("DECODER----------")
+
+        print("EMBED:",embedded.shape)
+        print("CONTEXT:",context.shape)
         print("HIDDEN:", previousHidden.shape)
         print("Z:", z.shape)
+
    
         # this is diverging from the original paper but they're already
         # ambiguous on how the decoder is implemented
@@ -279,26 +282,30 @@ class Decoder(nn.Module):
         # My guess is that we'll apply the attention mechanism 
         # and then do a linear combination of the result with z.
 
-        inputs = torch.mm(torch.mm(self.comb(embedded[0]), z.transpose(0,1)), context)
+        # inputs = torch.bmm(torch.bmm(self.comb(embedded), z), context)
+
+        inputs = torch.cat([embedded,context,z], 1).unsqueeze(1)
         
         print("INPUTS SHAPE:", inputs.shape)
-        # # concatenate hidden layer inputs together.
-        # inputs = torch.cat((embedded[0], context, z), 1)
 
-
-
+        if len(previousHidden.shape) < 3:
+            previousHidden = previousHidden.unsqueeze(0)
+        print(previousHidden.shape)
         # do a forward GRU
-        output, hidden = self.gru(inputs.view(1,1,-1), previousHidden[0].view(1,1,-1))
+        output, hidden = self.gru(inputs, previousHidden)
         print("OUTPUT SHAPE:", output.shape)
         # softmax the output
-        print("OUTS:", output[0,0].shape, context[0].shape)
-        output = self.out(torch.cat((output[0,0], context[0]), 0))
-        # output = F.log_softmax(output, dim=1)
+        output = output.squeeze(1)
+        print("OUTS:", output.shape, context.shape)
+        output = torch.cat((output, context), 1)
+        print("NOW WHAT:", output.shape)
+        output = self.out(output)
+
         output = F.log_softmax(output, dim=0)
         return output, hidden
 
     def initHidden(self):
-        return torch.zeros(1,1, self.hiddenSize, device=device) 
+        return torch.zeros(self.batchSize, 1, self.hiddenSize, device=device) 
 
 class Inference(nn.Module):
     """
@@ -411,7 +418,7 @@ class Prior(nn.Module):
 
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(y_predicted, y, z_inference, z_prior, criterion):
-    LL = criterion(y_predicted.view(1,-1), y.view(1))
+    LL = criterion(y_predicted, y)
     KL = F.kl_div(z_inference, z_prior)
     return LL - KL
 
@@ -468,6 +475,7 @@ def trainVAD(x,
     # set up the variables for decoder computation
     decoderInput = torch.tensor(
         [[word2id["<eos>"]]] * batchSize, dtype=torch.long, device=device)
+    
     decoderHidden = encoderHidden[-1]
     decoderOutput = None
     
@@ -475,8 +483,9 @@ def trainVAD(x,
     print("ENCODER HIDDENS:", encoderHidden.shape)
     # Run through the decoder one step at a time. This seems to be common practice across
     # all of the seq2seq based implementations I've come across on GitHub.
-    print("TARGET LENGTH",targetLength)
+    # print("TARGET LENGTH",targetLength)
     for t in range(targetLength):
+        print("ITERATION:-----------------------------------")
         # get the context vector c
         # c, _ = attention(encoderOutputs, decoderHidden)
         c = attention(decoderHidden, encoderOutputs)
@@ -490,18 +499,17 @@ def trainVAD(x,
         what = torch.bmm(c, why).squeeze(1)
         print(what.shape)
 
-        z_infer, infMean, infLogvar = inference(decoderHidden, what, backwardOutput[:,t])
+        z_infer, _, _ = inference(decoderHidden, what, backwardOutput[:,t])
         # compute the prior layer
-        z_prior, priMean, priLogvar = prior(decoderHidden, what)
+        z_prior, _, _ = prior(decoderHidden, what)
         # compute the output of each decoder state
         DecoderOut = decoder(decoderInput, what, z_infer, decoderHidden)
         decoderOutput, decoderHidden = DecoderOut
-        
         # calculate the loss
-        loss += loss_function(decoderOutput, y[t], z_infer, z_prior, criterion)
+        loss += loss_function(decoderOutput, y[:,t], z_infer, z_prior, criterion)
+        print("LOSS:",loss.item())
         # feed this output to the next input
         decoderInput = y[t]
-        print("NEXT ITERATION")
     
     # possible because our loss_function uses gradient storing calculations
     loss.backward()
@@ -622,7 +630,10 @@ if __name__ == "__main__":
     print("Loading parameters..", end=" ")
     hiddenSize = 512
     featureSize = 512
+    latentSize = 400
     iterations = 1
+    bidirectionalEncoder = True
+    batchSize = 32
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = "cpu"
     print("Done.")
@@ -644,7 +655,7 @@ if __name__ == "__main__":
 
     # batching data
     print("Batching Data..",end=" ")
-    dataset = batchData(dataset, word2id['<eos>'])
+    dataset = batchData(dataset, word2id['<eos>'], batchSize)
     print("Done.")
     
     # setup variables for model components initialisation
@@ -655,14 +666,15 @@ if __name__ == "__main__":
     paddingID = word2id['<pad>']
 
     print("Initialising model components..", end=" ")
-    modelEncoder   = Encoder(weightMatrix, vocabularySize, paddingID, hiddenSize).to(device)
+    modelEncoder = Encoder(weightMatrix, vocabularySize,
+                           paddingID, hiddenSize, bidirectionalEncoder).to(device)
     # modelAttention = Attention(maxLength=maxReviewLength).to(device)
     modelAttention = Attn(hiddenSize).to(device)
     modelBackwards = Backwards(weightMatrix, vocabularySize, paddingID, hiddenSize).to(device)
-    modelInference = Inference(hidden_size=hiddenSize).to(device)
-    modelPrior     = Prior(hidden_size=hiddenSize).to(device)
+    modelInference = Inference(hiddenSize, latentSize).to(device)
+    modelPrior = Prior(hiddenSize, latentSize).to(device)
     modelDecoder = Decoder(weightMatrix, vocabularySize,
-                           paddingID, maxReviewLength, hiddenSize).to(device)
+                           paddingID, batchSize, maxReviewLength, hiddenSize, latentSize, bidirectionalEncoder).to(device)
     print("Done.")
 
     print()
