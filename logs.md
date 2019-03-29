@@ -49,10 +49,10 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ### 2019/03/27 (Wednesday)
 - More bug-fixes on components
-- The paper mentions the inputs to the decoder mechanism but it is ambiguous in wording.
+- The paper does not explicitly mention how the variables are joined together other than "a combination" so I was a bit confused.
     ![](Documents/log_imgs/decoder.png)
-- Presently used a dot product between the components, with a linear layer between them.
-- Focused on changing model components to fit single-case batch
+    - For now I've just concatenated the variables together.
+- Focused on changing model components to fit single-case batch (which I should change later)
 
 ### 2019/03/26 (Tuesday)
 - Used glove weights for dataset for now (reflected as changes in code)
