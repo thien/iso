@@ -15,18 +15,25 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 
+## 2019/03/29 (Friday)
+- [00:12] Model runs for one batch, but the loss dissappears entirely on the second batch. This would mean that gradients are not appropiately pushed through. I'll need to look into this.
+- I should start with looking at all the `squeeze()` and `unsqueeze()` functions, and looking at the matrix operations of the input as it goes through the model.
+- Model also takes an incredibly long time to perform operations, especially with the parameter sizes mentioned in the paper. Training may take a day, and this is with 1/16th of the dataset (and with vector operations!!) - I should talk to my supervisor about this.
+- Now that I have a working dataset, I'll need to look at implementing other models such as the vanilla seq2seq and a regular Transformer on the dataset because I need charts to indicate anything wrong with the data representation...
+- Need to draw a flowchart of the vector dimension operations to see cases where I've messed up.
+
 ## 2019/03/28 (Thursday)
 - Changed decoder output to one-hot
 - Verified that one-pass can occur with current flow (but this will be broken as we're moving to batched operations)
 - Dataset needs to be rewritten as the input is presently `[itemID, summary, rating, polarity, review]` but this does not work with PyTorch as there would exist padding in the middle of the sequence. It'll need to be rewritten as `[ItemID, rating, polarity, summary, review]`.
-    - This may actually work much better for these reasons:
+    - Other than it working on PyTorch properly, this may actually work much better for these reasons:
     - More space for number of words overall for review
-    - Works with PyTorch
-    - summary can be conditioned by rating and polarity.
+    - the remainder of the text would have context on the rating and polarity.
 - Building data batching mechanism because realistically this model will take quite a long time to train compared to the other approaches. (The PyTorch tutorial on Seq2Seq is not batched!) - I'll be using [this tutorial.](https://github.com/howardyclo/pytorch-seq2seq-example/blob/master/seq2seq.ipynb)
-- Need to update data batching as the backwards model requires the output to be in reverse.
+- ~~Need to update data batching as the backwards model requires the output to be in reverse.~~ (Done; output is literally reversed s.t the padding is at the front, but I would imagine that padding order does not make a difference anyway)
 - Built data batching mechanism
 - Presently updating the VAD implementation to support batches.
+- Initial commit of running model.
 
 ### 2019/03/27 (Wednesday)
 - More bug-fixes on components
