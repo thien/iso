@@ -144,73 +144,6 @@ class Backwards(nn.Module):
     def initHidden(self, batchSize):
         return torch.zeros(1, batchSize, self.hiddenSize, device=device)
 
-class Attention(nn.Module):
-    """
-    TODO: Add layer normalisation?
-    https://arxiv.org/abs/1607.06450
-    
-    We also set the hidden state size to 512.
-    
-    """
-    def __init__(self, maxLength, hiddenSize=512):
-        """
-        # dropout omitted
-        """
-        super(Attention, self).__init__()
-        self.hiddenSize = hiddenSize
-        self.maxLength = maxLength
-        
-        # self.attention is our tiny neural network that takes 
-        # in the hidden weights and the previous hidden weights.
-        self.attention = nn.Linear(self.hiddenSize * maxLength, self.hiddenSize*2)
-        # torch.nn.init.xavier_uniform_(self.attention)
-        # torch.nn.init.xavier_uniform_(self.attentionCombined)
-    
-    def forward(self, encoderOut, prevDecoderH):
-        """
-        1. encoder_outputs: (batch_size,max_src_len, hidden_size * num_directions)
-        2. decoder_output: (batch_size, seq_len=1, hidden_size)
-        3. W_a(encoder_outputs): (max_src_len, batch_size, hidden_size)
-                        .transpose(0,1)  : (batch_size, max_src_len, hidden_size) 
-                        .transpose(1,2)  : (batch_size, hidden_size, max_src_len)
-        4. attention_scores: 
-                        (batch_size, seq_len=1, hidden_size) * (batch_size, hidden_size, max_src_len) 
-                        => (batch_size, seq_len=1, max_src_len)
-        """
-        # print("ATTENTION:---------------------------")
-        # print("Encoder outputs shape:", encoderOut.shape)
-        # print("Prev Hidden shape:", prevDecoderH.shape)
-        # concatenate hidden layer inputs together.
-        # concatenated = torch.cat((encoderH[0], prevDecoderH), 1)
-        # torch.bmm(attentionWeights.unsqueeze(0),
-                #   encoderOutputs.unsqueeze(0))
-        # print("CONCATENATED:", concatenated.shape)
-
-        # energy = self.attn(encoder_output)
-        # energy = energy.transpose(2, 1)
-        # energy = hidden.bmm(energy)
-        # return energy
-
-        # relation = torch.mv(encoderOut, prevDecoderH)
-        # print("relation:", relation.shape)
-        
-        energy = self.attention(encoderOut).transpose(0, 1).transpose(1, 2)
-        # print("ENERGY:", energy.shape)
-
-        attentionWeights = F.softmax(self.attention(encoderOut), dim=1)
-        
-        # print("MAX LENGTH:",self.maxLength)
-        # batch matrix multiplication
-        # print("ATTENTION WEIGHTS:", attentionWeights.shape)
-        context = torch.mm(attentionWeights.t(), prevDecoderH)
-        # print("CONTEXT:", context.shape)
-        # reshape to produce context vector.
-        context = F.relu(context)
-        return context, attentionWeights
-
-    def initHidden(self):
-        return torch.zeros(1,1, self.hiddenSize) 
-
 class Attn(nn.Module):
     def __init__(self,  hidden_size):
         super(Attn, self).__init__()
@@ -265,40 +198,17 @@ class Decoder(nn.Module):
         self.out = nn.Linear(encoderDim * 2, vocabularySize)
 
     def forward(self, y, context, z, previousHidden):
-
         embedded = self.embedding(y).squeeze(1)
-        # print("DECODER----------")
-
-        # print("EMBED:",embedded.shape)
-        # print("CONTEXT:",context.shape)
-        # print("HIDDEN:", previousHidden.shape)
-        # print("Z:", z.shape)
-
-   
-        # this is diverging from the original paper but they're already
-        # ambiguous on how the decoder is implemented
-        # ("The input to GRU is the combination of the previous word's embedding
-        # y_{t-1}, the context vector, ..., and the latent variable z.")
-        # My guess is that we'll apply the attention mechanism 
-        # and then do a linear combination of the result with z.
-
-        # inputs = torch.bmm(torch.bmm(self.comb(embedded), z), context)
 
         inputs = torch.cat([embedded,context,z], 1).unsqueeze(1)
-        
-        # print("INPUTS SHAPE:", inputs.shape)
 
         if len(previousHidden.shape) < 3:
             previousHidden = previousHidden.unsqueeze(0)
-        # print(previousHidden.shape)
         # do a forward GRU
         output, hidden = self.gru(inputs, previousHidden)
-        # print("OUTPUT SHAPE:", output.shape)
         # softmax the output
         output = output.squeeze(1)
-        # print("OUTS:", output.shape, context.shape)
         output = torch.cat((output, context), 1)
-        # print("NOW WHAT:", output.shape)
         output = self.out(output)
 
         output = F.log_softmax(output, dim=0)
@@ -322,18 +232,9 @@ class Inference(nn.Module):
         self.mean = nn.Linear(hidden_size, latent_size)
         self.var = nn.Linear(hidden_size, latent_size)
 
-        # decode
-        # self.fc3 = nn.Linear(latent_size + class_size, 400)
-        # self.fc4 = nn.Linear(400, feature_size)
-
         self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
 
     def encode(self, h_forward, c, h_backward): # Q(z|x, c)
-        # print("ENCODE:")
-        # print(h_forward.shape)
-        # print(c.shape)
-        # print(h_backward.shape)
         inputs = torch.cat([h_forward, c, h_backward], 1) # (bs, feature_size+class_size)
         h1 = self.relu(self.fc1(inputs))
         z_mu = self.mean(h1)
@@ -346,16 +247,6 @@ class Inference(nn.Module):
         eps = Variable(std.data.new(std.size()).normal_())
         return eps.mul(std) + mu
   
-
-    # def decode(self, z, c): # P(x|z, c)
-    #     '''
-    #     z: (bs, latent_size)
-    #     c: (bs, class_size)
-    #     '''
-    #     inputs = torch.cat([z, c], 1) # (bs, latent_size+class_size)
-    #     h3 = self.relu(self.fc3(inputs))
-    #     return self.sigmoid(self.fc4(h3))
-
     def forward(self, h_forward, c, h_backward):
         # print("INFERENCE:-----------")
         mu, logvar = self.encode(h_forward, c, h_backward)
@@ -374,12 +265,7 @@ class Prior(nn.Module):
         self.mean = nn.Linear(hidden_size, latent_size)
         self.var = nn.Linear(hidden_size, latent_size)
 
-        # # decode
-        # self.fc3 = nn.Linear(latent_size + class_size, 400)
-        # self.fc4 = nn.Linear(400, feature_size)
-
         self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
 
     def encode(self, h, c): # Q(z|x, c)
         '''
@@ -401,20 +287,10 @@ class Prior(nn.Module):
         else:
             return mu
 
-    # def decode(self, z, c): # P(x|z, c)
-    #     '''
-    #     z: (bs, latent_size)
-    #     c: (bs, class_size)
-    #     '''
-    #     inputs = torch.cat([z, c], 1) # (bs, latent_size+class_size)
-    #     h3 = self.relu(self.fc3(inputs))
-    #     return self.sigmoid(self.fc4(h3))
-
     def forward(self, x, c):
         mu, logvar = self.encode(x, c)
         z = self.reparametrize(mu, logvar)
         return z, mu, logvar
-        # return self.decode(z, c), mu, logvar
 
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(y_predicted, y, z_inference, z_prior, criterion):
@@ -474,17 +350,13 @@ def trainVAD(x,
 
 
     # set up the variables for decoder computation
-    decoderInput = torch.tensor(
-        [[word2id["<eos>"]]] * batchSize, dtype=torch.long, device=device)
+    decoderInput = torch.tensor([[word2id["<eos>"]]] * batchSize, dtype=torch.long, device=device)
     
     decoderHidden = encoderHidden[-1]
     decoderOutput = None
     
-    # print("ENCODER OUTPUTS:", encoderOutputs.shape)
-    # print("ENCODER HIDDENS:", encoderHidden.shape)
     # Run through the decoder one step at a time. This seems to be common practice across
     # all of the seq2seq based implementations I've come across on GitHub.
-    # print("TARGET LENGTH",targetLength)
     for t in range(targetLength-1):
         # print("ITERATION:-----------------------------------")
         # get the context vector c
@@ -509,7 +381,6 @@ def trainVAD(x,
         decoderOutput, decoderHidden = DecoderOut
         # calculate the loss
         loss += loss_function(decoderOutput, y[:,t], z_infer, z_prior, criterion)
-        # print("LOSS:",loss.item())
         # feed this output to the next input
         decoderInput = y[:,t]
         decoderHidden = decoderHidden.squeeze(0)
@@ -553,10 +424,11 @@ def trainIteration(
     priorOpt     = optim.Adam(prior.parameters(),     lr=learningRate)
     decoderOpt   = optim.Adam(decoder.parameters(),   lr=learningRate)
     
-    for i in range(1, iterations + 1):
-        print("Iteration", i)
+    for j in range(1, iterations + 1):
+        print("Iteration", j)
         # set up variables needed for training.
-        for batch in tqdm(dataset):
+        for i in range(1,len(dataset)+1):
+            batch = dataset[i-1]
             # each batch is composed of the 
             # reviews, and a sentence length.
             entry, length = batch
@@ -587,18 +459,26 @@ def trainIteration(
             plotLossTotal += loss
             
             # print mechanism
-            if i % printEvery == 0:
-                printLossAvg = printLossTotal / printEvery
-                # reset the print loss.
-                printLossTotal = 0
-                print('%s (%d %d%%) %.4f' % (timeSince(start, i / iterations),
-                                            i, i / iterations * 100, printLossAvg))
+            print(loss)
             # plot mechanism
             # if i % plotEvery == 0:
             #     plotLossAvg = plotLossTotal / plotEvery
             #     plotLosses.append(plotLossAvg)
             #     plotLossTotal = 0
 
+
+def asMinutes(s):
+    m = math.floor(s / 60)
+    s -= m * 60
+    return '%dm %ds' % (m, s)
+
+
+def timeSince(since, percent):
+    now = time.time()
+    s = now - since
+    es = s / (percent)
+    rs = es - s
+    return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
 """
 Dataset batching mechanism
