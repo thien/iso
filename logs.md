@@ -16,9 +16,21 @@ These logs are used to indicate progress of the project as I work on it through 
 ----
 
 ## 2019/03/29 (Friday)
+- [Model can run forward passes no problem on the batched dataset.](code/vad.py)
 - [00:12] Model runs for one batch, but the loss dissappears entirely on the second batch. This would mean that gradients are not appropiately pushed through. I'll need to look into this.
 - I should start with looking at all the `squeeze()` and `unsqueeze()` functions, and looking at the matrix operations of the input as it goes through the model.
-- Model also takes an incredibly long time to perform operations, especially with the parameter sizes mentioned in the paper. Training may take a day, and this is with 1/16th of the dataset (and with vector operations!!) - I should talk to my supervisor about this.
+- Model also takes an incredibly long time to perform operations, especially with the parameter sizes mentioned in the paper. Training may take a day, and this is with 1/16th of the dataset (and with vector operations!!) 
+    - With the following parameters, it takes 15 minutes to go through one iteration:
+        ```
+        dataShrink = 1/16
+        hiddenSize = 128
+        featureSize = 128
+        latentSize = 128
+        iterations = 10
+        bidirectionalEncoder = True
+        batchSize = 32
+        ```
+    - I should talk to my supervisor about this.
 - Now that I have a working dataset, I'll need to look at implementing other models such as the vanilla seq2seq and a regular Transformer on the dataset because I need charts to indicate anything wrong with the data representation...
 - Need to draw a flowchart of the vector dimension operations to see cases where I've messed up.
 

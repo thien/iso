@@ -427,8 +427,7 @@ def trainIteration(
     for j in range(1, iterations + 1):
         print("Iteration", j)
         # set up variables needed for training.
-        for i in range(1,len(dataset)+1):
-            batch = dataset[i-1]
+        for batch in tqdm(dataset):
             # each batch is composed of the 
             # reviews, and a sentence length.
             entry, length = batch
@@ -459,7 +458,7 @@ def trainIteration(
             plotLossTotal += loss
             
             # print mechanism
-            print(loss)
+            # print(loss)
             # plot mechanism
             # if i % plotEvery == 0:
             #     plotLossAvg = plotLossTotal / plotEvery
@@ -517,7 +516,7 @@ if __name__ == "__main__":
     latentSize = 128
     iterations = 10
     bidirectionalEncoder = True
-    batchSize = 128
+    batchSize = 32
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Done.")
 
