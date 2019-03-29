@@ -9,13 +9,77 @@ These logs are used to indicate progress of the project as I work on it through 
 - Summary of Baselines:
     - [x] Concise summary of seq2seq
     - Concise summary of Transformer paper
-- Cover Controllable Story Generation paper
-- [x] Buy storage so you can fit the amazon dataset
-- [x] Browse around for variational autoencoder implementations?
-- Model the implemented `seq2seq` code around the ISO problem so we can use it as a benchmark.
-- [] Finish the literature survey writeup.
+- [ ] Cover Controllable Story Generation paper
+- [ ] Model the implemented `seq2seq` code around the ISO problem so we can use it as a benchmark.
+- [ ] Finish the literature survey writeup.
 
 ----
+
+## 2019/03/29 (Friday)
+- [Model can run forward passes no problem on the batched dataset.](code/vad.py)
+- [00:12] Model runs for one batch, but the loss dissappears entirely on the second batch. This would mean that gradients are not appropiately pushed through. I'll need to look into this.
+- I should start with looking at all the `squeeze()` and `unsqueeze()` functions, and looking at the matrix operations of the input as it goes through the model.
+- Model also takes an incredibly long time to perform operations, especially with the parameter sizes mentioned in the paper. Training may take a day, and this is with 1/16th of the dataset (and with vector operations!!) 
+    - With the following parameters, it takes 15 minutes to go through one iteration:
+        ```
+        dataShrink = 1/16
+        hiddenSize = 128
+        featureSize = 128
+        latentSize = 128
+        iterations = 10
+        bidirectionalEncoder = True
+        batchSize = 32
+        ```
+    - I should talk to my supervisor about this.
+- Now that I have a working dataset, I'll need to look at implementing other models such as the vanilla seq2seq and a regular Transformer on the dataset because I need charts to indicate anything wrong with the data representation...
+- Need to draw a flowchart of the vector dimension operations to see cases where I've messed up.
+
+## 2019/03/28 (Thursday)
+- Changed decoder output to one-hot
+- Verified that one-pass can occur with current flow (but this will be broken as we're moving to batched operations)
+- Dataset needs to be rewritten as the input is presently `[itemID, summary, rating, polarity, review]` but this does not work with PyTorch as there would exist padding in the middle of the sequence. It'll need to be rewritten as `[ItemID, rating, polarity, summary, review]`.
+    - Other than it working on PyTorch properly, this may actually work much better for these reasons:
+    - More space for number of words overall for review
+    - the remainder of the text would have context on the rating and polarity.
+- Building data batching mechanism because realistically this model will take quite a long time to train compared to the other approaches. (The PyTorch tutorial on Seq2Seq is not batched!) - I'll be using [this tutorial.](https://github.com/howardyclo/pytorch-seq2seq-example/blob/master/seq2seq.ipynb)
+- ~~Need to update data batching as the backwards model requires the output to be in reverse.~~ (Done; output is literally reversed s.t the padding is at the front, but I would imagine that padding order does not make a difference anyway)
+- Built data batching mechanism
+- Presently updating the VAD implementation to support batches.
+- Initial commit of running model.
+
+### 2019/03/27 (Wednesday)
+- More bug-fixes on components
+- The paper does not explicitly mention how the variables are joined together other than "a combination" so I was a bit confused.
+    ![](Documents/log_imgs/decoder.png)
+    - For now I've just concatenated the variables together.
+- Focused on changing model components to fit single-case batch (which I should change later)
+
+### 2019/03/26 (Tuesday)
+- Used glove weights for dataset for now (reflected as changes in code)
+- Moved VAD code to dedicated python file for better debugging
+- Pickled datasets with weights
+
+### 2019/03/25 (Monday)
+- Converted dataset into form
+- Added multiprocessing and log bars to indicate progress of model updating
+- Setup code-server for remote IDE work alongside jupyter
+- I'll need a method later to split the review by sentence but for now we'll create an autoencoder style implementation.
+
+
+### 2019/02/15 (Friday)
+- Discussed the weird auxillary function, and asked on the rationale behind using 1 layer neural networks for many of the components with supervisor.
+- Added GloVe embeddings.
+- Initial definition of all components (except for the auxillary function)
+- Reimplemented KL Divergence function
+- Added GloVe embeddings to encoder and decoder
+- Split the attention mechanism away from the decoder s.t the context vector can be used in other components.
+- Added Xavier weight initialisation and adam optimisers.
+- Initial setup for code.
+
+#### Todo:
+- [ ] Start implementing the transformer paper.
+- [ ] Get a working model for seq2seq on our dataset.
+
 
 ### 2019/02/02 (Saturday)
 - [Continued working on implementation on VADs.](Samples/VAD.ipynb).
