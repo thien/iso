@@ -37,17 +37,17 @@ class Encoder(nn.Module):
     
     The hidden size is 512 as per the paper.
     """
-    def __init__(self, embeddingMatrix, vocabularySize, padding_id, hiddenSize=512, bidirectional=True):
+    def __init__(self, 
+                embeddingMatrix, 
+                vocabularySize, 
+                padding_id, 
+                hiddenSize=512, 
+                bidirectional=True):
+
         super(Encoder, self).__init__()
         self.hiddenSize = hiddenSize
         self.isBidirectional = bidirectional
-        # this embedding is a simple lookup table that stores the embeddings of a 
-        # fixed dictionary and size.
-        
-        # This module is often used to store word embeddings and retrieve them
-        # using indices. 
-        # The input to the module is a list of indices, and 
-        # the output is the corresponding word embeddings.
+
         embeddingDim = embeddingMatrix.shape[1]
         self.embedding = nn.Embedding(
             num_embeddings=vocabularySize,
@@ -57,65 +57,34 @@ class Encoder(nn.Module):
         )
         # we're using pretrained labels
         self.embedding.weight.requires_grad = False
-        self.embedding.to(device)
+        self.embedding.to(device)    
+        
         self.gru = nn.GRU(embeddingDim, hiddenSize,
                           bidirectional=self.isBidirectional, batch_first=True)
     
-    def forward(self, x, x_length, hidden):
+    def forward(self, x, hidden, x_length=None):
         # load the input into the embedding before doing GRU computation.
         embed = self.embedding(x)
-        # load pack_padded_sequence so PyTorch knows when to not compute rubbish
-        packed_emb = nn.utils.rnn.pack_padded_sequence(
-            embed, x_length, batch_first=True)
+
+        if x_length is not None:
+            # load pack_padded_sequence so PyTorch knows when to not compute rubbish
+            packed_emb = nn.utils.rnn.pack_padded_sequence(embed, x_length, batch_first=True)
+        
         # load it through the GRU
         packed_outputs, hidden = self.gru(packed_emb, hidden)
-        # reverse
-        output, output_lens = nn.utils.rnn.pad_packed_sequence(packed_outputs, batch_first=True)
-
-        if self.isBidirectional:
-            # (num_layers * num_directions, batch_size, hidden_size)
-            # => (num_layers, batch_size, hidden_size * num_directions)
-            hidden = self._cat_directions(hidden)
-        return output, hidden
     
+        if x_length is not None:
+            # reverse pack_padded_sequence
+            output, _ = nn.utils.rnn.pad_packed_sequence(packed_outputs, batch_first=True)
+
+        return output, hidden
+
     def initHidden(self, batch_size):
-        numLayers = 1
-        if self.isBidirectional:
-            numLayers = 2 # because it's bidirectional
+        numLayers = 2 if self.isBidirectional else 1
         return torch.zeros(numLayers, batch_size, self.hiddenSize, device=device)
 
-    def _cat_directions(self, hidden):
-        """ If the encoder is bidirectional, do the following transformation.
-            Ref: https://github.com/IBM/pytorch-seq2seq/blob/master/seq2seq/models/DecoderRNN.py#L176
-            -----------------------------------------------------------
-            In: (num_layers * num_directions, batch_size, hidden_size)
-            (ex: num_layers=2, num_directions=2)
-
-            layer 1: forward__hidden(1)
-            layer 1: backward_hidden(1)
-            layer 2: forward__hidden(2)
-            layer 2: backward_hidden(2)
-
-            -----------------------------------------------------------
-            Out: (num_layers, batch_size, hidden_size * num_directions)
-
-            layer 1: forward__hidden(1) backward_hidden(1)
-            layer 2: forward__hidden(2) backward_hidden(2)
-        """
-        def _cat(h):
-            return torch.cat([h[0:h.size(0):2], h[1:h.size(0):2]], 2)
-
-        if isinstance(hidden, tuple):
-            # LSTM hidden contains a tuple (hidden state, cell state)
-            hidden = tuple([_cat(h) for h in hidden])
-        else:
-            # GRU hidden
-            hidden = _cat(hidden)
-
-        return hidden
-
 class Backwards(nn.Module):
-    def __init__(self, embeddingMatrix, vocabularySize, padding_id, hidden_size=512):
+    def __init__(self, embeddingMatrix, vocabularySize, padding_id, hidden_size=512, bidirectionalEncoder=False):
         super(Backwards, self).__init__()
         self.hiddenSize = hidden_size
 
@@ -130,43 +99,48 @@ class Backwards(nn.Module):
         # we're using pretrained labels
         self.embedding.weight.requires_grad = False
         self.embedding.to(device)
-        self.gru = nn.GRU(embeddingDim, hidden_size, batch_first=True)
+
+        self.numLayers = 2 if bidirectionalEncoder else 1
+        self.gru = nn.GRU(embeddingDim, hidden_size,num_layers=self.numLayers,batch_first=True)
 
     def forward(self, x, x_length, hidden):
         embed = self.embedding(x)
         packed_emb = nn.utils.rnn.pack_padded_sequence(
             embed, x_length, batch_first=True)
         packed_outputs, hidden = self.gru(packed_emb, hidden)
-        output, output_lens = nn.utils.rnn.pad_packed_sequence(
+        output, _ = nn.utils.rnn.pad_packed_sequence(
             packed_outputs, batch_first=True)
         return output, hidden
 
     def initHidden(self, batchSize):
-        return torch.zeros(1, batchSize, self.hiddenSize, device=device)
+        return torch.zeros(self.numLayers, batchSize, self.hiddenSize, device=device)
 
 class Attn(nn.Module):
-    def __init__(self,  hidden_size):
+    def __init__(self,  hidden_size, bidirectionalEncoder):
         super(Attn, self).__init__()
-        
+        self.bidirectionalEncoder = bidirectionalEncoder
         self.hidden_size = hidden_size
-        self.attn = nn.Linear(self.hidden_size * 2, self.hidden_size * 2)
 
-    def forward(self, hidden, encoder_outputs):
-        max_len = encoder_outputs.size(0)
-        this_batch_size = encoder_outputs.size(1)
+        self.attnInput = self.hidden_size * 2 if self.bidirectionalEncoder else self.hidden_size
+        self.attn = nn.Linear(self.attnInput, self.hidden_size)
+        # self.compressor = nn.Linear(self.attnInput, self.hidden_size)
 
+    def forward(self, encoder_outputs, hidden):
+        # https://github.com/howardyclo/pytorch-seq2seq-example/blob/master/seq2seq.ipynb
         # Create variable to store attention energies
         attn_energies = self.score(hidden, encoder_outputs)
-
         # Normalize energies to weights in range 0 to 1, resize to 1 x B x S
-        return F.softmax(attn_energies, dim=1).squeeze()
+        attention_weights = F.softmax(attn_energies, dim=1)
+        # compute context weights
+        c = torch.bmm(attention_weights, encoder_outputs).squeeze(1)
+    
+        return c
     
     def score(self, hidden, encoder_output):
-        energy = self.attn(encoder_output)
-        energy = energy.transpose(2, 1)
+        energy = self.attn(encoder_output).transpose(2, 1)
         hidden = hidden.unsqueeze(1)
-        energy = hidden.bmm(energy)
-        return energy
+        score = hidden.bmm(energy)
+        return score
 
 class Decoder(nn.Module):
     def __init__(self, embeddingMatrix, vocabularySize, padding_id, batchSize, outputSize, hiddenSize, latentSize, encoderBidirectional):
@@ -193,11 +167,15 @@ class Decoder(nn.Module):
         if encoderBidirectional:
             encoderDim *= 2
 
-        self.gru = nn.GRU(encoderDim +
-                          embeddingDim + self.latentSize, encoderDim, batch_first=True)
-        self.out = nn.Linear(encoderDim * 2, vocabularySize)
+        self.gru = nn.GRU(embeddingDim +
+                          encoderDim + self.latentSize, self.hiddenSize, batch_first=True)
+        self.out = nn.Linear(self.hiddenSize + encoderDim, vocabularySize)
 
     def forward(self, y, context, z, previousHidden):
+        # print("Y:", y.shape)
+        # print("C:", context.shape)
+        # print("Z:", z.shape)
+        # print("H", previousHidden.shape)
         embedded = self.embedding(y).squeeze(1)
 
         inputs = torch.cat([embedded,context,z], 1).unsqueeze(1)
@@ -210,8 +188,7 @@ class Decoder(nn.Module):
         output = output.squeeze(1)
         output = torch.cat((output, context), 1)
         output = self.out(output)
-
-        output = F.log_softmax(output, dim=0)
+        output = F.log_softmax(output, dim=1)
         return output, hidden
 
     def initHidden(self):
@@ -224,14 +201,16 @@ class Inference(nn.Module):
     Therefore the size of the weights are entirely based on the size
     of the input and outputs.
     """
-    def __init__(self, hidden_size=512, latent_size=400):
+    def __init__(self, hidden_size=512, latent_size=400, bidirectionalEncoder=False):
         super(Inference, self).__init__()
         
+        forwardInput = hidden_size * 3
+        if bidirectionalEncoder:
+            forwardInput += hiddenSize
         # encode
-        self.fc1  = nn.Linear(hidden_size*2 + hidden_size*2 + hidden_size, hidden_size)
+        self.fc1 = nn.Linear(forwardInput, hidden_size)
         self.mean = nn.Linear(hidden_size, latent_size)
         self.var = nn.Linear(hidden_size, latent_size)
-
         self.relu = nn.ReLU()
 
     def encode(self, h_forward, c, h_backward): # Q(z|x, c)
@@ -245,33 +224,30 @@ class Inference(nn.Module):
         # samples your mu, logvar to get z.
         std = logvar.mul(0.5).exp_()
         eps = Variable(std.data.new(std.size()).normal_())
-        return eps.mul(std) + mu
+        # return eps.mul(std) + mu
+        return mu + std.mul(eps)
   
     def forward(self, h_forward, c, h_backward):
-        # print("INFERENCE:-----------")
         mu, logvar = self.encode(h_forward, c, h_backward)
         z = self.reparametrize(mu, logvar)
         return z, mu, logvar
         
 class Prior(nn.Module):
-    def __init__(self, hidden_size=512, latent_size=400):
+    def __init__(self, hidden_size=512, latent_size=400, bidirectionalEncoder=False):
         super(Prior, self).__init__()
         
-        # self.feature_size = feature_size
-        # self.class_size = class_size
+        forwardInput = hidden_size * 2
+        if bidirectionalEncoder:
+            forwardInput += hiddenSize
 
         # encode
-        self.fc1  = nn.Linear(hidden_size*2 + hidden_size*2, hidden_size)
+        self.fc1  = nn.Linear(forwardInput, hidden_size)
         self.mean = nn.Linear(hidden_size, latent_size)
         self.var = nn.Linear(hidden_size, latent_size)
 
         self.relu = nn.ReLU()
 
     def encode(self, h, c): # Q(z|x, c)
-        '''
-        x: (bs, feature_size)
-        c: (bs, class_size)
-        '''
         inputs = torch.cat([h, c], 1) # (bs, feature_size+class_size)
         h1 = self.relu(self.fc1(inputs))
         z_mu = self.mean(h1)
@@ -283,7 +259,7 @@ class Prior(nn.Module):
         if self.training:
             std = logvar.mul(0.5).exp_()
             eps = Variable(std.data.new(std.size()).normal_())
-            return eps.mul(std) + mu
+            return mu + std.mul(eps)
         else:
             return mu
 
@@ -291,6 +267,7 @@ class Prior(nn.Module):
         mu, logvar = self.encode(x, c)
         z = self.reparametrize(mu, logvar)
         return z, mu, logvar
+
 
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(y_predicted, y, z_inference, z_prior, criterion):
@@ -335,6 +312,8 @@ def trainVAD(x,
     targetLength = y[0].size(0)
     batchSize = x.shape[0]
 
+    # print("X SHAPE:", x.shape)
+    # print("Y SHAPE:", y.shape)
     # set default loss
     loss = 0
     
@@ -343,11 +322,17 @@ def trainVAD(x,
     backwardHidden = backwards.initHidden(batchSize)
     
     # set up encoder outputs
-    encoderOutputs, encoderHidden = encoder(x, xLength, encoderHidden)
+    encoderOutputs, encoderHidden = encoder(x, encoderHidden, xLength)
+
+    # print("ENCODER OUTPUT:", encoderOutputs.shape)
+    # print("ENCODER HIDDEN:", encoderHidden.shape)
+
     # compute backwards outputs
     backwardOutput, backwardHidden = backwards(torch.flip(
         y, [0, 1]), yLength, backwardHidden)
 
+    # print("BACKWARD OUTPUT:", backwardOutput.shape)
+    # print("BACKWARD HIDDEN:", backwardHidden.shape)
 
     # set up the variables for decoder computation
     decoderInput = torch.tensor([[word2id["<eos>"]]] * batchSize, dtype=torch.long, device=device)
@@ -358,42 +343,35 @@ def trainVAD(x,
     # Run through the decoder one step at a time. This seems to be common practice across
     # all of the seq2seq based implementations I've come across on GitHub.
     for t in range(targetLength-1):
-        # print("ITERATION:-----------------------------------")
         # get the context vector c
-        # c, _ = attention(encoderOutputs, decoderHidden)
-        # print("DECODER HIDDEN:--------", decoderHidden.shape)
-        c = attention(decoderHidden, encoderOutputs)
+        c = attention(encoderOutputs, decoderHidden)
+
         # compute the inference layer
-        # print("ATTENTION DIM:",c.shape)
-
-        why = encoderOutputs
-        c = c.unsqueeze(1)
-        # print("C HOW:", c.shape)
-        # print("INP:", why.shape)
-        what = torch.bmm(c, why).squeeze(1)
-        # print(what.shape)
-
-        z_infer, _, _ = inference(decoderHidden, what, backwardOutput[:,t])
+        z_infer, _, _ = inference(decoderHidden, c, backwardOutput[:,t])
         # compute the prior layer
-        z_prior, _, _ = prior(decoderHidden, what)
+        z_prior, _, _ = prior(decoderHidden, c)
+        # print("DECODER:")
         # compute the output of each decoder state
-        DecoderOut = decoder(decoderInput, what, z_infer, decoderHidden)
+        DecoderOut = decoder(decoderInput, c, z_infer, decoderHidden)
+        # update variables
         decoderOutput, decoderHidden = DecoderOut
         # calculate the loss
-        loss += loss_function(decoderOutput, y[:,t], z_infer, z_prior, criterion)
+        seqloss = loss_function(decoderOutput, y[:,t], z_infer, z_prior, criterion)
+        loss += seqloss
+
         # feed this output to the next input
         decoderInput = y[:,t]
         decoderHidden = decoderHidden.squeeze(0)
-    
+    print(loss)
     # possible because our loss_function uses gradient storing calculations
     loss.backward()
-    
-    encoderOpt.step()
+    print(loss)
+    decoderOpt.step()
+    priorOpt.step()
+    inferenceOpt.step()
     attentionOpt.step()
     backwardsOpt.step()
-    inferenceOpt.step()
-    priorOpt.step()
-    decoderOpt.step()
+    encoderOpt.step()
     
     return loss.item()/targetLength
 
@@ -423,11 +401,13 @@ def trainIteration(
     inferenceOpt = optim.Adam(inference.parameters(), lr=learningRate)
     priorOpt     = optim.Adam(prior.parameters(),     lr=learningRate)
     decoderOpt   = optim.Adam(decoder.parameters(),   lr=learningRate)
-    
+
     for j in range(1, iterations + 1):
         print("Iteration", j)
         # set up variables needed for training.
-        for batch in tqdm(dataset):
+        n = -1
+        for batch in dataset:
+            n += 1
             # each batch is composed of the 
             # reviews, and a sentence length.
             entry, length = batch
@@ -457,13 +437,10 @@ def trainIteration(
             printLossTotal += loss
             plotLossTotal += loss
             
-            # print mechanism
-            # print(loss)
-            # plot mechanism
-            # if i % plotEvery == 0:
-            #     plotLossAvg = plotLossTotal / plotEvery
-            #     plotLosses.append(plotLossAvg)
-            #     plotLossTotal = 0
+            print("BATCH ",n,"- LOSS:", loss)
+            if n > 0:
+                break
+        break
 
 
 def asMinutes(s):
@@ -511,12 +488,12 @@ def batchData(dataset, eos, batchsize=32):
 
 if __name__ == "__main__":
     print("Loading parameters..", end=" ")
-    hiddenSize = 128
-    featureSize = 128
-    latentSize = 128
-    iterations = 10
+    hiddenSize = 64
+    latentSize = 32
+    batchSize  = 16
+    iterations = 1
+    learningRate = 0.01
     bidirectionalEncoder = True
-    batchSize = 32
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Done.")
 
@@ -551,10 +528,12 @@ if __name__ == "__main__":
     modelEncoder = Encoder(weightMatrix, vocabularySize,
                            paddingID, hiddenSize, bidirectionalEncoder).to(device)
     # modelAttention = Attention(maxLength=maxReviewLength).to(device)
-    modelAttention = Attn(hiddenSize).to(device)
-    modelBackwards = Backwards(weightMatrix, vocabularySize, paddingID, hiddenSize).to(device)
-    modelInference = Inference(hiddenSize, latentSize).to(device)
-    modelPrior = Prior(hiddenSize, latentSize).to(device)
+    modelAttention = Attn(hiddenSize, bidirectionalEncoder).to(device)
+    modelBackwards = Backwards(weightMatrix, vocabularySize,
+                               paddingID, hiddenSize, bidirectionalEncoder).to(device)
+    modelInference = Inference(
+        hiddenSize, latentSize, bidirectionalEncoder).to(device)
+    modelPrior = Prior(hiddenSize, latentSize, bidirectionalEncoder).to(device)
     modelDecoder = Decoder(weightMatrix, vocabularySize,
                            paddingID, batchSize, maxReviewLength, hiddenSize, latentSize, bidirectionalEncoder).to(device)
     print("Done.")
@@ -569,4 +548,5 @@ if __name__ == "__main__":
                    modelDecoder,
                    iterations,
                    word2id, 
+                   learningRate=learningRate,
                    printEvery=1000)
