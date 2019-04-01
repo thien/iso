@@ -279,8 +279,10 @@ def loss_function(y_predicted, y, inference_mu, inference_logvar, prior_mu, prio
     KL = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
     # print(LL.shape)
     # print("KL:",KL.shape)
-    KL = torch.mean(torch.mean(KL))/y_predicted.shape[0]
-    return LL - KL
+    # KL = torch.mean(torch.mean(KL))/y_predicted.shape[0]
+    # print(LL,KL)
+    # return LL - KL
+    return LL
 
 def trainVAD(x,
              y,
@@ -299,7 +301,7 @@ def trainVAD(x,
              priorOpt,
              decoderOpt,
              word2id,
-             criterion = nn.NLLLoss()
+             criterion
             ):
 
     """
@@ -393,7 +395,7 @@ def trainIteration(
                 decoder,
                 iterations,
                 word2id,
-                criterion = nn.NLLLoss(),
+                criterion,
                 learningRate = 0.0001,
                 printEvery = 10,
                 plotEvery = 100):
@@ -483,7 +485,7 @@ def batchData(dataset, padID, batchsize=32, cutoff=50):
     for i in range(0, datasize, batchsize):
         batches.append(dataset[i:i+batchsize])
     # within each batch, sort the entries.
-    for i in tqdm(range(len(batches))):
+    for i in range(len(batches)):
         batch = batches[i]
         # get lengths of each review in the batch
         # based on the postion of the EOS tag.
@@ -507,9 +509,9 @@ def batchData(dataset, padID, batchsize=32, cutoff=50):
 
 if __name__ == "__main__":
     print("Loading parameters..", end=" ")
-    hiddenSize = 400
-    latentSize = 512
-    batchSize  = 32
+    hiddenSize = 512
+    latentSize = 400
+    batchSize  = 64
     iterations = 1
     learningRate = 0.00001
     bidirectionalEncoder = True
@@ -572,6 +574,7 @@ if __name__ == "__main__":
     modelPrior = Prior(hiddenSize, latentSize, bidirectionalEncoder).to(device)
     modelDecoder = Decoder(weightMatrix, vocabularySize,
                            paddingID, batchSize, maxReviewLength, hiddenSize, latentSize, bidirectionalEncoder).to(device)
+    criterion = nn.NLLLoss(ignore_index=paddingID)
     print("Done.")
 
     print()
@@ -584,5 +587,6 @@ if __name__ == "__main__":
                    modelDecoder,
                    iterations,
                    word2id, 
+                   criterion,
                    learningRate=learningRate,
                    printEvery=1000)
