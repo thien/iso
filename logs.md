@@ -14,6 +14,14 @@ These logs are used to indicate progress of the project as I work on it through 
 - [ ] Finish the literature survey writeup.
 
 ----
+## 2019/04/01 (Monday)
+- Updated data processing mechanism to allow sentence by sentence input
+- Reduced input vocabulary size to 30k
+- Presplit training and validation data by the data processing notebook
+- Need to add padding to sequences
+
+## 2019/03/30 (Saturday)
+- Fix attention mechanism and double check for gradient loss
 
 ## 2019/03/29 (Friday)
 - [Model can run forward passes no problem on the batched dataset.](code/vad.py)
