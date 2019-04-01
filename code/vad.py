@@ -512,7 +512,7 @@ if __name__ == "__main__":
     latentSize = 60
     batchSize  = 16
     iterations = 1
-    learningRate = 0.0000001
+    learningRate = 0.00001
     bidirectionalEncoder = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Done.")
@@ -531,7 +531,7 @@ if __name__ == "__main__":
 
     print("Converting dataset weights into tensors..", end=" ")
     # convert dataset into tensors
-    weightMatrix = torch.tensor(weightMatrix, dtype=torch.float, device=device)
+    weightMatrix = torch.tensor(weightMatrix, dtype=torch.float)
     print("Done.")
 
     # batching data
