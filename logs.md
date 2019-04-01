@@ -19,6 +19,7 @@ These logs are used to indicate progress of the project as I work on it through 
 - Reduced input vocabulary size to 30k
 - Presplit training and validation data by the data processing notebook
 - Need to add padding to sequences
+- Fixed critical KL mechanism bug where gradients were not being pushed through sampling method
 
 ## 2019/03/30 (Saturday)
 - Fix attention mechanism and double check for gradient loss
