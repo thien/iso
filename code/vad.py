@@ -508,9 +508,9 @@ def batchData(dataset, padID, batchsize=32, cutoff=50):
 
 if __name__ == "__main__":
     print("Loading parameters..", end=" ")
-    hiddenSize = 32
-    latentSize = 60
-    batchSize  = 16
+    hiddenSize = 400
+    latentSize = 512
+    batchSize  = 32
     iterations = 1
     learningRate = 0.00001
     bidirectionalEncoder = True
