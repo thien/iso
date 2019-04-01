@@ -20,6 +20,9 @@ These logs are used to indicate progress of the project as I work on it through 
 - Presplit training and validation data by the data processing notebook
 - Need to add padding to sequences
 - Fixed critical KL mechanism bug where gradients were not being pushed through sampling method
+- Gradients are being pushed through but the loss is massively fluctuating based on the location of the sequences. (This could be promptly fixed with shuffling)
+- I'll need to look at how the data is being represented and see how messed up it is
+- I'll also need to refactor the data-processing mechanism so that others can simply run the code (and it'll download the dataset, preprocess and package ready for use with the model.)
 
 ## 2019/03/30 (Saturday)
 - Fix attention mechanism and double check for gradient loss
