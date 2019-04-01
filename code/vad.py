@@ -464,7 +464,6 @@ def timeSince(since, percent):
 Dataset batching mechanism
 """
 
-
 def padSeq(row, maxlength, padID, cutoff):
     currentLength = len(row)
     difference = maxlength - currentLength
@@ -542,10 +541,12 @@ if __name__ == "__main__":
     valx = [x[0] for x in validation]
     valy = [x[1] for x in validation]
 
-    # trainx = batchData(trainx, paddingID, batchSize, cutoff)
-    # trainy = batchData(trainy, paddingID, batchSize, cutoff)
-    trainx = batchData(valx, paddingID, batchSize, cutoff)
-    trainy = batchData(valy, paddingID, batchSize, cutoff)
+    # shuffle data row
+
+    trainx = batchData(trainx, paddingID, batchSize, cutoff)
+    trainy = batchData(trainy, paddingID, batchSize, cutoff)
+    # trainx = batchData(valx, paddingID, batchSize, cutoff)
+    # trainy = batchData(valy, paddingID, batchSize, cutoff)
 
     traindata = (trainx, trainy)
     # valdata= (valx, valy)
