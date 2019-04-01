@@ -133,7 +133,6 @@ class Attn(nn.Module):
         attention_weights = F.softmax(attn_energies, dim=1)
         # compute context weights
         c = torch.bmm(attention_weights, encoder_outputs).squeeze(1)
-    
         return c
     
     def score(self, hidden, encoder_output):
@@ -172,10 +171,6 @@ class Decoder(nn.Module):
         self.out = nn.Linear(self.hiddenSize + encoderDim, vocabularySize)
 
     def forward(self, y, context, z, previousHidden):
-        # print("Y:", y.shape)
-        # print("C:", context.shape)
-        # print("Z:", z.shape)
-        # print("H", previousHidden.shape)
         embedded = self.embedding(y).squeeze(1)
 
         inputs = torch.cat([embedded,context,z], 1).unsqueeze(1)
@@ -269,10 +264,22 @@ class Prior(nn.Module):
         return z, mu, logvar
 
 
+def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
+    # https://stats.stackexchange.com/questions/60680/kl-divergence-between-two-multivariate-gaussians
+    kld = -0.5 * torch.sum(1 + (recog_logvar - prior_logvar)
+                           - torch.div(torch.pow(prior_mu - recog_mu,
+                                                 2), torch.exp(prior_logvar))
+                           - torch.div(torch.exp(recog_logvar), torch.exp(prior_logvar)), 1)
+    return kld
+
+
 # Reconstruction + KL divergence losses summed over all elements and batch
-def loss_function(y_predicted, y, z_inference, z_prior, criterion):
+def loss_function(y_predicted, y, inference_mu, inference_logvar, prior_mu, prior_logvar, criterion):
     LL = criterion(y_predicted, y)
-    KL = F.kl_div(z_inference, z_prior)
+    KL = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
+    # print(LL.shape)
+    # print("KL:",KL.shape)
+    KL = torch.mean(torch.mean(KL))/y_predicted.shape[0]
     return LL - KL
 
 def trainVAD(x,
@@ -312,11 +319,13 @@ def trainVAD(x,
     targetLength = y[0].size(0)
     batchSize = x.shape[0]
 
+    # print(xLength[0], yLength[0])
     # print("X SHAPE:", x.shape)
     # print("Y SHAPE:", y.shape)
     # set default loss
     loss = 0
     
+    # print(inputLength,)
     # set up encoder computation
     encoderHidden = encoder.initHidden(batchSize)
     backwardHidden = backwards.initHidden(batchSize)
@@ -335,37 +344,36 @@ def trainVAD(x,
     # print("BACKWARD HIDDEN:", backwardHidden.shape)
 
     # set up the variables for decoder computation
-    decoderInput = torch.tensor([[word2id["<eos>"]]] * batchSize, dtype=torch.long, device=device)
+    decoderInput = torch.tensor([[word2id["<sos>"]]] * batchSize, dtype=torch.long, device=device)
     
     decoderHidden = encoderHidden[-1]
     decoderOutput = None
     
     # Run through the decoder one step at a time. This seems to be common practice across
     # all of the seq2seq based implementations I've come across on GitHub.
-    for t in range(targetLength-1):
+    for t in range(yLength[0]):
         # get the context vector c
         c = attention(encoderOutputs, decoderHidden)
 
         # compute the inference layer
-        z_infer, _, _ = inference(decoderHidden, c, backwardOutput[:,t])
+        z_infer, infer_mu, infer_logvar = inference(decoderHidden, c, backwardOutput[:,t])
         # compute the prior layer
-        z_prior, _, _ = prior(decoderHidden, c)
-        # print("DECODER:")
+        z_prior, prior_mu, prior_logvar = prior(decoderHidden, c)
+    
         # compute the output of each decoder state
         DecoderOut = decoder(decoderInput, c, z_infer, decoderHidden)
         # update variables
         decoderOutput, decoderHidden = DecoderOut
         # calculate the loss
-        seqloss = loss_function(decoderOutput, y[:,t], z_infer, z_prior, criterion)
+        seqloss = loss_function(decoderOutput, y[:, t], infer_mu, infer_logvar, prior_mu, prior_logvar, criterion)
         loss += seqloss
-
+        # print(t, targetLength, seqloss)
         # feed this output to the next input
         decoderInput = y[:,t]
         decoderHidden = decoderHidden.squeeze(0)
-    print(loss)
+    # print(loss)
     # possible because our loss_function uses gradient storing calculations
     loss.backward()
-    print(loss)
     decoderOpt.step()
     priorOpt.step()
     inferenceOpt.step()
@@ -406,13 +414,13 @@ def trainIteration(
         print("Iteration", j)
         # set up variables needed for training.
         n = -1
-        for batch in dataset:
+
+        for batch in range(len(dataset[0])):
             n += 1
             # each batch is composed of the 
             # reviews, and a sentence length.
-            entry, length = batch
-            x, y = entry, entry
-            xLength, yLength = length, length
+            x, xLength = dataset[0][batch][0], dataset[0][batch][1]
+            y, yLength = dataset[1][batch][0], dataset[1][batch][1]
 
             # calculate loss.
             loss = trainVAD(x, y, 
@@ -438,10 +446,6 @@ def trainIteration(
             plotLossTotal += loss
             
             print("BATCH ",n,"- LOSS:", loss)
-            if n > 0:
-                break
-        break
-
 
 def asMinutes(s):
     m = math.floor(s / 60)
@@ -459,7 +463,15 @@ def timeSince(since, percent):
 """
 Dataset batching mechanism
 """
-def batchData(dataset, eos, batchsize=32):
+
+
+def padSeq(row, maxlength, padID, cutoff):
+    currentLength = len(row)
+    difference = maxlength - currentLength
+    return row + [padID for _ in range(difference)]
+
+
+def batchData(dataset, padID, batchsize=32, cutoff=50):
     """
     Splits the dataset into batches.
     Each batch needs to be sorted by 
@@ -472,27 +484,35 @@ def batchData(dataset, eos, batchsize=32):
     for i in range(0, datasize, batchsize):
         batches.append(dataset[i:i+batchsize])
     # within each batch, sort the entries.
-    for i in range(len(batches)):
+    for i in tqdm(range(len(batches))):
         batch = batches[i]
         # get lengths of each review in the batch
         # based on the postion of the EOS tag.
-        lengths = (batch==eos).nonzero()[:,1]
-        # sort the lengths
-        ordered = torch.argsort(lengths, descending=True)
+        lengths = [len(seq) for seq in batch]
+        indexes = [x for x in range(len(lengths))]
+        sortedindexes = sorted(list(zip(lengths, indexes)), reverse=True)
+
+        # since sentences are split by period, the period itself acts
+        # the token to identify that the sentence has ended.
+        # i.e. we don't need another token identifying the end of the subsequence.
+
         # get the reviews based on the sorted batch lengths
-        reviews = batch[ordered]
+        reviews = [padSeq(batch[i[1]], cutoff, padID, cutoff)
+                   for i in sortedindexes]
+
+        reviews = torch.tensor(reviews, dtype=torch.long, device=device)
         # re-allocate values.
-        batches[i] = (reviews, lengths[ordered])
+        batches[i] = (reviews, [i[0] for i in sortedindexes])
     return batches
 
 
 if __name__ == "__main__":
     print("Loading parameters..", end=" ")
-    hiddenSize = 64
-    latentSize = 32
+    hiddenSize = 32
+    latentSize = 60
     batchSize  = 16
     iterations = 1
-    learningRate = 0.01
+    learningRate = 0.0000001
     bidirectionalEncoder = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Done.")
@@ -503,28 +523,43 @@ if __name__ == "__main__":
     id2word = dataset['id2word']
     word2id = dataset['word2id']
     weightMatrix = dataset['weights']
-    dataset = dataset['reviews']
+    train = dataset['train']
+    validation = dataset['validation']
+    cutoff = dataset['cutoff']
+    paddingID = word2id['<pad>']
     print("Done.")
 
     print("Converting dataset weights into tensors..", end=" ")
     # convert dataset into tensors
-    dataset = torch.tensor(dataset, dtype=torch.long, device=device)
-    weightMatrix = torch.tensor(weightMatrix, dtype=torch.float)
+    weightMatrix = torch.tensor(weightMatrix, dtype=torch.float, device=device)
     print("Done.")
 
     # batching data
     print("Batching Data..",end=" ")
-    dataset = batchData(dataset, word2id['<eos>'], batchSize)
+
+    trainx = [x[0] for x in train]
+    trainy = [x[1] for x in train]
+    valx = [x[0] for x in validation]
+    valy = [x[1] for x in validation]
+
+    # trainx = batchData(trainx, paddingID, batchSize, cutoff)
+    # trainy = batchData(trainy, paddingID, batchSize, cutoff)
+    trainx = batchData(valx, paddingID, batchSize, cutoff)
+    trainy = batchData(valy, paddingID, batchSize, cutoff)
+
+    traindata = (trainx, trainy)
+    # valdata= (valx, valy)
     print("Done.")
     
     # setup variables for model components initialisation
-    maxReviewLength = dataset[0][0].shape[1]
+    maxReviewLength = cutoff
     vocabularySize = len(id2word)
     embeddingDim = weightMatrix.shape[1]
     embedding_shape = weightMatrix.shape
-    paddingID = word2id['<pad>']
+
 
     print("Initialising model components..", end=" ")
+
     modelEncoder = Encoder(weightMatrix, vocabularySize,
                            paddingID, hiddenSize, bidirectionalEncoder).to(device)
     # modelAttention = Attention(maxLength=maxReviewLength).to(device)
@@ -539,7 +574,7 @@ if __name__ == "__main__":
     print("Done.")
 
     print()
-    trainIteration(dataset,
+    trainIteration(traindata,
                    modelEncoder,
                    modelAttention,
                    modelBackwards,
