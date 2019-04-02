@@ -429,7 +429,7 @@ def trainIteration(
         n = -1
 
         losses = []
-        for batch in range(len(dataset[0])):
+        for batch in tqdm(range(len(dataset[0]))):
             n += 1
             # each batch is composed of the 
             # reviews, and a sentence length.
@@ -459,7 +459,7 @@ def trainIteration(
             printLossTotal += loss
             plotLossTotal += loss
             
-            print("BATCH ",n,"- LOSS:", loss)
+#             print("BATCH ",n,"- LOSS:", loss)
             losses.append(loss)
         plotBatchLoss(j, losses)
 
@@ -540,7 +540,7 @@ if __name__ == "__main__":
     hiddenSize = 1024
     latentSize = 400
     batchSize  = 64
-    iterations = 5
+    iterations = 3
     learningRate = 0.0001
     bidirectionalEncoder = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -622,3 +622,13 @@ if __name__ == "__main__":
                    criterion,
                    learningRate=learningRate,
                    printEvery=1000)
+
+    print("Saving models..", end=" ")
+    
+    torch.save(modelEncoder.state_dict(), 'encoder.pth')
+    torch.save(modelAttention.state_dict(), 'attention.pth')
+    torch.save(modelBackwards.state_dict(), 'backwards.pth')
+    torch.save(modelInference.state_dict(), 'inference.pth')
+    torch.save(modelPrior.state_dict(), 'prior.pth')
+    torch.save(modelDecoder.state_dict(), 'decoder.pth')
+    print("Done.")

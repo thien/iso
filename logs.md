@@ -33,8 +33,12 @@ These logs are used to indicate progress of the project as I work on it through 
 - I've noticed that the NLLLoss is decreasing at a steady constant rate (which is good!!) but the KL divergence is causing a large issue.
 - Fixed KLD loss
 - Noticed that KL quickly converges to zero(?)
-- Might need to implement teacher forcing?
-- Look at KL Annealing methods.
+- [ ] Might need to implement teacher forcing?
+- [ ] Look at KL Annealing methods.
+- I've managed to make the model learn!
+- ![](Documents/log_imgs/ep1.png)
+- ![](Documents/log_imgs/ep2.png)
+- I'm currently training the model on a subset for the time being (It will take 4 hours based on `tqdm`'s estimate.) I've written some scratch code to print charts and store model parameters after training so we can evaluate performance on the validation set.
         
 
 ## 2019/04/01 (Monday)
