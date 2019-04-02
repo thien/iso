@@ -283,7 +283,7 @@ def loss_function(y_predicted, y, inference_mu, inference_logvar, prior_mu, prio
     # print(LL.shape)
     # print("KL:",KL.shape)
     KL = torch.mean(torch.mean(KL))/y_predicted.shape[0]
-    print(LL.item(),KL.item())
+#     print(LL.item(),KL.item())
     return LL + KL
 #     return LL
 
