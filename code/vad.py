@@ -265,11 +265,13 @@ class Prior(nn.Module):
 
 
 def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
+    mu_1, var_1 = recog_mu, recog_logvar
+    mu_2, var_2 = prior_mu, prior_logvar
     # https://stats.stackexchange.com/questions/60680/kl-divergence-between-two-multivariate-gaussians
-    kld = -0.5 * torch.sum(1 + (recog_logvar - prior_logvar)
-                           - torch.div(torch.pow(prior_mu - recog_mu,
-                                                 2), torch.exp(prior_logvar))
-                           - torch.div(torch.exp(recog_logvar), torch.exp(prior_logvar)), 1)
+    kld = -0.5 * torch.sum(1 + (var_1 - var_2)
+                           - torch.div(torch.pow(mu_2 - mu_1,
+                                                 2), torch.exp(var_2))
+                           - torch.div(torch.exp(var_1), torch.exp(var_2)), 1)
     return kld
 
 
@@ -277,12 +279,13 @@ def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
 def loss_function(y_predicted, y, inference_mu, inference_logvar, prior_mu, prior_logvar, criterion):
     LL = criterion(y_predicted, y)
     KL = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
+#     print(KL)
     # print(LL.shape)
     # print("KL:",KL.shape)
-    # KL = torch.mean(torch.mean(KL))/y_predicted.shape[0]
-    # print(LL,KL)
-    # return LL - KL
-    return LL
+    KL = torch.mean(torch.mean(KL))/y_predicted.shape[0]
+    print(LL.item(),KL.item())
+    return LL + KL
+#     return LL
 
 def trainVAD(x,
              y,
@@ -509,11 +512,11 @@ def batchData(dataset, padID, batchsize=32, cutoff=50):
 
 if __name__ == "__main__":
     print("Loading parameters..", end=" ")
-    hiddenSize = 512
+    hiddenSize = 700
     latentSize = 400
     batchSize  = 64
     iterations = 1
-    learningRate = 0.00001
+    learningRate = 0.0001
     bidirectionalEncoder = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Done.")
