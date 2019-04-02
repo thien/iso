@@ -18,6 +18,14 @@ import pickle
 from tqdm import tqdm
 from torch.autograd import Variable
 
+# plotting
+import matplotlib
+matplotlib.use('Agg')
+
+from matplotlib import cm
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
 """
 Set seed #
 """
@@ -420,6 +428,7 @@ def trainIteration(
         # set up variables needed for training.
         n = -1
 
+        losses = []
         for batch in range(len(dataset[0])):
             n += 1
             # each batch is composed of the 
@@ -451,7 +460,23 @@ def trainIteration(
             plotLossTotal += loss
             
             print("BATCH ",n,"- LOSS:", loss)
+            losses.append(loss)
+        plotBatchLoss(j, losses)
 
+def plotBatchLoss(iteration, losses):
+    x = [i for i in range(1,len(losses)+1)]
+    su = plt.plot(x, losses)
+    title = 'Learning Loss during Iteration ' + str(iteration)
+    plt.title(title)
+    plt.ylabel('Loss')
+    plt.xlabel('Batch Number')
+    filetype = "png"
+    directory = "charts"
+    filename = title + "." + filetype
+    filepath = os.path.join(directory, filename)
+    plt.savefig(filepath, bbox_inches='tight')    
+    plt.close()
+        
 def asMinutes(s):
     m = math.floor(s / 60)
     s -= m * 60
@@ -514,8 +539,8 @@ if __name__ == "__main__":
     print("Loading parameters..", end=" ")
     hiddenSize = 1024
     latentSize = 400
-    batchSize  = 32
-    iterations = 1
+    batchSize  = 64
+    iterations = 5
     learningRate = 0.0001
     bidirectionalEncoder = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
