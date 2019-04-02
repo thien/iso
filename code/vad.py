@@ -282,7 +282,7 @@ def loss_function(y_predicted, y, inference_mu, inference_logvar, prior_mu, prio
 #     print(KL)
     # print(LL.shape)
     # print("KL:",KL.shape)
-    KL = torch.mean(torch.mean(KL))/y_predicted.shape[0]
+    KL = torch.mean(torch.mean(KL))
 #     print(LL.item(),KL.item())
     return LL + KL
 #     return LL
@@ -512,9 +512,9 @@ def batchData(dataset, padID, batchsize=32, cutoff=50):
 
 if __name__ == "__main__":
     print("Loading parameters..", end=" ")
-    hiddenSize = 700
+    hiddenSize = 1024
     latentSize = 400
-    batchSize  = 64
+    batchSize  = 32
     iterations = 1
     learningRate = 0.0001
     bidirectionalEncoder = True
@@ -540,6 +540,10 @@ if __name__ == "__main__":
 
     # batching data
     print("Batching Data..",end=" ")
+    
+    # shuffle data rows
+    random.shuffle(train)
+    random.shuffle(validation)
 
     trainx = [x[0] for x in train]
     trainy = [x[1] for x in train]

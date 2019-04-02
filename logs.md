@@ -32,7 +32,9 @@ These logs are used to indicate progress of the project as I work on it through 
 - However, not sure if it is a good idea to split the itemID by the character.
 - I've noticed that the NLLLoss is decreasing at a steady constant rate (which is good!!) but the KL divergence is causing a large issue.
 - Fixed KLD loss
-- Noticed that KL quickly converges to zero..
+- Noticed that KL quickly converges to zero(?)
+- Might need to implement teacher forcing?
+- Look at KL Annealing methods.
         
 
 ## 2019/04/01 (Monday)
