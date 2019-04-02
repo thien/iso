@@ -14,6 +14,25 @@ These logs are used to indicate progress of the project as I work on it through 
 - [ ] Finish the literature survey writeup.
 
 ----
+
+## 2019/03/02 (Tuesday)
+- Updated the data processing mechanism s.t data comes out looking like the following (Note that the sentences have the identity concatenated to it):
+
+        ENTRY: {'reviewerID': 'A21AX7U9UNIV75', 'asin': 'B00000JD4V', 'reviewerName': 'Amazon Customer "SWNovice"', 'helpful': [3, 3], 'reviewText': "I've had my radio for about six months now and I could not be happier.  It pulls in stations from all over the globe 24 hours a day.  It is easy to use and extremely reliable.  I recently took it to Mexico with me so I could keep up on U.S. news and it provided me with several U.S. broadcasts.  I love this radio.", 'overall': 5.0, 'summary': 'Awesome radio', 'unixReviewTime': 1113091200, 'reviewTime': '04 10, 2005'}
+        IDENTITY: ['b', '0', '0', '0', '0', '0', 'j', 'd', '4', 'v', 'rating_5.0', 'polarity_0.0']
+
+        ['<sos>', 'awesome', 'radio']
+        ['i', "'", 've', 'had', 'my', 'radio', 'for', 'about', 'six', 'months', 'now', 'and', 'i', 'could', 'not', 'be', 'happier', '.']
+        ['it', 'pulls', 'in', 'stations', 'from', 'all', 'over', 'the', 'globe', '24', 'hours', 'a', 'day', '.']
+        ['it', 'is', 'easy', 'to', 'use', 'and', 'extremely', 'reliable', '.']
+        ['i', 'recently', 'took', 'it', 'to', 'mexico', 'with', 'me', 'so', 'i', 'could', 'keep', 'up', 'on', 'u', '.', 's', '.']
+        ['news', 'and', 'it', 'provided', 'me', 'with', 'several', 'u', '.', 's', '.']
+        ['broadcasts', '.']
+        ['i', 'love', 'this', 'radio', '.', '<eos>']
+- However, not sure if it is a good idea to split the itemID by the character.
+- I've noticed that the NLLLoss is decreasing at a steady constant rate (which is good!!) but the KL divergence is causing a large issue.
+        
+
 ## 2019/04/01 (Monday)
 - Updated data processing mechanism to allow sentence by sentence input
 - Reduced input vocabulary size to 30k
