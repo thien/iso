@@ -422,14 +422,23 @@ def trainIteration(
     inferenceOpt = optim.Adam(inference.parameters(), lr=learningRate)
     priorOpt     = optim.Adam(prior.parameters(),     lr=learningRate)
     decoderOpt   = optim.Adam(decoder.parameters(),   lr=learningRate)
+    
+    numBatches = len(dataset[0])
 
     for j in range(1, iterations + 1):
         print("Iteration", j)
         # set up variables needed for training.
         n = -1
+        
+        # get random indexes
+        indexes = [i for i in range(numBatches)]
+        random.shuffle(indexes)
+        
+        # note that the data entries in each batch are sorted!
+        # we're shuffling the batches.
 
         losses = []
-        for batch in tqdm(range(len(dataset[0]))):
+        for batch in tqdm(indexes):
             n += 1
             # each batch is composed of the 
             # reviews, and a sentence length.
@@ -540,7 +549,7 @@ if __name__ == "__main__":
     print("Loading parameters..", end=" ")
     hiddenSize = 512
     latentSize = 400
-    batchSize  = 32
+    batchSize  = 64
     iterations = 3
     learningRate = 0.0001
     bidirectionalEncoder = True
@@ -571,8 +580,8 @@ if __name__ == "__main__":
     random.shuffle(train)
     random.shuffle(validation)
 
-    trainx = [x[0] for x in train[:10000]]
-    trainy = [x[1] for x in train[:10000]]
+    trainx = [x[0] for x in train]
+    trainy = [x[1] for x in train]
     valx = [x[0] for x in validation]
     valy = [x[1] for x in validation]
 

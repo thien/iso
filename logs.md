@@ -22,7 +22,14 @@ These logs are used to indicate progress of the project as I work on it through 
 - Bad news, I accidentally cut the dataset such that the sequence is of length 14. (It used the 40th most popular sequence length). I've now hard coded it to length 60.
 - Worse news, I have to retrain the model again (With sequence length 60)
 - Built [model evaluators](code/val_evaluate.ipynb) to determine model success.
-- I'll have to wait quite a while for model success.
+- I'll have to wait quite a while for the model to train. (According to the model it'll take 3 hours, 10mins to train 1 epoch - I've trained it for 3 hours. At the time of writing it's 13:34pm so I'll check it out at 10pm.)
+- Here's the model parameters I'm using:
+
+        hiddenSize = 512
+        latentSize = 400
+        batchSize  = 32
+        iterations = 3
+        learningRate = 0.0001
 
 
 ## 2019/04/02 (Tuesday)
