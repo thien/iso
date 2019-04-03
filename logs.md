@@ -30,6 +30,7 @@ These logs are used to indicate progress of the project as I work on it through 
         batchSize  = 32
         iterations = 3
         learningRate = 0.0001
+        DatasetReduction = 1/8 (i.e we're looking at 7876 reviews)
 
 
 ## 2019/04/02 (Tuesday)
