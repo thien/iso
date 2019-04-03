@@ -31,7 +31,53 @@ These logs are used to indicate progress of the project as I work on it through 
         iterations = 3
         learningRate = 0.0001
         DatasetReduction = 1/8 (i.e we're looking at 7876 reviews)
+- Devised a vectorised solution for computing the sequential bag of words:
+        
+        for w in range(y_len):
+            # get indexes of future words
+            labels = y_outs[:,w:].long().unsqueeze(2)
+            # set up bag of words container
+            bow = torch.FloatTensor(batch_size, y_len-w, num_classes).zero_()
+            # create SBOW
+            bow.scatter_(2, labels, 1)
+- The model finished training at 11pm, Loss is steady but the reproductions leave much to be desired.
+- ![](Documents/log_imgs/at1_ep1.png)
+- ![](Documents/log_imgs/at1_ep2.png)
+- ![](Documents/log_imgs/at1_ep3.png)
 
+		i % the'the <unk> to the, , i comes to be the and i the <unk> <unk>, the, ,, , <unk>), <unk> the))).'to one a issue choice to get the <unk>.. .
+		i is the, and <unk> <unk>, <unk>, <unk>), is is a small easier than the',, is to't have you <unk> to use it of ,.. the than.. the and as a other, <unk>
+		i, <unk> is the.. <unk> is is a good, the, the'it'much more the.the.. the <unk> i is the the cover cover, , the.., is the.. of get out is
+		i have i is is a to be a <unk> of, but i extra of 20 for the of the one to the.i i i is is like a to you have the 3.0.the to <unk>.you't have
+		i are re not a, the same of of, , but with be the good to.the <unk> of to the.the <unk>...<unk>.the the.. though you <unk> is of)a the)<unk>))
+		i's a a a'it be able the the, you, to the <unk> inch is is be a, but it the you issue for ,.card.a.. are)))lot of than the <unk>)card
+		i the the the, i have the the hour <unk> <unk> <unk>'not research <unk> the <unk> com <unk> <unk> reviewers reviewers, the...<unk> the the the <unk> is the <unk> <unk> <unk>.the <unk> <unk>.of <unk>..
+		polarity_0.0 the of for a the.<unk> ghz, well cables the of are been a out to <unk> of the drive, center a to bit deal.. new.... <eos>.......... .
+		i've had a with with to for a the <unk> <unk> and'in the the the, i is about the best of that the <unk> of.the.<eos>..............
+		i'that had have to of to the tv, the a, <unk> of the <unk>.a a.<eos> is great.<unk> <unk>.great.<eos>................
+		i you are you'have to spend the ray player, you the not'the the of.but.....the box.<eos>..................
+		i good, be a to get the who little to'want the the <unk>.and.the.a.<eos>........................
+		polarity_0.0 are great and i't have, , the the)) but they's not little)the). <eos>...................... .
+		i you are to <unk> basics, can, for <unk> to get the the tv.the tv...<eos>........................ .
+		i is is a and to be the to the and hours to and to). the speed.. <eos>..........................
+		i've had that of about complained that with the few.the <unk> jack.the sound.<eos>.......................... .
+		i is a a good as the <unk> <unk> <unk> <unk> 20., have ve had.<eos>............................ .
+		i you are looking to use the, the home, you are will a <unk>.<eos>..............................
+		the'the <unk> <unk>, and the 20, , and and the, i, ,..............................
+		i the the other are, well are be the problems ,.to <eos>................................ .
+		polarity_0.0 for for i only interface is a a better and easy.<eos>..................................
+		i is, of a best <unk> you can lot of system <eos>.................................. .
+		i'this to <unk> weeks and the <unk> and and <eos>....................................
+		the is the <unk> a.. few...<eos>....................................
+		i though the the, ,, is a good and <eos>....................................
+		i is a great good product <unk>.. <eos>......................................
+		<unk> the, <unk> of very.<eos>.<eos>......................................
+		i the <unk> quality on and..........................................
+		i'the a got that <eos>........................................ .
+		the'm not with <eos>..........................................
+		i'the ! <eos>.......................................... .
+		i problems with are <eos>.......................................... .
+		LOSS: 4.672455342610677
 
 ## 2019/04/02 (Tuesday)
 - Updated the data processing mechanism s.t data comes out looking like the following (Note that the sentences have the identity concatenated to it):
