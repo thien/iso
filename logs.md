@@ -31,6 +31,7 @@ These logs are used to indicate progress of the project as I work on it through 
         iterations = 3
         learningRate = 0.0001
         DatasetReduction = 1/8 (i.e we're looking at 7876 reviews)
+
 - Devised a vectorised solution for computing the sequential bag of words:
         
         for w in range(y_len):
@@ -78,6 +79,9 @@ These logs are used to indicate progress of the project as I work on it through 
 		i'the ! <eos>.......................................... .
 		i problems with are <eos>.......................................... .
 		LOSS: 4.672455342610677
+
+- Update report notes and added relevant equations regarding VADs.
+
 
 ## 2019/04/02 (Tuesday)
 - Updated the data processing mechanism s.t data comes out looking like the following (Note that the sentences have the identity concatenated to it):
