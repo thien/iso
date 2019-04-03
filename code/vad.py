@@ -65,9 +65,9 @@ class Encoder(nn.Module):
         )
         # we're using pretrained labels
         self.embedding.weight.requires_grad = False
-        self.embedding.to(device)    
+#         self.embedding.to(device)    
         
-        self.gru = nn.GRU(embeddingDim, hiddenSize,
+        self.gru = nn.GRU(embeddingDim, self.hiddenSize,
                           bidirectional=self.isBidirectional, batch_first=True)
     
     def forward(self, x, hidden, x_length=None):
@@ -89,7 +89,7 @@ class Encoder(nn.Module):
 
     def initHidden(self, batch_size):
         numLayers = 2 if self.isBidirectional else 1
-        return torch.zeros(numLayers, batch_size, self.hiddenSize, device=device)
+        return torch.zeros(numLayers, batch_size, self.hiddenSize)
 
 class Backwards(nn.Module):
     def __init__(self, embeddingMatrix, vocabularySize, padding_id, hidden_size=512, bidirectionalEncoder=False):
@@ -106,7 +106,7 @@ class Backwards(nn.Module):
         )
         # we're using pretrained labels
         self.embedding.weight.requires_grad = False
-        self.embedding.to(device)
+#         self.embedding.to(device)
 
         self.numLayers = 2 if bidirectionalEncoder else 1
         self.gru = nn.GRU(embeddingDim, hidden_size,num_layers=self.numLayers,batch_first=True)
@@ -121,7 +121,7 @@ class Backwards(nn.Module):
         return output, hidden
 
     def initHidden(self, batchSize):
-        return torch.zeros(self.numLayers, batchSize, self.hiddenSize, device=device)
+        return torch.zeros(self.numLayers, batchSize, self.hiddenSize)
 
 class Attn(nn.Module):
     def __init__(self,  hidden_size, bidirectionalEncoder):
@@ -168,7 +168,7 @@ class Decoder(nn.Module):
         )
         # we're using pretrained labels
         self.embedding.weight.requires_grad = False
-        self.embedding.to(device)
+#         self.embedding.to(device)
 
         encoderDim = self.hiddenSize
         if encoderBidirectional:
@@ -195,7 +195,7 @@ class Decoder(nn.Module):
         return output, hidden
 
     def initHidden(self):
-        return torch.zeros(self.batchSize, 1, self.hiddenSize, device=device) 
+        return torch.zeros(self.batchSize, 1, self.hiddenSize) 
 
 class Inference(nn.Module):
     """
@@ -209,7 +209,7 @@ class Inference(nn.Module):
         
         forwardInput = hidden_size * 3
         if bidirectionalEncoder:
-            forwardInput += hiddenSize
+            forwardInput += hidden_size
         # encode
         self.fc1 = nn.Linear(forwardInput, hidden_size)
         self.mean = nn.Linear(hidden_size, latent_size)
@@ -241,7 +241,7 @@ class Prior(nn.Module):
         
         forwardInput = hidden_size * 2
         if bidirectionalEncoder:
-            forwardInput += hiddenSize
+            forwardInput += hidden_size
 
         # encode
         self.fc1  = nn.Linear(forwardInput, hidden_size)
@@ -340,8 +340,8 @@ def trainVAD(x,
     
     # print(inputLength,)
     # set up encoder computation
-    encoderHidden = encoder.initHidden(batchSize)
-    backwardHidden = backwards.initHidden(batchSize)
+    encoderHidden = encoder.initHidden(batchSize).to(device)
+    backwardHidden = backwards.initHidden(batchSize).to(device)
     
     # set up encoder outputs
     encoderOutputs, encoderHidden = encoder(x, encoderHidden, xLength)
@@ -500,7 +500,7 @@ def padSeq(row, maxlength, padID, cutoff):
     return row + [padID for _ in range(difference)]
 
 
-def batchData(dataset, padID, batchsize=32, cutoff=50):
+def batchData(dataset, padID, device, batchsize=32, cutoff=50):
     """
     Splits the dataset into batches.
     Each batch needs to be sorted by 
@@ -535,11 +535,12 @@ def batchData(dataset, padID, batchsize=32, cutoff=50):
     return batches
 
 
+    
 if __name__ == "__main__":
     print("Loading parameters..", end=" ")
-    hiddenSize = 1024
+    hiddenSize = 512
     latentSize = 400
-    batchSize  = 64
+    batchSize  = 32
     iterations = 3
     learningRate = 0.0001
     bidirectionalEncoder = True
@@ -570,15 +571,15 @@ if __name__ == "__main__":
     random.shuffle(train)
     random.shuffle(validation)
 
-    trainx = [x[0] for x in train]
-    trainy = [x[1] for x in train]
+    trainx = [x[0] for x in train[:10000]]
+    trainy = [x[1] for x in train[:10000]]
     valx = [x[0] for x in validation]
     valy = [x[1] for x in validation]
 
     # shuffle data row
 
-    trainx = batchData(trainx, paddingID, batchSize, cutoff)
-    trainy = batchData(trainy, paddingID, batchSize, cutoff)
+    trainx = batchData(trainx, paddingID, device, batchSize, cutoff)
+    trainy = batchData(trainy, paddingID, device, batchSize, cutoff)
     # trainx = batchData(valx, paddingID, batchSize, cutoff)
     # trainy = batchData(valy, paddingID, batchSize, cutoff)
 
@@ -609,7 +610,7 @@ if __name__ == "__main__":
     criterion = nn.NLLLoss(ignore_index=paddingID)
     print("Done.")
 
-    print()
+#     print()
     trainIteration(traindata,
                    modelEncoder,
                    modelAttention,
@@ -631,4 +632,6 @@ if __name__ == "__main__":
     torch.save(modelInference.state_dict(), 'inference.pth')
     torch.save(modelPrior.state_dict(), 'prior.pth')
     torch.save(modelDecoder.state_dict(), 'decoder.pth')
+
     print("Done.")
+    
