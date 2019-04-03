@@ -15,7 +15,17 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 
-## 2019/03/02 (Tuesday)
+## 2019/04/03 (Wednesday)
+- Good news, the model successfully trained on the dataset.
+- ![](Documents/log_imgs/iter1_accident.png)
+- ![](Documents/log_imgs/iter2_accident.png)
+- Bad news, I accidentally cut the dataset such that the sequence is of length 14. (It used the 40th most popular sequence length). I've now hard coded it to length 60.
+- Worse news, I have to retrain the model again (With sequence length 60)
+- Built [model evaluators](code/val_evaluate.ipynb) to determine model success.
+- I'll have to wait quite a while for model success.
+
+
+## 2019/04/02 (Tuesday)
 - Updated the data processing mechanism s.t data comes out looking like the following (Note that the sentences have the identity concatenated to it):
 
         ENTRY: {'reviewerID': 'A21AX7U9UNIV75', 'asin': 'B00000JD4V', 'reviewerName': 'Amazon Customer "SWNovice"', 'helpful': [3, 3], 'reviewText': "I've had my radio for about six months now and I could not be happier.  It pulls in stations from all over the globe 24 hours a day.  It is easy to use and extremely reliable.  I recently took it to Mexico with me so I could keep up on U.S. news and it provided me with several U.S. broadcasts.  I love this radio.", 'overall': 5.0, 'summary': 'Awesome radio', 'unixReviewTime': 1113091200, 'reviewTime': '04 10, 2005'}
