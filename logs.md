@@ -32,6 +32,8 @@ These logs are used to indicate progress of the project as I work on it through 
         learningRate = 0.0001
         DatasetReduction = 1/8 (i.e we're looking at 7876 reviews)
 
+- Update report notes
+
 
 ## 2019/04/02 (Tuesday)
 - Updated the data processing mechanism s.t data comes out looking like the following (Note that the sentences have the identity concatenated to it):
