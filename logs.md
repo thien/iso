@@ -28,11 +28,11 @@ These logs are used to indicate progress of the project as I work on it through 
 - [x] Add Xavier/Kaiming Weight Initialisation to model components
 - Changed the model training to save weights after each iteration (So I can determine model performance without waiting so long.)
 - [I've added examples of text generations from the first attempt here.](Documents/model_examples/attempt_1.txt) - imo I think it's a good first attempt.
-- Currently training the model again with new configs and CBOW with these parameters (Currently takes 9:36:21 per epoch) but as I've set it to save the model per epoch I'll be able to test performance tomorrow morning:
+- Currently training the model again with new configs and CBOW with these parameters (Currently takes 8:36:21 per epoch) but as I've set it to save the model per epoch I'll be able to test performance tomorrow morning:
 
         hiddenSize = 512
         latentSize = 400
-        batchSize  = 32
+        batchSize  = 64
         iterations = 2
         learningRate = 0.0001
         DatasetReduction = 1/32
