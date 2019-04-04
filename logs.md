@@ -15,17 +15,18 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 ## 2019/04/04 (Thursday)
-- [x] Implement Teacher Forcing
+- [x] Implement Teacher Forcing (Turns out that this was already implemented a long time ago)
 - [x] Implement CBOW Loss
 - [ ] Add option for CBOW Loss
-- [ ] Augment Dataset so that the conditioning variables do not appear in the output
+- [ ] Augment Dataset so that the conditioning variables do not appear in the output (Since I imagine that this is not necessary!)
+- [ ] Need to further filter the dataset such that we have an equal weighting of reviews with different polarities and review ratings.
 - [x] Look at KL Annealing and what it is
     - KL annealing: gradually increasing the weight of the KL term from 0 to 1 during training 
 - [x] Implement KL Annealing to augment CBOW loss (WOW THE CHANGE!)
 - [ ] Implement BLEU/ROUGE Scores and Perplexity
 - [ ] Clean codebase because it stinks
 - [ ] Add Xavier/Kaiming Weight Initialisation to all models
-- [I've added examples of text generations from the first attempt here.](Documents/model_examples/attempt_1.txt)
+- [I've added examples of text generations from the first attempt here.](Documents/model_examples/attempt_1.txt) - imo I think it's a good first attempt.
 
 ## 2019/04/03 (Wednesday)
 - Good news, the model successfully trained on the dataset.
