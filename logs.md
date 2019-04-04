@@ -14,6 +14,14 @@ These logs are used to indicate progress of the project as I work on it through 
 - [ ] Finish the literature survey writeup.
 
 ----
+## 2019/04/04 (Thursday)
+- [ ] Implement Teacher Forcing
+- [ ] Add option for CBOW Loss
+- [ ] Augment Dataset so that the conditioning variables do not appear in the output
+- [ ] Look at KL Annealing and what it is
+- [ ] Implement BLEU/ROUGE Scores and Perplexity
+- [ ] Clean codebase because it stinks
+- [I've added examples of text generations from the first attempt here.](Documents/model_examples/attempt_1.txt)
 
 ## 2019/04/03 (Wednesday)
 - Good news, the model successfully trained on the dataset.
