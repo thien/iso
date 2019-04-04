@@ -271,7 +271,21 @@ class Prior(nn.Module):
         z = self.reparametrize(mu, logvar)
         return z, mu, logvar
 
-
+class CBOW(nn.Module):
+    def __init__(self, vocabulary_size, latent_size=400):
+        super(CBOW, self).__init__()
+        
+        self.bow = nn.Linear(latent_size, vocabulary_size)
+        self.sigmoid = nn.Sigmoid()
+#         self.softmax = nn.Softmax(dim=1)
+    
+    def forward(self, z):
+#         vocab = self.sigmoid(self.bow(z))
+        vocab = self.bow(z)
+#         onehot = self.softmax(vocab)
+        
+        return vocab
+        
 def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
     mu_1, var_1 = recog_mu, recog_logvar
     mu_2, var_2 = prior_mu, prior_logvar
@@ -282,20 +296,50 @@ def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
                            - torch.div(torch.exp(var_1), torch.exp(var_2)), 1)
     return kld
 
-
-# Reconstruction + KL divergence losses summed over all elements and batch
-def loss_function(y_predicted, y, inference_mu, inference_logvar, prior_mu, prior_logvar, criterion):
-    LL = criterion(y_predicted, y)
+    
+def loss_function(batch_num,
+                  num_batches, 
+                  y_predicted, 
+                  y, 
+                  inference_mu,
+                  inference_logvar, 
+                  prior_mu, 
+                  prior_logvar, 
+                  ref_bow, 
+                  pred_bow,
+                  criterion_r, 
+                  criterion_bow):
+    
+    # compute reconstruction loss
+    LL = criterion_r(y_predicted, y)
+    
+    # compute KLD
     KL = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
-#     print(KL)
-    # print(LL.shape)
-    # print("KL:",KL.shape)
     KL = torch.mean(torch.mean(KL))
-#     print(LL.item(),KL.item())
-    return LL + KL
+    
+    # KL Annealing
+    kl_weight = 0 if batch_num == 0 else batch_num/num_batches
+    weighted_KL = KL * kl_weight 
+    
+    # compute auxillary loss
+    aux = criterion_bow(pred_bow, ref_bow)
+    # weight auxillary loss
+    alpha = 10
+    weighted_aux = aux * alpha
+    
+    
+    print("KL:", round(weighted_KL.item(),3), end=" ")
+    print("KL WEIGHT:", round(kl_weight, 3), batch_num, num_batches, end=" ")
+    print("AUX:",round(weighted_aux.item(),3))
+    
+    return LL + weighted_KL + weighted_aux
+
 #     return LL
 
-def trainVAD(x,
+def trainVAD(
+             batch_num,
+             num_batches,
+             x,
              y,
              xLength,
              yLength,
@@ -305,14 +349,17 @@ def trainVAD(x,
              inference,
              prior,
              decoder,
+             cbow,
              encoderOpt,
              attentionOpt,
              backwardsOpt,
              inferenceOpt,
              priorOpt,
              decoderOpt,
+             cbowOpt,
              word2id,
-             criterion
+             criterion_reconstruction,
+             criterion_bow
             ):
 
     """
@@ -326,6 +373,7 @@ def trainVAD(x,
     inferenceOpt.zero_grad()
     priorOpt.zero_grad()
     decoderOpt.zero_grad()
+    cbowOpt.zero_grad()
     
     # initalise input and target lengths
     inputLength = x[0].size(0)
@@ -377,16 +425,29 @@ def trainVAD(x,
         DecoderOut = decoder(decoderInput, c, z_infer, decoderHidden)
         # update variables
         decoderOutput, decoderHidden = DecoderOut
+        
+        # compute reference CBOW
+        labels = y[:,t:].long().unsqueeze(2)
+        ref_bow = torch.FloatTensor(batchSize, labels.shape[1], vocabularySize).zero_().to(device)
+        ref_bow.scatter_(2,labels,1)
+        ref_bow = torch.sum(ref_bow, dim=1).clamp(0,1)
+
+        # compute auxillary
+        pred_bow = cbow(z_infer)
+
         # calculate the loss
-        seqloss = loss_function(decoderOutput, y[:, t], infer_mu, infer_logvar, prior_mu, prior_logvar, criterion)
+        seqloss = loss_function(batch_num, num_batches, decoderOutput, y[:, t], infer_mu, infer_logvar, prior_mu, prior_logvar, ref_bow, pred_bow, criterion_reconstruction, criterion_bow)
         loss += seqloss
-        # print(t, targetLength, seqloss)
+    
         # feed this output to the next input
         decoderInput = y[:,t]
         decoderHidden = decoderHidden.squeeze(0)
-    # print(loss)
-    # possible because our loss_function uses gradient storing calculations
+
+    print((loss/targetLength).item())
+   
+    # update gradients
     loss.backward()
+    cbowOpt.step()
     decoderOpt.step()
     priorOpt.step()
     inferenceOpt.step()
@@ -404,9 +465,11 @@ def trainIteration(
                 inference,
                 prior,
                 decoder,
+                cbow,
                 iterations,
                 word2id,
-                criterion,
+                criterion_reconstruction,
+                criterion_bow,
                 learningRate = 0.0001,
                 printEvery = 10,
                 plotEvery = 100):
@@ -422,6 +485,7 @@ def trainIteration(
     inferenceOpt = optim.Adam(inference.parameters(), lr=learningRate)
     priorOpt     = optim.Adam(prior.parameters(),     lr=learningRate)
     decoderOpt   = optim.Adam(decoder.parameters(),   lr=learningRate)
+    cbowOpt      = optim.Adam(cbow.parameters(),   lr=learningRate)
     
     numBatches = len(dataset[0])
 
@@ -438,15 +502,18 @@ def trainIteration(
         # we're shuffling the batches.
 
         losses = []
-        for batch in tqdm(indexes):
+        for batch_num in tqdm(indexes):
             n += 1
             # each batch is composed of the 
             # reviews, and a sentence length.
-            x, xLength = dataset[0][batch][0], dataset[0][batch][1]
-            y, yLength = dataset[1][batch][0], dataset[1][batch][1]
+            x, xLength = dataset[0][batch_num][0], dataset[0][batch_num][1]
+            y, yLength = dataset[1][batch_num][0], dataset[1][batch_num][1]
 
             # calculate loss.
-            loss = trainVAD(x, y, 
+            loss = trainVAD(
+                n,
+                numBatches,
+                x, y, 
                 xLength,  
                 yLength,
                 encoder,
@@ -455,14 +522,17 @@ def trainIteration(
                 inference,
                 prior,
                 decoder,
+                cbow,
                 encoderOpt,
                 attentionOpt,
                 backwardsOpt,
                 inferenceOpt,
                 priorOpt,
                 decoderOpt,
+                cbowOpt,
                 word2id,
-                criterion
+                criterion_reconstruction,
+                criterion_bow
                 )
             # increment our print and plot.
             printLossTotal += loss
@@ -549,11 +619,12 @@ if __name__ == "__main__":
     print("Loading parameters..", end=" ")
     hiddenSize = 512
     latentSize = 400
-    batchSize  = 64
+    batchSize  = 32
     iterations = 3
     learningRate = 0.0001
     bidirectionalEncoder = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#     device = "cpu"
     print("Done.")
 
     print("Loading dataset..", end=" ")
@@ -580,10 +651,10 @@ if __name__ == "__main__":
     random.shuffle(train)
     random.shuffle(validation)
 
-    trainx = [x[0] for x in train]
-    trainy = [x[1] for x in train]
-    valx = [x[0] for x in validation]
-    valy = [x[1] for x in validation]
+    trainx = [x[0] for x in train[::20]]
+    trainy = [x[1] for x in train[::20]]
+#     valx = [x[0] for x in validation]
+#     valy = [x[1] for x in validation]
 
     # shuffle data row
 
@@ -616,7 +687,9 @@ if __name__ == "__main__":
     modelPrior = Prior(hiddenSize, latentSize, bidirectionalEncoder).to(device)
     modelDecoder = Decoder(weightMatrix, vocabularySize,
                            paddingID, batchSize, maxReviewLength, hiddenSize, latentSize, bidirectionalEncoder).to(device)
-    criterion = nn.NLLLoss(ignore_index=paddingID)
+    modelBOW = CBOW(vocabularySize, latentSize).to(device)
+    criterion_r = nn.NLLLoss(ignore_index=paddingID)
+    criterion_bow = nn.BCEWithLogitsLoss()
     print("Done.")
 
 #     print()
@@ -627,9 +700,11 @@ if __name__ == "__main__":
                    modelInference,
                    modelPrior,
                    modelDecoder,
+                   modelBOW,
                    iterations,
                    word2id, 
-                   criterion,
+                   criterion_r,
+                   criterion_bow,
                    learningRate=learningRate,
                    printEvery=1000)
 

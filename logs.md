@@ -15,12 +15,16 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 ## 2019/04/04 (Thursday)
-- [ ] Implement Teacher Forcing
+- [x] Implement Teacher Forcing
+- [x] Implement CBOW Loss
 - [ ] Add option for CBOW Loss
 - [ ] Augment Dataset so that the conditioning variables do not appear in the output
-- [ ] Look at KL Annealing and what it is
+- [x] Look at KL Annealing and what it is
+    - KL annealing: gradually increasing the weight of the KL term from 0 to 1 during training 
+- [x] Implement KL Annealing to augment CBOW loss (WOW THE CHANGE!)
 - [ ] Implement BLEU/ROUGE Scores and Perplexity
 - [ ] Clean codebase because it stinks
+- [ ] Add Xavier/Kaiming Weight Initialisation to all models
 - [I've added examples of text generations from the first attempt here.](Documents/model_examples/attempt_1.txt)
 
 ## 2019/04/03 (Wednesday)
