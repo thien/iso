@@ -17,8 +17,8 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ## 2019/04/05 (Friday)
 - Results for attempt 2 are out, and they are worse than attempt 1 (In terms of loss and looking at word generation.) Weights are saved. The loss may be attributed to the arbitary weight on the auxiliary loss (The original paper does not specify what this alpha value is)
-- ![](Documents/log_imgs/iter2_ep1.png)
-- ![](Documents/log_imgs/iter2_ep2.png)
+- ![](Documents/log_imgs/at2_ep1.png)
+- ![](Documents/log_imgs/at2_ep2.png)
 - [ ] Measure computation time with forward propagation s.t I can detect the bottleneck.
 - [ ] Add Gradient Clipping
 - [ ] Add option for CBOW Loss
