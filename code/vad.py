@@ -325,7 +325,6 @@ def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
                                                  2), torch.exp(var_2))
                            - torch.div(torch.exp(var_1), torch.exp(var_2)), 1)
     return kld
-
     
 def loss_function(batch_num,
                   num_batches, 
@@ -401,6 +400,9 @@ def trainVAD(
 
     # set default loss
     loss = 0
+    ll_loss = 0
+    kl_loss = 0
+    aux_loss = 0
 
     # initalise input and target lengths
     inputLength, targetLength, batchSize = x[0].size(0), y[0].size(0), x.shape[0]
@@ -448,9 +450,13 @@ def trainVAD(
         pred_bow = cbow(z_infer)
 
         # calculate the loss
-        seqloss, _, _, _ = loss_function(batch_num, num_batches, decoderOutput, y[:, t], infer_mu, infer_logvar, prior_mu, prior_logvar, ref_bow, pred_bow, criterion_reconstruction, criterion_bow)
+        seqloss, ll, kl, aux = loss_function(batch_num, num_batches, decoderOutput, y[:, t], infer_mu, infer_logvar, prior_mu, prior_logvar, ref_bow, pred_bow, criterion_reconstruction, criterion_bow)
+        
         loss += seqloss
-
+        ll_loss += ll
+        kl_loss += kl
+        aux_loss += aux
+        
         # feed this output to the next input
         decoderInput = y[:,t]
         decoderHidden = decoderHidden.squeeze(0)
@@ -476,7 +482,7 @@ def trainVAD(
     backwardsOpt.step()
     encoderOpt.step()
     
-    return loss.item()/targetLength
+    return loss.item()/targetLength, ll_loss.item()/targetLength, kl_loss.item()/targetLength, aux_loss.item()/targetLength
 
 def trainIteration(
                 dataset,
@@ -524,6 +530,9 @@ def trainIteration(
         # we're shuffling the batches.
 
         losses = []
+        ll_losses = []
+        kl_losses = []
+        aux_losses = []
         for batch_num in tqdm(indexes):
             n += 1
             # each batch is composed of the 
@@ -532,7 +541,7 @@ def trainIteration(
             y, yLength = dataset[1][batch_num][0], dataset[1][batch_num][1]
 
             # calculate loss.
-            loss = trainVAD(
+            loss, ll, kl, aux = trainVAD(
                 n,
                 numBatches,
                 x, y, 
@@ -557,24 +566,35 @@ def trainIteration(
                 criterion_bow,
                 gradientClip
                 )
+            
             # increment our print and plot.
             printLossTotal += loss
             plotLossTotal += loss
             
             losses.append(loss)
+            ll_losses.append(ll)
+            kl_losses.append(kl)
+            aux_losses.append(aux)
             
             if batch_num % 10 == 0:
-                plotBatchLoss(j, losses)
+                plotBatchLoss(j, ll_losses, kl_losses, aux_losses)
         
         saveModels(encoder, backwards, attention, inference, prior, decoder, cbow)
 
-def plotBatchLoss(iteration, losses):
+def plotBatchLoss(iteration, losses, kl, aux):
     x = [i for i in range(1,len(losses)+1)]
-    su = plt.plot(x, losses)
+    
+#     su = plt.plot(x, losses)
+#     losses = losses - kl - aux
+    labels = ["KL", "Auxiliary", "LL"]
+
+    plt.stackplot(x, kl, aux, losses, labels=labels)
+    plt.legend()
     title = 'Learning Loss during Iteration ' + str(iteration)
     plt.title(title)
     plt.ylabel('Loss')
     plt.xlabel('Batch Number')
+    
     filetype = "png"
     directory = "charts"
     filename = title + "." + filetype
