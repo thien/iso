@@ -357,14 +357,7 @@ def loss_function(batch_num,
     alpha = 10
     weighted_aux = aux * alpha
     
-    
-#     print("KL:", round(weighted_KL.item(),3), end=" ")
-#     print("KL WEIGHT:", round(kl_weight, 3), batch_num, num_batches, end=" ")
-#     print("AUX:",round(weighted_aux.item(),3))
-    
-    return LL + weighted_KL + weighted_aux
-
-#     return LL
+    return LL + weighted_KL + weighted_aux, LL, weighted_KL, weighted_aux
 
 def trainVAD(
              batch_num,
@@ -389,17 +382,13 @@ def trainVAD(
              cbowOpt,
              word2id,
              criterion_reconstruction,
-             criterion_bow
+             criterion_bow,
+             gradientClip
             ):
 
     """
-    Represents a whole sequence iteration trained on one review.
+    Represents a whole sequence iteration trained on a batch of reviews.
     """
-    
-#     times = {}
-    
-#     time_start = time.perf_counter()
-#     with torch.autograd.profiler.profile(use_cuda=True) as prof:
 
     # initialise gradients
     encoderOpt.zero_grad()
@@ -410,30 +399,16 @@ def trainVAD(
     decoderOpt.zero_grad()
     cbowOpt.zero_grad()
 
-    # initalise input and target lengths
-    inputLength = x[0].size(0)
-    targetLength = y[0].size(0)
-    batchSize = x.shape[0]
-
     # set default loss
     loss = 0
 
-#     times['zero_grad_init'] = time.perf_counter() - time_start
+    # initalise input and target lengths
+    inputLength, targetLength, batchSize = x[0].size(0), y[0].size(0), x.shape[0]
+    ySeqlength = yLength[0]
 
-        # set up encoder computation
+    # set up encoder and backward hidden vectors
     encoderHidden = encoder.initHidden(batchSize).to(device)
     backwardHidden = backwards.initHidden(batchSize).to(device)
-
-#     print(prof)
-#     print(dir(prof))
-#     print(prof.total_average)
-#         prof.export_chrome_trace("trace")
-
-
-
-#     times['encoder_backward_hidden_init'] = time.perf_counter() - times['zero_grad_init']
-
-#     print(times)
 
     # set up encoder outputs
     encoderOutputs, encoderHidden = encoder(x, encoderHidden, xLength)
@@ -450,7 +425,7 @@ def trainVAD(
 
     # Run through the decoder one step at a time. This seems to be common practice across
     # all of the seq2seq based implementations I've come across on GitHub.
-    for t in range(yLength[0]):
+    for t in range(ySeqlength):
 
         # get the context vector c
         c = attention(encoderOutputs, decoderHidden)
@@ -466,33 +441,31 @@ def trainVAD(
         decoderOutput, decoderHidden = DecoderOut
 
         # compute reference CBOW
-        labels = y[:,t:].long()
         ref_bow = torch.FloatTensor(batchSize, vocabularySize).zero_().to(device)
-        ref_bow.scatter_(1,labels,1)
-#             ref_bow = torch.sum(ref_bow, dim=1).clamp(0,1)
+        ref_bow.scatter_(1,y[:,t:],1)
 
         # compute auxillary
         pred_bow = cbow(z_infer)
 
-#             print(ref_bow.shape)
-#             print(pred_bow.shape)
-
         # calculate the loss
-        seqloss = loss_function(batch_num, num_batches, decoderOutput, y[:, t], infer_mu, infer_logvar, prior_mu, prior_logvar, ref_bow, pred_bow, criterion_reconstruction, criterion_bow)
+        seqloss, _, _, _ = loss_function(batch_num, num_batches, decoderOutput, y[:, t], infer_mu, infer_logvar, prior_mu, prior_logvar, ref_bow, pred_bow, criterion_reconstruction, criterion_bow)
         loss += seqloss
 
         # feed this output to the next input
         decoderInput = y[:,t]
         decoderHidden = decoderHidden.squeeze(0)
-
-#     print(prof)
-#     prof.export_chrome_trace("trace")
-#     print((loss/targetLength).item())
    
     # calculate gradients
     loss.backward()
     
-#     torch.nn.utils.clip_grad_norm_
+    # gradient clipping
+    torch.nn.utils.clip_grad_norm_(encoder.parameters(), gradientClip)
+    torch.nn.utils.clip_grad_norm_(backwards.parameters(), gradientClip)
+    torch.nn.utils.clip_grad_norm_(attention.parameters(), gradientClip)
+    torch.nn.utils.clip_grad_norm_(inference.parameters(), gradientClip)
+    torch.nn.utils.clip_grad_norm_(prior.parameters(), gradientClip)
+    torch.nn.utils.clip_grad_norm_(decoder.parameters(), gradientClip)
+    torch.nn.utils.clip_grad_norm_(cbow.parameters(), gradientClip)
     
     # gradient descent
     cbowOpt.step()
@@ -503,7 +476,6 @@ def trainVAD(
     backwardsOpt.step()
     encoderOpt.step()
     
-#     who
     return loss.item()/targetLength
 
 def trainIteration(
@@ -519,7 +491,8 @@ def trainIteration(
                 word2id,
                 criterion_reconstruction,
                 criterion_bow,
-                learningRate = 0.0001,
+                learningRate,
+                gradientClip,
                 printEvery = 10,
                 plotEvery = 100):
     
@@ -534,7 +507,7 @@ def trainIteration(
     inferenceOpt = optim.Adam(inference.parameters(), lr=learningRate)
     priorOpt     = optim.Adam(prior.parameters(),     lr=learningRate)
     decoderOpt   = optim.Adam(decoder.parameters(),   lr=learningRate)
-    cbowOpt      = optim.Adam(cbow.parameters(),   lr=learningRate)
+    cbowOpt      = optim.Adam(cbow.parameters(),      lr=learningRate)
     
     numBatches = len(dataset[0])
 
@@ -581,14 +554,17 @@ def trainIteration(
                 cbowOpt,
                 word2id,
                 criterion_reconstruction,
-                criterion_bow
+                criterion_bow,
+                gradientClip
                 )
             # increment our print and plot.
             printLossTotal += loss
             plotLossTotal += loss
             
             losses.append(loss)
-        plotBatchLoss(j, losses)
+            
+            if batch_num % 10 == 0:
+                plotBatchLoss(j, losses)
         
         saveModels(encoder, backwards, attention, inference, prior, decoder, cbow)
 
@@ -683,6 +659,7 @@ if __name__ == "__main__":
     batchSize  = 32
     iterations = 2
     learningRate = 0.0001
+    gradientClip = 1
     bidirectionalEncoder = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #     device = "cpu"
@@ -767,7 +744,8 @@ if __name__ == "__main__":
                    word2id, 
                    criterion_r,
                    criterion_bow,
-                   learningRate=learningRate,
+                   learningRate,
+                   gradientClip,
                    printEvery=1000)
 
     saveModels(modelEncoder, modelBackwards, modelAttention, modelInference, modelPrior, modelDecoder, modelBOW)
