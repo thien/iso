@@ -19,13 +19,15 @@ These logs are used to indicate progress of the project as I work on it through 
 - Results for attempt 2 are out, and they are worse than attempt 1 (In terms of loss and [looking at generated outputs](Documents/model_examples/attempt_2.txt).) Weights are saved. The loss may be attributed to the arbitary weight on the auxiliary loss (The original paper does not specify what this alpha value is)
 - ![](Documents/log_imgs/at2_ep1.png)
 - ![](Documents/log_imgs/at2_ep2.png)
-- [ ] Measure computation time with forward propagation s.t I can detect the bottleneck (as we're currently experiencing nearly 1/3 the performance throughput by adding the auxiliary loss) - My guess is that this could be solved by vectorising the whole decoder stage using masks, or at the minimum compute the BOW in this mask representation.
+- [x] Measure computation time with forward propagation s.t I can detect the bottleneck (as we're currently experiencing nearly 1/3 the performance throughput by adding the auxiliary loss) - My guess is that this could be solved by vectorising the whole decoder stage using masks, or at the minimum compute the BOW in this mask representation.
 - [ ] Add Gradient Clipping
 - [ ] Add option for CBOW Loss
 - [ ] Need to further filter the dataset such that we have an equal weighting of reviews with different polarities and review ratings.
 - Dataset Augmentation s.t the conditioning variables don't appear in the output may have influence the model performance negatively but I'll need to look into it. I should talk to supervisor about this?
 - As mentioned above, the Auxillary weight is arbitary and does not specify what it could be. I've looked at both the Zhao's and Du's paper (It's only used in Du's) and they do not specify the weight for alpha. For reference:
 ![](Documents/log_imgs/random_alpha.png)
+- I've analysed the computation times using and the results can be seen [here](https://docs.google.com/spreadsheets/d/1t9d2BOOgSMBPXIjEciaLOqNR1CFX9571CrQPNjWQTOg/edit#gid=1364830110). The slowdown is caused by generating the BOW zero vector for reference results (which dominate the computation time). 
+- The bug above has been solved by reducing the necessary vector size, leading to computation times back to normal (3 hours per epoch with parameters described on wednesday). Performance change can be seen in the second tab of the google sheets in the above line.
 
 ## 2019/04/04 (Thursday)
 - [x] Implement Teacher Forcing (Turns out that this was already implemented a long time ago)

@@ -396,6 +396,11 @@ def trainVAD(
     Represents a whole sequence iteration trained on one review.
     """
     
+#     times = {}
+    
+#     time_start = time.perf_counter()
+#     with torch.autograd.profiler.profile(use_cuda=True) as prof:
+
     # initialise gradients
     encoderOpt.zero_grad()
     attentionOpt.zero_grad()
@@ -404,7 +409,7 @@ def trainVAD(
     priorOpt.zero_grad()
     decoderOpt.zero_grad()
     cbowOpt.zero_grad()
-    
+
     # initalise input and target lengths
     inputLength = x[0].size(0)
     targetLength = y[0].size(0)
@@ -412,11 +417,24 @@ def trainVAD(
 
     # set default loss
     loss = 0
-    
-    # set up encoder computation
+
+#     times['zero_grad_init'] = time.perf_counter() - time_start
+
+        # set up encoder computation
     encoderHidden = encoder.initHidden(batchSize).to(device)
     backwardHidden = backwards.initHidden(batchSize).to(device)
-    
+
+#     print(prof)
+#     print(dir(prof))
+#     print(prof.total_average)
+#         prof.export_chrome_trace("trace")
+
+
+
+#     times['encoder_backward_hidden_init'] = time.perf_counter() - times['zero_grad_init']
+
+#     print(times)
+
     # set up encoder outputs
     encoderOutputs, encoderHidden = encoder(x, encoderHidden, xLength)
 
@@ -426,14 +444,14 @@ def trainVAD(
 
     # set up the variables for decoder computation
     decoderInput = torch.tensor([[word2id["<sos>"]]] * batchSize, dtype=torch.long, device=device)
-    
+
     decoderHidden = encoderHidden[-1]
     decoderOutput = None
-    
+
     # Run through the decoder one step at a time. This seems to be common practice across
     # all of the seq2seq based implementations I've come across on GitHub.
     for t in range(yLength[0]):
-        
+
         # get the context vector c
         c = attention(encoderOutputs, decoderHidden)
 
@@ -441,33 +459,42 @@ def trainVAD(
         z_infer, infer_mu, infer_logvar = inference(decoderHidden, c, backwardOutput[:,t])
         # compute the prior layer
         z_prior, prior_mu, prior_logvar = prior(decoderHidden, c)
-    
+
         # compute the output of each decoder state
         DecoderOut = decoder(decoderInput, c, z_infer, decoderHidden)
         # update variables
         decoderOutput, decoderHidden = DecoderOut
-        
+
         # compute reference CBOW
-        labels = y[:,t:].long().unsqueeze(2)
-        ref_bow = torch.FloatTensor(batchSize, labels.shape[1], vocabularySize).zero_().to(device)
-        ref_bow.scatter_(2,labels,1)
-        ref_bow = torch.sum(ref_bow, dim=1).clamp(0,1)
+        labels = y[:,t:].long()
+        ref_bow = torch.FloatTensor(batchSize, vocabularySize).zero_().to(device)
+        ref_bow.scatter_(1,labels,1)
+#             ref_bow = torch.sum(ref_bow, dim=1).clamp(0,1)
 
         # compute auxillary
         pred_bow = cbow(z_infer)
 
+#             print(ref_bow.shape)
+#             print(pred_bow.shape)
+
         # calculate the loss
         seqloss = loss_function(batch_num, num_batches, decoderOutput, y[:, t], infer_mu, infer_logvar, prior_mu, prior_logvar, ref_bow, pred_bow, criterion_reconstruction, criterion_bow)
         loss += seqloss
-    
+
         # feed this output to the next input
         decoderInput = y[:,t]
         decoderHidden = decoderHidden.squeeze(0)
 
+#     print(prof)
+#     prof.export_chrome_trace("trace")
 #     print((loss/targetLength).item())
    
-    # update gradients
+    # calculate gradients
     loss.backward()
+    
+#     torch.nn.utils.clip_grad_norm_
+    
+    # gradient descent
     cbowOpt.step()
     decoderOpt.step()
     priorOpt.step()
@@ -476,6 +503,7 @@ def trainVAD(
     backwardsOpt.step()
     encoderOpt.step()
     
+#     who
     return loss.item()/targetLength
 
 def trainIteration(
@@ -652,7 +680,7 @@ if __name__ == "__main__":
     print("Loading parameters..", end=" ")
     hiddenSize = 512
     latentSize = 400
-    batchSize  = 64
+    batchSize  = 32
     iterations = 2
     learningRate = 0.0001
     bidirectionalEncoder = True
