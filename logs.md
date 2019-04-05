@@ -14,17 +14,30 @@ These logs are used to indicate progress of the project as I work on it through 
 - [ ] Finish the literature survey writeup.
 
 ----
+
+## 2019/04/05 (Friday)
+- Results for attempt 2 are out, and they are worse than attempt 1 (In terms of loss and looking at word generation.) Weights are saved. The loss may be attributed to the arbitary weight on the auxiliary loss (The original paper does not specify what this alpha value is)
+- ![](Documents/log_imgs/iter2_ep1.png)
+- ![](Documents/log_imgs/iter2_ep2.png)
+- [ ] Measure computation time with forward propagation s.t I can detect the bottleneck.
+- [ ] Add Gradient Clipping
+- [ ] Add option for CBOW Loss
+- [ ] Need to further filter the dataset such that we have an equal weighting of reviews with different polarities and review ratings.
+- Dataset Augmentation s.t the conditioning variables don't appear in the output may have influence the model performance negatively but I'll need to look into it. I should talk to supervisor about this?
+- As mentioned above, the Auxillary weight is arbitary and does not specify what it could be. I've looked at both the Zhao's and Du's paper (It's only used in Du's) and they do not specify the weight for alpha. For reference:
+![](Documents/log_imgs/random_alpha.png)
+
 ## 2019/04/04 (Thursday)
 - [x] Implement Teacher Forcing (Turns out that this was already implemented a long time ago)
 - [x] Implement CBOW Loss
-- [ ] Add option for CBOW Loss
+- [ ] Add option for CBOW Loss (Moved to Friday)
 - [x] Augment Dataset so that the conditioning variables do not appear in the output (Since I imagine that this is not necessary!)
 - [ ] Need to further filter the dataset such that we have an equal weighting of reviews with different polarities and review ratings.
 - [x] Look at KL Annealing and what it is
     - KL annealing: gradually increasing the weight of the KL term from 0 to 1 during training 
 - [x] Implement KL Annealing to augment CBOW loss (WOW THE CHANGE!)
-- [ ] Implement BLEU/ROUGE Scores and Perplexity
-- [ ] Clean codebase because it stinks
+- [ ] Implement BLEU/ROUGE Scores and Perplexity (Moved to Friday)
+- [ ] Clean codebase because it stinks (Moved to Friday)
 - [x] Add Xavier/Kaiming Weight Initialisation to model components
 - Changed the model training to save weights after each iteration (So I can determine model performance without waiting so long.)
 - [I've added examples of text generations from the first attempt here.](Documents/model_examples/attempt_1.txt) - imo I think it's a good first attempt.
@@ -36,9 +49,7 @@ These logs are used to indicate progress of the project as I work on it through 
         iterations = 2
         learningRate = 0.0001
         DatasetReduction = 1/32
-        
-
- 
+   
 
 ## 2019/04/03 (Wednesday)
 - Good news, the model successfully trained on the dataset.
@@ -56,6 +67,7 @@ These logs are used to indicate progress of the project as I work on it through 
         iterations = 3
         learningRate = 0.0001
         DatasetReduction = 1/8 (i.e we're looking at 7876 reviews)
+        NO SBOW
 
 - Devised a vectorised solution for computing the sequential bag of words:
         

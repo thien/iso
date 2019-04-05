@@ -652,7 +652,7 @@ if __name__ == "__main__":
     print("Loading parameters..", end=" ")
     hiddenSize = 512
     latentSize = 400
-    batchSize  = 32
+    batchSize  = 64
     iterations = 2
     learningRate = 0.0001
     bidirectionalEncoder = True
