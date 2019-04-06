@@ -520,7 +520,9 @@ def trainIteration(
                 gradientClip
                 )
             
-            print("Batch:",n,"Loss:",loss, "LL:", ll, "KL:", kl, "AUX:", aux)
+            print("Batch:",n,"Loss:",round(loss,4), "LL:", round(ll,4), "KL:", round(kl,4), "AUX:", round(aux,4))
+            # print("Batch:", n)
+            
             
             # increment our print and plot.
             printLossTotal += loss
