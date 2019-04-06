@@ -342,8 +342,9 @@ def trainVAD(
     aux_loss = 0
 
     # initalise input and target lengths
-    inputLength, targetLength, batchSize = x[0].size(0), y[0].size(0), x.shape[0]
+    targetLength, batchSize = y[0].size(0), x.shape[0]
     ySeqlength = yLength[0]
+    print(targetLength, ySeqlength)
     vocabularySize = decoder.embedding.weight.shape[0]
     # set up encoder and backward hidden vectors
     encoderHidden = encoder.initHidden(batchSize).to(device)
@@ -421,7 +422,7 @@ def trainVAD(
     backwardsOpt.step()
     encoderOpt.step()
     
-    return loss.item()/targetLength, ll_loss.item()/targetLength, kl_loss.item()/targetLength, aux_loss.item()/targetLength
+    return loss.item()/ySeqlength, ll_loss.item()/ySeqlength, kl_loss.item()/ySeqlength, aux_loss.item()/ySeqlength
 
 def trainIteration(
                 device,
