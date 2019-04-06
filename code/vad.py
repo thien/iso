@@ -6,10 +6,8 @@ import bcolz
 import numpy as np
 import torch
 import torch.nn as nn
-from torch import optim
 import torch.nn.functional as F
 import torch.nn.init as init
-from tqdm import tqdm
 
 from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels
 
@@ -168,7 +166,14 @@ class Decoder(nn.Module):
         self.latentSize = latentSize
 
         embeddingDim = embeddingMatrix.shape[1]
+
+        # additional components
+        self.attention = Attention(hiddenSize, encoderBidirectional)
+        self.inference = Inference(hiddenSize, latentSize, encoderBidirectional)
+        self.prior = Prior(hiddenSize, latentSize, encoderBidirectional)
+        self.cbow = CBOW(vocabularySize, latentSize)
         
+        # decoder components:
         self.embedding = nn.Embedding(
             num_embeddings=vocabularySize,
             embedding_dim=embeddingDim,
@@ -191,12 +196,36 @@ class Decoder(nn.Module):
             init.xavier_uniform_(self.gru.weight_ih_l0)
             init.xavier_uniform_(self.out.weight)
 
-    def forward(self, y, context, z, previousHidden):
+    def forward(self, y, encoderOutputs, previousHidden, back=None):
+
+        # CALCULATE ATTENTION ---------------------------------
+        c = self.attention(encoderOutputs, previousHidden)
+
+        # LATENT SAMPLING -------------------------------------
+
+        if self.training:
+            # compute the inference layer
+            z, infer_mu, infer_logvar = self.inference(
+                previousHidden, c, back)
+            # compute the prior layer
+            _, prior_mu, prior_logvar = self.prior(previousHidden, c)
+
+        else:
+            # otherwise just sample from the prior layer.
+            z, _, _ = self.prior(previousHidden, c)
+
+        # AUXILIARY FUNCTION ----------------------------------
+
+        if self.training:
+            sbow = self.cbow(z)
+
+        # DECODER COMPONENT -----------------------------------
+
         # get output word
         embedded = self.embedding(y).squeeze(1)
-                # print(decoder.training)
+
         # combine inputs together
-        inputs = torch.cat([embedded,context,z], 1).unsqueeze(1)
+        inputs = torch.cat([embedded,c,z], 1).unsqueeze(1)
 
         if len(previousHidden.shape) < 3:
             previousHidden = previousHidden.unsqueeze(0)
@@ -206,10 +235,14 @@ class Decoder(nn.Module):
 
         # softmax the output
         output = output.squeeze(1)
-        output = torch.cat((output, context), 1)
+        output = torch.cat((output, c), 1)
         output = self.out(output)
         output = F.log_softmax(output, dim=1)
-        return output, hidden
+
+        if self.training:
+            return output, hidden, sbow, infer_mu, infer_logvar, prior_mu, prior_logvar
+        else:
+            return output, hidden
 
     def initHidden(self):
         return torch.zeros(self.batchSize, 1, self.hiddenSize) 
@@ -293,247 +326,3 @@ class CBOW(nn.Module):
         vocab = self.bow(z)
         return vocab
    
-def trainVAD(
-             device,
-             batch_num,
-             num_batches,
-             x,
-             y,
-             xLength,
-             yLength,
-             encoder,
-             attention,
-             backwards,
-             inference,
-             prior,
-             decoder,
-             cbow,
-             encoderOpt,
-             attentionOpt,
-             backwardsOpt,
-             inferenceOpt,
-             priorOpt,
-             decoderOpt,
-             cbowOpt,
-             word2id,
-             criterion_r,
-             criterion_bow,
-             useBOW,
-             gradientClip
-            ):
-
-    """
-    Represents a whole sequence iteration trained on a batch of reviews.
-    """
-
-    # initialise gradients
-    encoderOpt.zero_grad()
-    attentionOpt.zero_grad()
-    backwardsOpt.zero_grad()
-    inferenceOpt.zero_grad()
-    priorOpt.zero_grad()
-    decoderOpt.zero_grad()
-    if useBOW:
-        cbowOpt.zero_grad()
-
-    # set default loss
-    loss = 0
-    ll_loss = 0
-    kl_loss = 0
-    aux_loss = 0
-
-    # initalise input and target lengths, and vocab size
-    ySeqlength, batchSize = yLength[0], x.shape[0]
-    vocabularySize = decoder.embedding.weight.shape[0]
-    # set up encoder and backward hidden vectors
-    encoderHidden = encoder.initHidden(batchSize).to(device)
-    backwardHidden = backwards.initHidden(batchSize).to(device)
-
-    # set up encoder outputs
-    encoderOutputs, encoderHidden = encoder(x, encoderHidden, xLength)
-
-    # compute backwards outputs
-    backwardOutput, backwardHidden = backwards(torch.flip(
-        y, [0, 1]), yLength, backwardHidden)
-
-    # set up the variables for decoder computation
-    decoderInput = torch.tensor([[word2id["<sos>"]]] * batchSize, dtype=torch.long, device=device)
-
-    decoderHidden = encoderHidden[-1]
-    decoderOutput = None
-
-    # Run through the decoder one step at a time. This seems to be common practice across
-    # all of the seq2seq based implementations I've come across on GitHub.
-    for t in range(ySeqlength):
-
-        # get the context vector c
-        c = attention(encoderOutputs, decoderHidden)
-
-        # compute the inference layer
-        z_infer, infer_mu, infer_logvar = inference(decoderHidden, c, backwardOutput[:,t])
-        # compute the prior layer
-        z_prior, prior_mu, prior_logvar = prior(decoderHidden, c)
-
-        # compute the output of each decoder state
-        DecoderOut = decoder(decoderInput, c, z_infer, decoderHidden)
-
-        # update variables
-        decoderOutput, decoderHidden = DecoderOut
-
-        # compute reference CBOW
-        ref_bow = torch.FloatTensor(batchSize, vocabularySize).zero_().to(device)
-        ref_bow.scatter_(1,y[:,t:],1)
-
-        # compute auxillary
-        pred_bow = cbow(z_infer)
-
-        # calculate the loss
-        seqloss, ll, kl, aux = loss_function(
-                                            batch_num, 
-                                            num_batches,
-                                            decoderOutput,
-                                            y[:, t],
-                                            infer_mu,
-                                            infer_logvar,
-                                            prior_mu,
-                                            prior_logvar,
-                                            ref_bow,
-                                            pred_bow,
-                                            criterion_r,
-                                            criterion_bow)
-        
-        loss += seqloss
-        ll_loss += ll
-        kl_loss += kl
-        aux_loss += aux
-        
-        # feed this output to the next input
-        decoderInput = y[:,t]
-        decoderHidden = decoderHidden.squeeze(0)
-   
-    # calculate gradients
-    loss.backward()
-    
-    # gradient clipping
-    torch.nn.utils.clip_grad_norm_(encoder.parameters(), gradientClip)
-    torch.nn.utils.clip_grad_norm_(backwards.parameters(), gradientClip)
-    torch.nn.utils.clip_grad_norm_(attention.parameters(), gradientClip)
-    torch.nn.utils.clip_grad_norm_(inference.parameters(), gradientClip)
-    torch.nn.utils.clip_grad_norm_(prior.parameters(), gradientClip)
-    torch.nn.utils.clip_grad_norm_(decoder.parameters(), gradientClip)
-    if useBOW:
-        torch.nn.utils.clip_grad_norm_(cbow.parameters(), gradientClip)
-    
-    # gradient descent
-    if useBOW:
-        cbowOpt.step()
-    decoderOpt.step()
-    priorOpt.step()
-    inferenceOpt.step()
-    attentionOpt.step()
-    backwardsOpt.step()
-    encoderOpt.step()
-    
-    return loss.item()/ySeqlength, ll_loss.item()/ySeqlength, kl_loss.item()/ySeqlength, aux_loss.item()/ySeqlength
-
-def trainIteration(
-                device,
-                dataset,
-                encoder,
-                attention,
-                backwards,
-                inference,
-                prior,
-                decoder,
-                cbow,
-                iterations,
-                word2id,
-                criterion_r,
-                criterion_bow,
-                learningRate,
-                gradientClip,
-                useBOW,
-                printEvery = 10,
-                plotEvery = 100):
-    
-    plotLosses = []
-    printLossTotal = 0
-    plotLossTotal = 0
-    
-    encoderOpt   = optim.Adam(encoder.parameters(),   lr=learningRate)
-    attentionOpt = optim.Adam(attention.parameters(), lr=learningRate)
-    backwardsOpt = optim.Adam(backwards.parameters(), lr=learningRate)
-    inferenceOpt = optim.Adam(inference.parameters(), lr=learningRate)
-    priorOpt     = optim.Adam(prior.parameters(),     lr=learningRate)
-    decoderOpt   = optim.Adam(decoder.parameters(),   lr=learningRate)
-    cbowOpt      = optim.Adam(cbow.parameters(),      lr=learningRate)
-    
-    numBatches = len(dataset[0])
-
-    for j in range(1, iterations + 1):
-        print("Iteration", j)
-        # set up variables needed for training.
-        n = -1
-        
-        # get random indexes
-        indexes = [i for i in range(numBatches)]
-        random.shuffle(indexes)
-        
-        # note that the data entries in each batch are sorted!
-        # we're shuffling the batches.
-
-        losses = []
-        ll_losses = []
-        kl_losses = []
-        aux_losses = []
-        for batch_num in tqdm(indexes):
-            n += 1
-            # each batch is composed of the 
-            # reviews, and a sentence length.
-            x, xLength = dataset[0][batch_num][0], dataset[0][batch_num][1]
-            y, yLength = dataset[1][batch_num][0], dataset[1][batch_num][1]
-
-            # calculate loss.
-            loss, ll, kl, aux = trainVAD(
-                device,
-                n,
-                numBatches,
-                x, y, 
-                xLength,  
-                yLength,
-                encoder,
-                attention,
-                backwards,
-                inference,
-                prior,
-                decoder,
-                cbow,
-                encoderOpt,
-                attentionOpt,
-                backwardsOpt,
-                inferenceOpt,
-                priorOpt,
-                decoderOpt,
-                cbowOpt,
-                word2id,
-                criterion_r,
-                criterion_bow,
-                useBOW,
-                gradientClip
-                )
-            
-            print("Batch:",n,"Loss:",round(loss,4), "LL:", round(ll,4), "KL:", round(kl,4), "AUX:", round(aux,4))
-
-            # increment our print and plot.
-            printLossTotal += loss
-            plotLossTotal += loss
-            
-            losses.append(loss)
-            ll_losses.append(ll)
-            kl_losses.append(kl)
-            aux_losses.append(aux)
-            
-            if batch_num % 10 == 0:
-                plotBatchLoss(j, ll_losses, kl_losses, aux_losses)
-        
-        saveModels(encoder, backwards, attention, inference, prior, decoder, cbow)

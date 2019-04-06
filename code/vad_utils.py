@@ -25,6 +25,7 @@ def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
     return kld
 
 
+
 def loss_function(batch_num,
                   num_batches,
                   y_predicted,
@@ -62,7 +63,6 @@ def loss_function(batch_num,
 
 def plotBatchLoss(iteration, losses, kl, aux):
     x = [i for i in range(1, len(losses)+1)]
-
     labels = ["KL", "Auxiliary", "LL"]
 
     plt.stackplot(x, kl, aux, losses, labels=labels)
