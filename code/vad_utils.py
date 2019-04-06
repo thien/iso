@@ -3,11 +3,13 @@ from io import open
 import torch
 import pickle
 # plotting
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
+# plotting
+import matplotlib
+matplotlib.use('Agg')
+
 from matplotlib import cm
-
-
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 def loadDataset(path='../Datasets/Reviews/dataset_ready.pkl'):
     return pickle.load(open(path, 'rb'))
@@ -46,7 +48,8 @@ def loss_function(batch_num,
     # KL Annealing
     kl_weight = (batch_num+1)/10000
     # kl_weight = 1
-    weighted_KL = KL * kl_weight
+    # weighted_KL = KL * kl_weight
+    weighted_KL = KL
 
     # compute auxillary loss
     aux = criterion_bow(pred_bow, ref_bow)

@@ -13,15 +13,44 @@ np.random.seed(seed)
 
 if __name__ == "__main__":
     print("Loading parameters..", end=" ")
-    hiddenSize = 64
-    latentSize = 32
-    batchSize = 32
-    iterations = 5
-    learningRate = 0.0001
-    gradientClip = 5
-    useBOW = False
-    bidirectionalEncoder = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    if not torch.cuda.is_available():
+        parameters = {
+            'hiddenSize'			: 64,
+            'latentSize'			: 32,
+            'batchSize'				: 32,
+            'iterations'			: 5,
+            'learningRate'			: 0.0001,
+            'gradientClip'			: 5,
+            'useBOW'				: False,
+            'bidirectionalEncoder'	: True,
+            'reduction'             : 512
+        }
+    else:
+        parameters = {
+            'hiddenSize'			: 512,
+            'latentSize'			: 400,
+            'batchSize'				: 64,
+            'iterations'			: 5,
+            'learningRate'			: 0.0001,
+            'gradientClip'			: 5,
+            'useBOW'				: False,
+            'bidirectionalEncoder'	: True,
+            'reduction'             : 1
+        }
+
+    hiddenSize = parameters['hiddenSize']
+    latentSize = parameters['latentSize']
+    batchSize = parameters['batchSize']
+    iterations = parameters['iterations']
+    learningRate = parameters['learningRate']
+    gradientClip = parameters['gradientClip']
+    useBOW = parameters['useBOW']
+    bidirectionalEncoder = parameters['bidirectionalEncoder']
+    reduction = parameters['reduction']
+
+    print(parameters)
     print("Done.")
 
     print("Loading dataset..", end=" ")
@@ -48,8 +77,8 @@ if __name__ == "__main__":
     random.shuffle(train)
     random.shuffle(validation)
 
-    trainx = [x[0] for x in train]
-    trainy = [x[1] for x in train]
+    trainx = [x[0] for x in train[::reduction]]
+    trainy = [x[1] for x in train[::reduction]]
 #     valx = [x[0] for x in validation]
 #     valy = [x[1] for x in validation]
 
@@ -91,7 +120,7 @@ if __name__ == "__main__":
     print("Done.")
 
     trainIteration(device,
-				   traindata,
+                   traindata,
                    modelEncoder,
                    modelAttention,
                    modelBackwards,
@@ -110,3 +139,6 @@ if __name__ == "__main__":
 
     saveModels(modelEncoder, modelBackwards, modelAttention,
                modelInference, modelPrior, modelDecoder, modelBOW)
+
+    # GOAL
+    # Batch: 0 Loss: 26731.2604 LL: 22.8447 KL: 26707.8917 AUX: 0.5253

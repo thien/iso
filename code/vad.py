@@ -194,6 +194,7 @@ class Decoder(nn.Module):
     def forward(self, y, context, z, previousHidden):
         # get output word
         embedded = self.embedding(y).squeeze(1)
+                # print(decoder.training)
         # combine inputs together
         inputs = torch.cat([embedded,context,z], 1).unsqueeze(1)
 
@@ -375,6 +376,7 @@ def trainVAD(
 
         # compute the output of each decoder state
         DecoderOut = decoder(decoderInput, c, z_infer, decoderHidden)
+
         # update variables
         decoderOutput, decoderHidden = DecoderOut
 
@@ -521,9 +523,7 @@ def trainIteration(
                 )
             
             print("Batch:",n,"Loss:",round(loss,4), "LL:", round(ll,4), "KL:", round(kl,4), "AUX:", round(aux,4))
-            # print("Batch:", n)
-            
-            
+
             # increment our print and plot.
             printLossTotal += loss
             plotLossTotal += loss
