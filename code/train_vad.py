@@ -324,7 +324,7 @@ if __name__ == "__main__":
             num_embeddings=vocabularySize,
             embedding_dim=embeddingDim,
             padding_idx=paddingID,
-            _weight=weightMatrix
+        _weight=weightMatrix
         ).to(device)
 
     # we're using pretrained labels
@@ -341,7 +341,7 @@ if __name__ == "__main__":
     # modelBOW = CBOW(vocabularySize, latentSize).to(device)
 
     criterion_r = nn.NLLLoss(ignore_index=paddingID)
-    criterion_bow = nn.BCEWithLogitsLoss()
+    criterion_bow = nn.CrossEntropyLoss()
 
     print("Done.")
 

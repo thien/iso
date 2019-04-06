@@ -301,6 +301,6 @@ class CBOW(nn.Module):
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, z):
-        vocab = self.bow(z)
+        vocab = self.sigmoid(self.bow(z))
         return vocab
    
