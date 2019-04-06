@@ -118,12 +118,8 @@ def trainVAD(
     torch.nn.utils.clip_grad_norm_(encoder.parameters(), gradientClip)
     torch.nn.utils.clip_grad_norm_(backwards.parameters(), gradientClip)
     torch.nn.utils.clip_grad_norm_(decoder.parameters(), gradientClip)
-    if useBOW:
-        torch.nn.utils.clip_grad_norm_(cbow.parameters(), gradientClip)
 
     # gradient descent
-    if useBOW:
-        cbowOpt.step()
     decoderOpt.step()
     # priorOpt.step()
     # inferenceOpt.step()
