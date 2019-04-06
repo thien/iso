@@ -318,10 +318,7 @@ if __name__ == "__main__":
             embedding_dim=embeddingDim,
             padding_idx=paddingID,
         _weight=weightMatrix
-        ).to(device)
-
-    # we're using pretrained labels
-    embedding.weight.requires_grad = False   
+        ).to(device) 
 
     modelEncoder = Encoder(embedding, vocabularySize,
                            paddingID, hiddenSize, bidirectionalEncoder).to(device)
@@ -331,7 +328,6 @@ if __name__ == "__main__":
 
     modelDecoder = Decoder(embedding, vocabularySize,
                            paddingID, batchSize, maxReviewLength, hiddenSize, latentSize, bidirectionalEncoder).to(device)
-    # modelBOW = CBOW(vocabularySize, latentSize).to(device)
 
     criterion_r = nn.NLLLoss(ignore_index=paddingID)
     criterion_bow = nn.BCEWithLogitsLoss()
@@ -341,12 +337,8 @@ if __name__ == "__main__":
     trainIteration(device,
                    traindata,
                    modelEncoder,
-                #    modelAttention,
                    modelBackwards,
-                #    modelInference,
-                #    modelPrior,
                    modelDecoder,
-                #    modelBOW,
                    iterations,
                    word2id,
                    criterion_r,
@@ -358,6 +350,3 @@ if __name__ == "__main__":
 
     saveModels(modelEncoder, modelBackwards, modelAttention,
                modelInference, modelPrior, modelDecoder, modelBOW)
-
-    # GOAL
-    # Batch: 0 Loss: 26731.2604 LL: 22.8447 KL: 26707.8917 AUX: 0.5253
