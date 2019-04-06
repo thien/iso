@@ -241,9 +241,9 @@ if __name__ == "__main__":
         }
     else:
         parameters = {
-            'hiddenSize'			: 512,
-            'latentSize'			: 400,
-            'batchSize'				: 32,
+            'hiddenSize'			: 400,
+            'latentSize'			: 512,
+            'batchSize'				: 64,
             'iterations'			: 5,
             'learningRate'			: 0.0001,
             'gradientClip'			: 5,
