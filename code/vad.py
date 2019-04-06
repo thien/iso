@@ -17,7 +17,7 @@ class Encoder(nn.Module):
     Utilises equation (1) in the paper.
     """
     def __init__(self, 
-                embeddingMatrix, 
+                embedding, 
                 vocabularySize, 
                 padding_id, 
                 hiddenSize=512, 
@@ -28,17 +28,9 @@ class Encoder(nn.Module):
         self.hiddenSize = hiddenSize
         self.isBidirectional = bidirectional
 
-        embeddingDim = embeddingMatrix.shape[1]
-        self.embedding = nn.Embedding(
-            num_embeddings=vocabularySize,
-            embedding_dim=embeddingDim,
-            padding_idx=padding_id,
-            _weight=torch.Tensor(embeddingMatrix)
-        )
+        embeddingDim = embedding.weight.shape[1]
+        self.embedding = embedding
 
-        # we're using pretrained labels
-        self.embedding.weight.requires_grad = False   
-        
         self.gru = nn.GRU(embeddingDim, self.hiddenSize,
                           bidirectional=self.isBidirectional, batch_first=True)
         
@@ -72,7 +64,7 @@ class Encoder(nn.Module):
 
 class Backwards(nn.Module):
     def __init__(self, 
-                embeddingMatrix, 
+                embedding, 
                 vocabularySize, 
                 padding_id, 
                 hidden_size=512, 
@@ -81,16 +73,9 @@ class Backwards(nn.Module):
         super(Backwards, self).__init__()
 
         self.hiddenSize = hidden_size
-        embeddingDim = embeddingMatrix.shape[1]
+        embeddingDim = embedding.weight.shape[1]
 
-        self.embedding = nn.Embedding(
-            num_embeddings=vocabularySize,
-            embedding_dim=embeddingDim,
-            padding_idx=padding_id,
-            _weight=torch.Tensor(embeddingMatrix)
-        )
-    
-        self.embedding.weight.requires_grad = False
+        self.embedding = embedding
 
         self.numLayers = 2 if bidirectionalEncoder else 1
         self.gru = nn.GRU(embeddingDim, 
@@ -150,7 +135,7 @@ class Attention(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(self, 
-                embeddingMatrix, 
+                embedding, 
                 vocabularySize, 
                 padding_id, 
                 batchSize, 
@@ -165,23 +150,16 @@ class Decoder(nn.Module):
         self.outputSize = outputSize
         self.latentSize = latentSize
 
-        embeddingDim = embeddingMatrix.shape[1]
+        embeddingDim = embedding.weight.shape[1]
 
         # additional components
         self.attention = Attention(hiddenSize, encoderBidirectional)
         self.inference = Inference(hiddenSize, latentSize, encoderBidirectional)
         self.prior = Prior(hiddenSize, latentSize, encoderBidirectional)
         self.cbow = CBOW(vocabularySize, latentSize)
-        
-        # decoder components:
-        self.embedding = nn.Embedding(
-            num_embeddings=vocabularySize,
-            embedding_dim=embeddingDim,
-            padding_idx=padding_id,
-            _weight=torch.Tensor(embeddingMatrix)
-        )
 
-        self.embedding.weight.requires_grad = False
+        # decoder components:
+        self.embedding = embedding
 
         encoderDim = self.hiddenSize
         if encoderBidirectional:

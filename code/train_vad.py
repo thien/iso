@@ -25,19 +25,11 @@ def trainVAD(
     xLength,
     yLength,
     encoder,
-    attention,
     backwards,
-    inference,
-    prior,
     decoder,
-    cbow,
     encoderOpt,
-    attentionOpt,
     backwardsOpt,
-    inferenceOpt,
-    priorOpt,
     decoderOpt,
-    cbowOpt,
     word2id,
     criterion_r,
     criterion_bow,
@@ -50,13 +42,8 @@ def trainVAD(
 
     # initialise gradients
     encoderOpt.zero_grad()
-    attentionOpt.zero_grad()
     backwardsOpt.zero_grad()
-    inferenceOpt.zero_grad()
-    priorOpt.zero_grad()
     decoderOpt.zero_grad()
-    if useBOW:
-        cbowOpt.zero_grad()
 
     # set default loss
     loss = 0
@@ -100,9 +87,6 @@ def trainVAD(
             batchSize, vocabularySize).zero_().to(device)
         ref_bow.scatter_(1, y[:, t:], 1)
 
-        # compute auxillary
-        # pred_bow = cbow(z_infer)
-
         # calculate the loss
         seqloss, ll, kl, aux = loss_function(
             batch_num,
@@ -133,9 +117,6 @@ def trainVAD(
     # gradient clipping
     torch.nn.utils.clip_grad_norm_(encoder.parameters(), gradientClip)
     torch.nn.utils.clip_grad_norm_(backwards.parameters(), gradientClip)
-    # torch.nn.utils.clip_grad_norm_(attention.parameters(), gradientClip)
-    # torch.nn.utils.clip_grad_norm_(inference.parameters(), gradientClip)
-    # torch.nn.utils.clip_grad_norm_(prior.parameters(), gradientClip)
     torch.nn.utils.clip_grad_norm_(decoder.parameters(), gradientClip)
     if useBOW:
         torch.nn.utils.clip_grad_norm_(cbow.parameters(), gradientClip)
@@ -157,12 +138,12 @@ def trainIteration(
         device,
         dataset,
         encoder,
-        attention,
+        # attention,
         backwards,
-        inference,
-        prior,
+        # inference,
+        # prior,
         decoder,
-        cbow,
+        # cbow,
         iterations,
         word2id,
         criterion_r,
@@ -177,13 +158,9 @@ def trainIteration(
     printLossTotal = 0
     plotLossTotal = 0
 
-    encoderOpt = optim.Adam(encoder.parameters(),   lr=learningRate)
-    attentionOpt = optim.Adam(attention.parameters(), lr=learningRate)
+    encoderOpt   = optim.Adam(encoder.parameters(),   lr=learningRate)
     backwardsOpt = optim.Adam(backwards.parameters(), lr=learningRate)
-    inferenceOpt = optim.Adam(inference.parameters(), lr=learningRate)
-    priorOpt = optim.Adam(prior.parameters(),     lr=learningRate)
-    decoderOpt = optim.Adam(decoder.parameters(),   lr=learningRate)
-    cbowOpt = optim.Adam(cbow.parameters(),      lr=learningRate)
+    decoderOpt   = optim.Adam(decoder.parameters(),   lr=learningRate)
 
     numBatches = len(dataset[0])
 
@@ -219,19 +196,14 @@ def trainIteration(
                 xLength,
                 yLength,
                 encoder,
-                attention,
+                # attention,
                 backwards,
-                inference,
-                prior,
+                # inference,
+                # prior,
                 decoder,
-                cbow,
                 encoderOpt,
-                attentionOpt,
                 backwardsOpt,
-                inferenceOpt,
-                priorOpt,
                 decoderOpt,
-                cbowOpt,
                 word2id,
                 criterion_r,
                 criterion_bow,
@@ -348,18 +320,25 @@ if __name__ == "__main__":
 
     print("Initialising model components..", end=" ")
 
-    modelEncoder = Encoder(weightMatrix, vocabularySize,
+    embedding = nn.Embedding(
+            num_embeddings=vocabularySize,
+            embedding_dim=embeddingDim,
+            padding_idx=paddingID,
+            _weight=weightMatrix
+        ).to(device)
+
+    # we're using pretrained labels
+    embedding.weight.requires_grad = False   
+
+    modelEncoder = Encoder(embedding, vocabularySize,
                            paddingID, hiddenSize, bidirectionalEncoder).to(device)
 
-    modelAttention = Attention(hiddenSize, bidirectionalEncoder).to(device)
-    modelBackwards = Backwards(weightMatrix, vocabularySize,
+    modelBackwards = Backwards(embedding, vocabularySize,
                                paddingID, hiddenSize, bidirectionalEncoder).to(device)
-    modelInference = Inference(
-        hiddenSize, latentSize, bidirectionalEncoder).to(device)
-    modelPrior = Prior(hiddenSize, latentSize, bidirectionalEncoder).to(device)
-    modelDecoder = Decoder(weightMatrix, vocabularySize,
+
+    modelDecoder = Decoder(embedding, vocabularySize,
                            paddingID, batchSize, maxReviewLength, hiddenSize, latentSize, bidirectionalEncoder).to(device)
-    modelBOW = CBOW(vocabularySize, latentSize).to(device)
+    # modelBOW = CBOW(vocabularySize, latentSize).to(device)
 
     criterion_r = nn.NLLLoss(ignore_index=paddingID)
     criterion_bow = nn.BCEWithLogitsLoss()
@@ -369,12 +348,12 @@ if __name__ == "__main__":
     trainIteration(device,
                    traindata,
                    modelEncoder,
-                   modelAttention,
+                #    modelAttention,
                    modelBackwards,
-                   modelInference,
-                   modelPrior,
+                #    modelInference,
+                #    modelPrior,
                    modelDecoder,
-                   modelBOW,
+                #    modelBOW,
                    iterations,
                    word2id,
                    criterion_r,
