@@ -49,8 +49,8 @@ def loss_function(batch_num,
     # KL Annealing
     kl_weight = (batch_num+1)/10000
     # kl_weight = 1
-    # weighted_KL = KL * kl_weight
-    weighted_KL = KL
+    weighted_KL = KL * kl_weight
+    # weighted_KL = KL
 
     # compute auxillary loss
     aux = criterion_bow(pred_bow, ref_bow)
