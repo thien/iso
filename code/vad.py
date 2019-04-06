@@ -166,10 +166,9 @@ class Decoder(nn.Module):
             encoderDim *= 2
 
         gruInputSize = embeddingDim + encoderDim + self.latentSize
-        self.comb = nn.Linear(gruInputSize, self.hiddenSize)
-        self.gru = nn.GRU(self.hiddenSize, self.hiddenSize, batch_first=True)
+   
+        self.gru = nn.GRU(gruInputSize, self.hiddenSize, batch_first=True)
         self.out = nn.Linear(self.hiddenSize + encoderDim, vocabularySize)
-        
         
         if xavier:
             init.xavier_uniform_(self.gru.weight_hh_l0)
@@ -206,9 +205,7 @@ class Decoder(nn.Module):
 
         # print(embedded.shape, c.shape, z.shape)
         # combine inputs together
-        inputs = torch.cat([embedded,c,z], 1).unsqueeze(1)
-
-        inputs = self.comb(inputs)
+        inputs = torch.cat([embedded,z,c], 1).unsqueeze(1)
 
         if len(previousHidden.shape) < 3:
             previousHidden = previousHidden.unsqueeze(0)
