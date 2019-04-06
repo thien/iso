@@ -315,7 +315,7 @@ def trainVAD(
              decoderOpt,
              cbowOpt,
              word2id,
-             criterion_reconstruction,
+             criterion_r,
              criterion_bow,
              useBOW,
              gradientClip
@@ -341,10 +341,8 @@ def trainVAD(
     kl_loss = 0
     aux_loss = 0
 
-    # initalise input and target lengths
-    targetLength, batchSize = y[0].size(0), x.shape[0]
-    ySeqlength = yLength[0]
-    print(targetLength, ySeqlength)
+    # initalise input and target lengths, and vocab size
+    ySeqlength, batchSize = yLength[0], x.shape[0]
     vocabularySize = decoder.embedding.weight.shape[0]
     # set up encoder and backward hidden vectors
     encoderHidden = encoder.initHidden(batchSize).to(device)
@@ -388,7 +386,19 @@ def trainVAD(
         pred_bow = cbow(z_infer)
 
         # calculate the loss
-        seqloss, ll, kl, aux = loss_function(batch_num, num_batches, decoderOutput, y[:, t], infer_mu, infer_logvar, prior_mu, prior_logvar, ref_bow, pred_bow, criterion_reconstruction, criterion_bow)
+        seqloss, ll, kl, aux = loss_function(
+                                            batch_num, 
+                                            num_batches,
+                                            decoderOutput,
+                                            y[:, t],
+                                            infer_mu,
+                                            infer_logvar,
+                                            prior_mu,
+                                            prior_logvar,
+                                            ref_bow,
+                                            pred_bow,
+                                            criterion_r,
+                                            criterion_bow)
         
         loss += seqloss
         ll_loss += ll
@@ -436,7 +446,7 @@ def trainIteration(
                 cbow,
                 iterations,
                 word2id,
-                criterion_reconstruction,
+                criterion_r,
                 criterion_bow,
                 learningRate,
                 gradientClip,
@@ -504,13 +514,13 @@ def trainIteration(
                 decoderOpt,
                 cbowOpt,
                 word2id,
-                criterion_reconstruction,
+                criterion_r,
                 criterion_bow,
                 useBOW,
                 gradientClip
                 )
             
-            print("Batch:",n,"Loss:",loss)
+            print("Batch:",n,"Loss:",loss, "LL:", ll, "KL:", kl, "AUX:", aux)
             
             # increment our print and plot.
             printLossTotal += loss
