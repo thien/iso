@@ -344,16 +344,17 @@ def loss_function(batch_num,
     
     # compute KLD
     KL = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
-    KL = torch.mean(torch.mean(KL))
+    KL = torch.sum(KL)
     
     # KL Annealing
-    kl_weight = 0 if batch_num == 0 else batch_num/num_batches
-    weighted_KL = KL * kl_weight 
+    kl_weight = (batch_num+1)/10000
+#     kl_weight = 1
+    weighted_KL = KL * kl_weight
     
     # compute auxillary loss
     aux = criterion_bow(pred_bow, ref_bow)
     # weight auxillary loss
-    alpha = 10
+    alpha = kl_weight
     weighted_aux = aux * alpha
     
     return LL + weighted_KL + weighted_aux, LL, weighted_KL, weighted_aux
@@ -382,6 +383,7 @@ def trainVAD(
              word2id,
              criterion_reconstruction,
              criterion_bow,
+             useBOW,
              gradientClip
             ):
 
@@ -396,7 +398,8 @@ def trainVAD(
     inferenceOpt.zero_grad()
     priorOpt.zero_grad()
     decoderOpt.zero_grad()
-    cbowOpt.zero_grad()
+    if useBOW:
+        cbowOpt.zero_grad()
 
     # set default loss
     loss = 0
@@ -471,10 +474,12 @@ def trainVAD(
     torch.nn.utils.clip_grad_norm_(inference.parameters(), gradientClip)
     torch.nn.utils.clip_grad_norm_(prior.parameters(), gradientClip)
     torch.nn.utils.clip_grad_norm_(decoder.parameters(), gradientClip)
-    torch.nn.utils.clip_grad_norm_(cbow.parameters(), gradientClip)
+    if useBOW:
+        torch.nn.utils.clip_grad_norm_(cbow.parameters(), gradientClip)
     
     # gradient descent
-    cbowOpt.step()
+    if useBOW:
+        cbowOpt.step()
     decoderOpt.step()
     priorOpt.step()
     inferenceOpt.step()
@@ -499,6 +504,7 @@ def trainIteration(
                 criterion_bow,
                 learningRate,
                 gradientClip,
+                useBOW,
                 printEvery = 10,
                 plotEvery = 100):
     
@@ -564,8 +570,11 @@ def trainIteration(
                 word2id,
                 criterion_reconstruction,
                 criterion_bow,
+                useBOW,
                 gradientClip
                 )
+            
+            print("Batch:",n,"Loss:",loss)
             
             # increment our print and plot.
             printLossTotal += loss
@@ -583,13 +592,12 @@ def trainIteration(
 
 def plotBatchLoss(iteration, losses, kl, aux):
     x = [i for i in range(1,len(losses)+1)]
-    
-#     su = plt.plot(x, losses)
-#     losses = losses - kl - aux
+   
     labels = ["KL", "Auxiliary", "LL"]
 
     plt.stackplot(x, kl, aux, losses, labels=labels)
     plt.legend()
+    plt.ylim(top=15) 
     title = 'Learning Loss during Iteration ' + str(iteration)
     plt.title(title)
     plt.ylabel('Loss')
@@ -601,19 +609,6 @@ def plotBatchLoss(iteration, losses, kl, aux):
     filepath = os.path.join(directory, filename)
     plt.savefig(filepath, bbox_inches='tight')    
     plt.close()
-        
-def asMinutes(s):
-    m = math.floor(s / 60)
-    s -= m * 60
-    return '%dm %ds' % (m, s)
-
-
-def timeSince(since, percent):
-    now = time.time()
-    s = now - since
-    es = s / (percent)
-    rs = es - s
-    return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
 """
 Dataset batching mechanism
@@ -671,18 +666,17 @@ def saveModels(encoder, backwards, attention, inference, prior, decoder, cbow):
     torch.save(cbow.state_dict(), 'cbow.pth')
     print("Done.")
     
-    
 if __name__ == "__main__":
     print("Loading parameters..", end=" ")
-    hiddenSize = 512
-    latentSize = 400
-    batchSize  = 32
-    iterations = 2
+    hiddenSize = 300
+    latentSize = 300
+    batchSize  = 64
+    iterations = 5
     learningRate = 0.0001
-    gradientClip = 1
+    gradientClip = 5
+    useBOW = False
     bidirectionalEncoder = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#     device = "cpu"
     print("Done.")
 
     print("Loading dataset..", end=" ")
@@ -766,6 +760,7 @@ if __name__ == "__main__":
                    criterion_bow,
                    learningRate,
                    gradientClip,
+                   useBOW,
                    printEvery=1000)
 
     saveModels(modelEncoder, modelBackwards, modelAttention, modelInference, modelPrior, modelDecoder, modelBOW)
