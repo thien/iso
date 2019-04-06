@@ -53,7 +53,7 @@ def loss_function(batch_num,
     # weighted_KL = KL
 
     # compute auxillary loss
-    aux = criterion_bow(pred_bow, ref_bow.long())
+    aux = criterion_bow(pred_bow, ref_bow)
     # weight auxillary loss
     alpha = 0.5
     weighted_aux = aux * alpha
