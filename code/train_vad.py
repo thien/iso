@@ -35,7 +35,7 @@ def trainVAD(
     criterion_bow,
     useBOW,
     gradientClip
-):
+    ):
     """
     Represents a whole sequence iteration trained on a batch of reviews.
     """
@@ -121,9 +121,6 @@ def trainVAD(
 
     # gradient descent
     decoderOpt.step()
-    # priorOpt.step()
-    # inferenceOpt.step()
-    # attentionOpt.step()
     backwardsOpt.step()
     encoderOpt.step()
 
@@ -219,8 +216,8 @@ def trainIteration(
             kl_losses.append(kl)
             aux_losses.append(aux)
 
-            # if batch_num % 10 == 0:
-                # plotBatchLoss(j, ll_losses, kl_losses, aux_losses)
+            if batch_num % 10 == 0:
+                plotBatchLoss(j, ll_losses, kl_losses, aux_losses)
 
         saveModels(encoder, backwards, attention,
                    inference, prior, decoder, cbow)
@@ -246,7 +243,7 @@ if __name__ == "__main__":
         parameters = {
             'hiddenSize'			: 512,
             'latentSize'			: 400,
-            'batchSize'				: 64,
+            'batchSize'				: 32,
             'iterations'			: 5,
             'learningRate'			: 0.0001,
             'gradientClip'			: 5,

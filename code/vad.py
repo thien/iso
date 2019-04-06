@@ -298,9 +298,8 @@ class CBOW(nn.Module):
         super(CBOW, self).__init__()
         
         self.bow = nn.Linear(latent_size, vocabulary_size)
-        self.sigmoid = nn.Sigmoid()
-    
+
     def forward(self, z):
-        vocab = self.sigmoid(self.bow(z))
+        vocab = self.bow(z)
         return vocab
    
