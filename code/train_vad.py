@@ -242,7 +242,7 @@ if __name__ == "__main__":
             'iterations'			: 5,
             'learningRate'			: 0.0001,
             'gradientClip'			: 5,
-            'useBOW'				: True,
+            'useBOW'				: False,
             'bidirectionalEncoder'	: True,
             'reduction'             : 512
         }
@@ -254,7 +254,7 @@ if __name__ == "__main__":
             'iterations'			: 5,
             'learningRate'			: 0.0001,
             'gradientClip'			: 5,
-            'useBOW'				: False,
+            'useBOW'				: True,
             'bidirectionalEncoder'	: True,
             'reduction'             : 1
         }
