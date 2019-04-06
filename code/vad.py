@@ -204,7 +204,7 @@ class Decoder(nn.Module):
         # get output word
         embedded = self.embedding(y).squeeze(1)
 
-        print(embedded.shape, c.shape, z.shape)
+        # print(embedded.shape, c.shape, z.shape)
         # combine inputs together
         inputs = torch.cat([embedded,c,z], 1).unsqueeze(1)
 
