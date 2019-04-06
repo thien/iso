@@ -242,7 +242,7 @@ if __name__ == "__main__":
             'iterations'			: 5,
             'learningRate'			: 0.0001,
             'gradientClip'			: 5,
-            'useBOW'				: False,
+            'useBOW'				: True,
             'bidirectionalEncoder'	: True,
             'reduction'             : 512
         }
@@ -341,7 +341,7 @@ if __name__ == "__main__":
     # modelBOW = CBOW(vocabularySize, latentSize).to(device)
 
     criterion_r = nn.NLLLoss(ignore_index=paddingID)
-    criterion_bow = nn.CrossEntropyLoss()
+    criterion_bow = nn.BCEWithLogitsLoss()
 
     print("Done.")
 
