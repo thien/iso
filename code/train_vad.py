@@ -1,5 +1,5 @@
 from vad import Encoder, Backwards, Attention, Decoder, Inference, Prior, CBOW
-from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset
+from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels
 
 
 import random
@@ -241,8 +241,8 @@ if __name__ == "__main__":
         }
     else:
         parameters = {
-            'hiddenSize'			: 400,
-            'latentSize'			: 512,
+            'hiddenSize'			: 500,
+            'latentSize'			: 400,
             'batchSize'				: 64,
             'iterations'			: 5,
             'learningRate'			: 0.0001,
