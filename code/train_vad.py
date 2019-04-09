@@ -10,6 +10,7 @@ import torch.nn as nn
 from torch import optim
 from tqdm import tqdm
 import json
+from shutil import copyfile
 
 # setup default seeds so we can repeat the outcomes
 seed = 1337
@@ -132,7 +133,6 @@ def trainVAD(
 
     return avg_loss, avg_llloss, avg_klloss, avg_auxloss
 
-
 def trainIteration(
         device,
         dataset,
@@ -221,9 +221,33 @@ def trainIteration(
 
         saveModels(encoder, backwards, decoder, folder_path)
 
+def printParameters(parameters):
+    """
+    Pretty print parameters in the cli.
+    """
+    maxLen = max([len(k) for k in parameters])
+    print("Paramters:")
+    for key in parameters:
+        padding = " ".join(["" for _ in range(maxLen - len(key) + 5)])
+        print(key + padding, parameters[key])
 
-if __name__ == "__main__":
-    print("Loading parameters..", end=" ")
+def initiateDirectory(folder_path, model_base_dir="models"):
+    folder_path = os.path.join(model_base_dir, folder_path)
+    # create directory as it does not exist yet.
+    if not os.path.isdir(folder_path):
+        os.makedirs(folder_path)
+    
+    return folder_path
+
+def copyDatasetParams(folder_path, dataset_parameters_file="dataset_parameters.json"):
+    # copy the dataset parameters into the model directory so we have an idea on
+    # what dataset the model parameters are trained with.
+    copyfile(dataset_parameters_file, os.path.join(folder_path, dataset_parameters_file))
+
+def defaultParameters():
+    """
+    Initiates default parameters if none is present.
+    """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if not torch.cuda.is_available():
@@ -236,7 +260,8 @@ if __name__ == "__main__":
             'gradientClip'			: 5,
             'useBOW'				: False,
             'bidirectionalEncoder'	: True,
-            'reduction'             : 512
+            'reduction'             : 512,
+            'device'                : device,
         }
     else:
         parameters = {
@@ -248,21 +273,27 @@ if __name__ == "__main__":
             'gradientClip'			: 5,
             'useBOW'				: True,
             'bidirectionalEncoder'	: True,
-            'reduction'             : 1
+            'reduction'             : 1,
+            'device'                : device,
         }
+    return parameters
+
+def initiate(parameters=None):
+    """
+    Loads model parameters, setup file directories and trains
+    model with specified params.
+    """
+
+    # load default parameters if they don't exist.
+    if parameters is None:
+        parameters = defaultParameters()
 
     # by default we set the folder_path folder to the current datetime
     folder_path = datetime.datetime.now().strftime("%Y%m%d %H-%M-%S")
-    model_base_dir = "models"
-    folder_path = os.path.join(model_base_dir, folder_path)
-    # create directory as it does not exist yet.
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
-    # we need to save model parameters
-    param_jsonpath = os.path.join(folder_path, 'model_parameters.json')
-    with open(param_jsonpath, 'w') as outfile:
-        json.dump(data, outfile)
-    
+    folder_path = initiateDirectory(folder_path)
+    # copy dataset parameters
+    copyDatasetParams(folder_path)
+    # initiate parameter variables
     hiddenSize = parameters['hiddenSize']
     latentSize = parameters['latentSize']
     batchSize = parameters['batchSize']
@@ -273,8 +304,7 @@ if __name__ == "__main__":
     bidirectionalEncoder = parameters['bidirectionalEncoder']
     reduction = parameters['reduction']
 
-    print(parameters)
-    print("Done.")
+    printParameters(parameters)
 
     print("Loading dataset..", end=" ")
     dataset = loadDataset()
@@ -285,7 +315,7 @@ if __name__ == "__main__":
     train = dataset['train']
     cutoff = dataset['cutoff']
     paddingID = word2id['<pad>']
-    print("Done.")
+
 
     print("Converting dataset weights into tensors..", end=" ")
     # convert dataset into tensors
@@ -351,3 +381,20 @@ if __name__ == "__main__":
                    printEvery=1000)
 
     saveModels(modelEncoder, modelBackwards, modelDecoder, folder_path)
+
+    # # clear memory s.t we can use it on the next model.
+    # del modelEncoder
+    # del modelBackwards
+    # del modelDecoder
+    # del folder_path
+    # del traindata
+    # del train_x
+    # del train_y
+    # del weightMatrix
+    # del dataset
+    # del embedding
+    # torch.cuda.empty_cache()
+
+
+if __name__ == "__main__":
+    initiate()
