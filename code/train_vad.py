@@ -1,7 +1,7 @@
 from vad import Encoder, Backwards, Attention, Decoder, Inference, Prior, CBOW
 from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels
 
-
+import datetime
 import random
 import numpy as np
 import torch
@@ -9,12 +9,11 @@ import torch.nn as nn
 from torch import optim
 from tqdm import tqdm
 
+# setup default seeds so we can repeat the outcomes
 seed = 1337
-
 torch.manual_seed(seed)
 random.seed(seed)
 np.random.seed(seed)
-
 
 def trainVAD(
     device,
@@ -145,6 +144,7 @@ def trainIteration(
         learningRate,
         gradientClip,
         useBOW,
+        folder_path,
         printEvery=10,
         plotEvery=100):
 
@@ -215,10 +215,9 @@ def trainIteration(
             aux_losses.append(aux)
 
             if batch_num % 10 == 0:
-                plotBatchLoss(j, ll_losses, kl_losses, aux_losses)
+                plotBatchLoss(j, ll_losses, kl_losses, aux_losses, folder_path)
 
-        saveModels(encoder, backwards, attention,
-                   inference, prior, decoder, cbow)
+        saveModels(encoder, backwards, decoder, folder_path)
 
 
 if __name__ == "__main__":
@@ -249,6 +248,13 @@ if __name__ == "__main__":
             'bidirectionalEncoder'	: True,
             'reduction'             : 1
         }
+
+    # by default we set the folder_path folder to the current datetime
+    folder_path = datetime.datetime.now().strftime("%Y%m%d %H-%M-%S")
+
+    model_base_dir = "models"
+
+    folder_path = os.path.join(model_base_dir, folder_path)
 
     hiddenSize = parameters['hiddenSize']
     latentSize = parameters['latentSize']
@@ -282,14 +288,10 @@ if __name__ == "__main__":
     # batching data
     print("Batching Data..", end=" ")
 
-    # shuffle data rows
+    # shuffle data rows and split data s.t they can be processed.
     random.shuffle(train)
-
-    trainx = [x[0] for x in train[::reduction]]
-    trainy = [x[1] for x in train[::reduction]]
-
-    # shuffle data row
-
+    trainx, trainy = [x[0] for x in train[::reduction]], [x[1] for x in train[::reduction]]
+    # batchify data.
     trainx = batchData(trainx, paddingID, device, batchSize, cutoff)
     trainy = batchData(trainy, paddingID, device, batchSize, cutoff)
 
@@ -337,7 +339,7 @@ if __name__ == "__main__":
                    learningRate,
                    gradientClip,
                    useBOW,
+                   folder_path,
                    printEvery=1000)
 
-    saveModels(modelEncoder, modelBackwards, modelAttention,
-               modelInference, modelPrior, modelDecoder, modelBOW)
+    saveModels(modelEncoder, modelBackwards, modelDecoder, folder_path)

@@ -61,7 +61,7 @@ def loss_function(batch_num,
     return LL + weighted_KL + weighted_aux, LL, weighted_KL, weighted_aux
 
 
-def plotBatchLoss(iteration, losses, kl, aux):
+def plotBatchLoss(iteration, losses, kl, aux, folder_path):
     x = [i for i in range(1, len(losses)+1)]
     labels = ["KL", "Auxiliary", "LL"]
 
@@ -77,6 +77,7 @@ def plotBatchLoss(iteration, losses, kl, aux):
     directory = "charts"
     filename = title + "." + filetype
     filepath = os.path.join(directory, filename)
+    filepath = os.path.join(folder_path, filepath)
     plt.savefig(filepath, bbox_inches='tight')
     plt.close()
 
@@ -122,13 +123,9 @@ def batchData(dataset, padID, device, batchsize=32, cutoff=50):
     return batches
 
 
-def saveModels(encoder, backwards, attention, inference, prior, decoder, cbow):
+def saveModels(encoder, backwards, decoder, filepath):
     print("Saving models..", end=" ")
-    torch.save(encoder.state_dict(), 'encoder.pth')
-    torch.save(attention.state_dict(), 'attention.pth')
-    torch.save(backwards.state_dict(), 'backwards.pth')
-    torch.save(inference.state_dict(), 'inference.pth')
-    torch.save(prior.state_dict(), 'prior.pth')
-    torch.save(decoder.state_dict(), 'decoder.pth')
-    torch.save(cbow.state_dict(), 'cbow.pth')
+    torch.save(encoder.state_dict(),  os.path.join(filepath, 'encoder.pth'))
+    torch.save(backwards.state_dict(),  os.path.join(filepath, 'backwards.pth'))
+    torch.save(decoder.state_dict(),  os.path.join(filepath, 'decoder.pth'))
     print("Done.")

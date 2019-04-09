@@ -304,4 +304,3 @@ class CBOW(nn.Module):
     def forward(self, z):
         vocab = self.bow(z)
         return vocab
-   
