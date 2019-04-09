@@ -76,15 +76,14 @@ def trainVAD(
     # all of the seq2seq based implementations I've come across on GitHub.
     for t in range(ySeqlength):
         # compute the output of each decoder state
-        DecoderOut = decoder(decoderInput, encoderOutputs,
+        out = decoder(decoderInput, encoderOutputs,
                              decoderHidden, back=backwardOutput[:, t])
 
         # update variables
-        decoderOutput, decoderHidden, pred_bow, infer_mu, infer_logvar, prior_mu, prior_logvar = DecoderOut
+        decoderOutput, decoderHidden, pred_bow, infer_mu, infer_logvar, prior_mu, prior_logvar = out
 
         # compute reference CBOW
-        ref_bow = torch.FloatTensor(
-            batchSize, vocabularySize).zero_().to(device)
+        ref_bow = torch.FloatTensor(batchSize, vocabularySize).zero_().to(device)
         ref_bow.scatter_(1, y[:, t:], 1)
 
         # calculate the loss
@@ -124,19 +123,21 @@ def trainVAD(
     backwardsOpt.step()
     encoderOpt.step()
 
-    return loss.item()/ySeqlength, ll_loss.item()/ySeqlength, kl_loss.item()/ySeqlength, aux_loss.item()/ySeqlength
+    # return avg losses for plotting.
+    avg_loss = loss.item()/ySeqlength
+    avg_llloss = ll_loss.item()/ySeqlength
+    avg_klloss = kl_loss.item()/ySeqlength
+    avg_auxloss = aux_loss.item()/ySeqlength
+
+    return avg_loss, avg_llloss, avg_klloss, avg_auxloss
 
 
 def trainIteration(
         device,
         dataset,
         encoder,
-        # attention,
         backwards,
-        # inference,
-        # prior,
         decoder,
-        # cbow,
         iterations,
         word2id,
         criterion_r,
@@ -189,10 +190,7 @@ def trainIteration(
                 xLength,
                 yLength,
                 encoder,
-                # attention,
                 backwards,
-                # inference,
-                # prior,
                 decoder,
                 encoderOpt,
                 backwardsOpt,
@@ -272,7 +270,6 @@ if __name__ == "__main__":
     word2id = dataset['word2id']
     weightMatrix = dataset['weights']
     train = dataset['train']
-    validation = dataset['validation']
     cutoff = dataset['cutoff']
     paddingID = word2id['<pad>']
     print("Done.")
@@ -287,22 +284,16 @@ if __name__ == "__main__":
 
     # shuffle data rows
     random.shuffle(train)
-    random.shuffle(validation)
 
     trainx = [x[0] for x in train[::reduction]]
     trainy = [x[1] for x in train[::reduction]]
-#     valx = [x[0] for x in validation]
-#     valy = [x[1] for x in validation]
 
     # shuffle data row
 
     trainx = batchData(trainx, paddingID, device, batchSize, cutoff)
     trainy = batchData(trainy, paddingID, device, batchSize, cutoff)
-    # trainx = batchData(valx, paddingID, batchSize, cutoff)
-    # trainy = batchData(valy, paddingID, batchSize, cutoff)
 
     traindata = (trainx, trainy)
-    # valdata= (valx, valy)
     print("Done.")
 
     # setup variables for model components initialisation
