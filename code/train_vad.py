@@ -256,7 +256,9 @@ if __name__ == "__main__":
     model_base_dir = "models"
 
     folder_path = os.path.join(model_base_dir, folder_path)
-
+    if not os.path.isdir(folder_path):
+        os.makedirs(folder_path)
+        
     hiddenSize = parameters['hiddenSize']
     latentSize = parameters['latentSize']
     batchSize = parameters['batchSize']

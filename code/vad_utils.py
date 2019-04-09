@@ -76,9 +76,10 @@ def plotBatchLoss(iteration, losses, kl, aux, folder_path):
     filetype = "png"
     directory = "charts"
     filename = title + "." + filetype
+    directory = os.path.join(folder_path, directory)
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
     filepath = os.path.join(directory, filename)
-    filepath = os.path.join(folder_path, filepath)
-    os.mkdir(filepath)
     plt.savefig(filepath, bbox_inches='tight')
     plt.close()
 
