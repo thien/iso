@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from torch import optim
 from tqdm import tqdm
+import json
 
 # setup default seeds so we can repeat the outcomes
 seed = 1337
@@ -252,13 +253,16 @@ if __name__ == "__main__":
 
     # by default we set the folder_path folder to the current datetime
     folder_path = datetime.datetime.now().strftime("%Y%m%d %H-%M-%S")
-
     model_base_dir = "models"
-
     folder_path = os.path.join(model_base_dir, folder_path)
+    # create directory as it does not exist yet.
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
-        
+    # we need to save model parameters
+    param_jsonpath = os.path.join(folder_path, 'model_parameters.json')
+    with open(param_jsonpath, 'w') as outfile:
+        json.dump(data, outfile)
+    
     hiddenSize = parameters['hiddenSize']
     latentSize = parameters['latentSize']
     batchSize = parameters['batchSize']
@@ -322,6 +326,7 @@ if __name__ == "__main__":
     modelBackwards = Backwards(embedding, vocabularySize,
                                paddingID, hiddenSize, bidirectionalEncoder).to(device)
 
+    # https://discuss.pytorch.org/t/confusion-about-nested-modules-and-shared-parameters/26212/2
     modelDecoder = Decoder(embedding, vocabularySize,
                            paddingID, batchSize, maxReviewLength, hiddenSize, latentSize, bidirectionalEncoder).to(device)
 

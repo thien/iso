@@ -24,8 +24,6 @@ def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
                            - torch.div(torch.exp(var_1), torch.exp(var_2)), 1)
     return kld
 
-
-
 def loss_function(batch_num,
                   num_batches,
                   y_predicted,
@@ -60,7 +58,6 @@ def loss_function(batch_num,
 
     return LL + weighted_KL + weighted_aux, LL, weighted_KL, weighted_aux
 
-
 def plotBatchLoss(iteration, losses, kl, aux, folder_path):
     x = [i for i in range(1, len(losses)+1)]
     labels = ["KL", "Auxiliary", "LL"]
@@ -83,12 +80,10 @@ def plotBatchLoss(iteration, losses, kl, aux, folder_path):
     plt.savefig(filepath, bbox_inches='tight')
     plt.close()
 
-
 def padSeq(row, maxlength, padID, cutoff):
     currentLength = len(row)
     difference = maxlength - currentLength
     return row + [padID for _ in range(difference)]
-
 
 def batchData(dataset, padID, device, batchsize=32, cutoff=50):
     """
