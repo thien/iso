@@ -1,6 +1,7 @@
 from vad import Encoder, Backwards, Attention, Decoder, Inference, Prior, CBOW
 from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels
 
+import os
 import datetime
 import random
 import numpy as np
