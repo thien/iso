@@ -15,6 +15,18 @@ These logs are used to indicate progress of the project as I work on it through 
 
 ----
 
+## 2019/04/10 (Wednesday)
+- Looking into reverse engineering the CVAE paper and how it can be adapted to use VAD approach.
+- Updated attention mechanism with [Lo's](https://github.com/howardyclo/pytorch-seq2seq-example) batch model.
+- Attempting runtime without variational inclusion (s.t it is treated as a Seq2seq model with attention) to determine errors with components of the model.
+- Training model without sampling.
+- Updated dataset s.t conditioning variables are ignored to help facilitate the seq2seq modelling.
+
+## 2019/04/09 (Tuesday)
+- Fixed bug on backwards RNN input where the reversal was flipped in the wrong order.
+- Added support for saving model parameters and chart components on each run (s.t. we can differentiate the parameter changes during the different model runs)
+- Sent an email to the authors to request clarification on alpha parameters. 
+
 ## 2019/04/05 (Friday)
 - Results for attempt 2 are out, and they are worse than attempt 1 (In terms of loss and [looking at generated outputs](Documents/model_examples/attempt_2.txt).) Weights are saved. The loss may be attributed to the arbitary weight on the auxiliary loss (The original paper does not specify what this alpha value is)
 - ![](Documents/log_imgs/at2_ep1.png)

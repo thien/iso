@@ -38,7 +38,8 @@ def trainVAD(
     criterion_r,
     criterion_bow,
     useBOW,
-    gradientClip
+    gradientClip,
+    use_latent
     ):
     """
     Represents a whole sequence iteration trained on a batch of reviews.
@@ -65,11 +66,6 @@ def trainVAD(
     # set up encoder outputs
     encoderOutputs, encoderHidden = encoder(x, encoderHidden, xLength)
 
-    # print("INPUT:",x.shape)
-
-    # print("Encoder Out:", encoderOutputs.shape)
-    # print("Encoder Hidden:", encoderHidden.shape)
-
     # compute backwards outputs
     backwardOutput, backwardHidden = backwards(yb, ybLength, backwardHidden)
 
@@ -84,7 +80,7 @@ def trainVAD(
     # all of the seq2seq based implementations I've come across on GitHub.
     for t in range(ySeqlength):
         # compute the output of each decoder state
-        out = decoder(decoderInput, encoderOutputs,
+        out = decoder(decoderInput, encoderOutputs, xLength,
                              decoderHidden, 
                              device,back=backwardOutput[:, t])
 
@@ -108,7 +104,8 @@ def trainVAD(
             ref_bow,
             pred_bow,
             criterion_r,
-            criterion_bow)
+            criterion_bow,
+            use_latent)
 
         loss += seqloss
         ll_loss += ll
@@ -116,11 +113,9 @@ def trainVAD(
         aux_loss += aux
 
         # feed this output to the next input
-        p = random.random()
-        if p > 0.5:
-            decoderInput = y[:, t]
-        else:
-            decoderInput = torch.argmax(decoderOutput, dim=1)
+        decoderInput = y[:, t]
+        # else:
+        #     decoderInput = torch.argmax(decoderOutput, dim=1)
         decoderHidden = decoderHidden.squeeze(0)
 
     avg_loss = loss/ySeqlength
@@ -141,8 +136,10 @@ def trainVAD(
     # return avg losses for plotting.
     avg_loss = loss.item()/ySeqlength
     avg_llloss = ll_loss.item()/ySeqlength
-    avg_klloss = kl_loss.item()/ySeqlength
-    avg_auxloss = aux_loss.item()/ySeqlength
+    avg_klloss, avg_auxloss = 0,0
+    if use_latent:
+        avg_klloss = kl_loss.item()/ySeqlength
+        avg_auxloss = aux_loss.item()/ySeqlength
 
     return avg_loss, avg_llloss, avg_klloss, avg_auxloss
 
@@ -160,6 +157,7 @@ def trainIteration(
         gradientClip,
         useBOW,
         folder_path,
+        use_latent,
         printEvery=10,
         plotEvery=100):
 
@@ -216,7 +214,8 @@ def trainIteration(
                 criterion_r,
                 criterion_bow,
                 useBOW,
-                gradientClip
+                gradientClip,
+                use_latent
             )
 
             print("Batch:", n, "Loss:", round(loss, 4), "LL:", round(
@@ -276,19 +275,21 @@ def defaultParameters():
             'bidirectionalEncoder'	: True,
             'reduction'             : 512,
             'device'                : "cpu",
+            'useLatent'             : True,
         }
     else:
         parameters = {
-            'hiddenSize'			: 500,
-            'latentSize'			: 400,
+            'hiddenSize'			: 256,
+            'latentSize'			: 2,
             'batchSize'				: 32,
-            'iterations'			: 5,
+            'iterations'			: 100,
             'learningRate'			: 0.0001,
             'gradientClip'			: 5,
             'useBOW'				: True,
             'bidirectionalEncoder'	: True,
-            'reduction'             : 256,
+            'reduction'             : 128,
             'device'                : "cuda",
+            'useLatent'             : False,
         }
     return parameters
 
@@ -304,9 +305,7 @@ def initiate(parameters=None):
 
     # by default we set the folder_path folder to the current datetime
     folder_path = datetime.datetime.now().strftime("%Y%m%d %H-%M-%S")
-    folder_path = initiateDirectory(folder_path)
-    # copy dataset parameters
-    copyDatasetParams(folder_path)
+    
     # initiate parameter variables
     hiddenSize = parameters['hiddenSize']
     latentSize = parameters['latentSize']
@@ -320,6 +319,10 @@ def initiate(parameters=None):
     device = torch.device(parameters['device'])
 
     printParameters(parameters)
+
+    folder_path = initiateDirectory(folder_path)
+    # copy dataset parameters
+    copyDatasetParams(folder_path)
     # save model parameters
     param_jsonpath = os.path.join(folder_path, "model_parameters.json")
     with open(param_jsonpath, 'w') as outfile:
@@ -399,6 +402,7 @@ def initiate(parameters=None):
                    gradientClip,
                    useBOW,
                    folder_path,
+                   parameters['useLatent'],
                    printEvery=1000)
 
     saveModels(modelEncoder, modelBackwards, modelDecoder, folder_path)
@@ -415,7 +419,6 @@ def initiate(parameters=None):
     # del dataset
     # del embedding
     # torch.cuda.empty_cache()
-
 
 if __name__ == "__main__":
     initiate()

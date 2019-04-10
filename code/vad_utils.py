@@ -6,6 +6,7 @@ import pickle
 # plotting
 import matplotlib
 matplotlib.use('Agg')
+from torch.autograd import Variable
 
 from matplotlib import cm
 import matplotlib.pyplot as plt
@@ -13,6 +14,76 @@ import matplotlib.patches as mpatches
 
 def loadDataset(path='../Datasets/Reviews/dataset_ready.pkl'):
     return pickle.load(open(path, 'rb'))
+
+def sequence_mask(sequence_length, max_len=None):
+    """
+    Caution: Input and Return are VARIABLE.
+    """
+    sequence_length = torch.tensor(sequence_length)
+    if max_len is None:
+        max_len = sequence_length.data.max()
+    batch_size = sequence_length.size(0)
+    seq_range = torch.arange(0, max_len).long()
+    seq_range_expand = seq_range.unsqueeze(0).expand(batch_size, max_len)
+    seq_range_expand = Variable(seq_range_expand)
+    if sequence_length.is_cuda:
+        seq_range_expand = seq_range_expand.cuda()
+    seq_length_expand = (sequence_length.unsqueeze(1)
+                         .expand_as(seq_range_expand))
+    mask = seq_range_expand < seq_length_expand
+    
+    return mask
+
+def masked_cross_entropy(logits, target, length):
+    """
+    Args:
+        logits: A Variable containing a FloatTensor of size
+            (batch, max_len, num_classes) which contains the
+            unnormalized probability for each class.
+        target: A Variable containing a LongTensor of size
+            (batch, max_len) which contains the index of the true
+            class for each corresponding step.
+        length: A Variable containing a LongTensor of size (batch,)
+            which contains the length of each data in a batch.
+    Returns:
+        loss: An average loss value masked by the length.
+        
+    The code is same as:
+    
+    weight = torch.ones(tgt_vocab_size)
+    weight[padding_idx] = 0
+    criterion = nn.CrossEntropyLoss(weight.cuda(), size_average)
+    loss = criterion(logits_flat, losses_flat)
+    """
+    # logits_flat: (batch * max_len, num_classes)
+    logits_flat = logits.view(-1, logits.size(-1))
+    # log_probs_flat: (batch * max_len, num_classes)
+    log_probs_flat = F.log_softmax(logits_flat)
+    # target_flat: (batch * max_len, 1)
+    target_flat = target.view(-1, 1)
+    # losses_flat: (batch * max_len, 1)
+    losses_flat = -torch.gather(log_probs_flat, dim=1, index=target_flat)
+    # losses: (batch, max_len)
+    losses = losses_flat.view(*target.size())
+    # mask: (batch, max_len)
+    mask = sequence_mask(sequence_length=length, max_len=target.size(1))
+    # Note: mask need to bed casted to float!
+    losses = losses * mask.float()
+    loss = losses.sum() / mask.float().sum()
+    
+    # (batch_size * max_tgt_len,)
+    pred_flat = log_probs_flat.max(1)[1]
+    # (batch_size * max_tgt_len,) => (batch_size, max_tgt_len) => (max_tgt_len, batch_size)
+    pred_seqs = pred_flat.view(*target.size()).transpose(0,1).contiguous()
+    # (batch_size, max_len) => (batch_size * max_tgt_len,)
+    mask_flat = mask.view(-1)
+    
+    # `.float()` IS VERY IMPORTANT !!!
+    # https://discuss.pytorch.org/t/batch-size-and-validation-accuracy/4066/3
+    num_corrects = int(pred_flat.eq(target_flat.squeeze(1)).masked_select(mask_flat).float().data.sum())
+    num_words = length.data.sum()
+
+    return loss, pred_seqs, num_corrects, num_words
 
 def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
     mu_1, var_1 = recog_mu, recog_logvar
@@ -35,28 +106,33 @@ def loss_function(batch_num,
                   ref_bow,
                   pred_bow,
                   criterion_r,
-                  criterion_bow):
+                  criterion_bow,
+                  use_latent=True):
 
     # compute reconstruction loss
     LL = criterion_r(y_predicted, y)
 
     # compute KLD
-    KL = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
-    KL = torch.mean(KL)
+    KL = 0
+    if use_latent:
+        KL = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
+        KL = torch.mean(KL)
+        # KL Annealing
+        kl_weight = (batch_num)/min(num_batches, 10000)
+        kl_weight = min(kl_weight, 1.0)
+        KL *= kl_weight
 
-    # KL Annealing
-    kl_weight = (batch_num)/10000
-    kl_weight = min(kl_weight, 1.0)
-    KL *= kl_weight
     elbo = LL + KL
 
-    # compute auxillary loss
-    aux = criterion_bow(pred_bow, ref_bow)
-    # weight auxillary loss
-    alpha =  5
-    weighted_aux = aux * alpha
+    aux = 0
+    if use_latent:
+        # compute auxillary loss
+        aux = criterion_bow(pred_bow, ref_bow)
+        # weight auxillary loss
+        alpha =  5
+        aux *= alpha
 
-    return elbo + weighted_aux, LL, KL, weighted_aux
+    return elbo + aux, LL, KL, aux
 
 def plotBatchLoss(iteration, losses, kl, aux, folder_path):
     x = [i for i in range(1, len(losses)+1)]
