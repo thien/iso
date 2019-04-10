@@ -42,21 +42,21 @@ def loss_function(batch_num,
 
     # compute KLD
     KL = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
-    KL = torch.sum(KL)
+    KL = torch.mean(KL)
 
     # KL Annealing
-    kl_weight = (batch_num+1)/10000
-    # kl_weight = 1
-    weighted_KL = KL * kl_weight
-    # weighted_KL = KL
+    kl_weight = (batch_num)/10000
+    kl_weight = min(kl_weight, 1.0)
+    KL *= kl_weight
+    elbo = LL + KL
 
     # compute auxillary loss
     aux = criterion_bow(pred_bow, ref_bow)
     # weight auxillary loss
-    alpha = 0.5
+    alpha =  5
     weighted_aux = aux * alpha
 
-    return LL + weighted_KL + weighted_aux, LL, weighted_KL, weighted_aux
+    return elbo + weighted_aux, LL, KL, weighted_aux
 
 def plotBatchLoss(iteration, losses, kl, aux, folder_path):
     x = [i for i in range(1, len(losses)+1)]
@@ -80,12 +80,15 @@ def plotBatchLoss(iteration, losses, kl, aux, folder_path):
     plt.savefig(filepath, bbox_inches='tight')
     plt.close()
 
-def padSeq(row, maxlength, padID, cutoff):
+def padSeq(row, maxlength, padID, backwards=False):
     currentLength = len(row)
     difference = maxlength - currentLength
-    return row + [padID for _ in range(difference)]
+    if backwards:
+        return row[::-1] + [padID for _ in range(difference)]
+    else:
+        return row + [padID for _ in range(difference)]
 
-def batchData(dataset, padID, device, batchsize=32, cutoff=50):
+def batchData(dataset, padID, device, batchsize=32, cutoff=50, backwards=False):
     """
     Splits the dataset into batches.
     Each batch needs to be sorted by 
@@ -111,14 +114,17 @@ def batchData(dataset, padID, device, batchsize=32, cutoff=50):
         # i.e. we don't need another token identifying the end of the subsequence.
 
         # get the reviews based on the sorted batch lengths
-        reviews = [padSeq(batch[i[1]], cutoff, padID, cutoff)
-                   for i in sortedindexes]
+    
+
+        if not backwards:
+            reviews = [padSeq(batch[i[1]], cutoff, padID) for i in sortedindexes]
+        else:
+            reviews = [padSeq(batch[i[1]], cutoff, padID, backwards) for i in sortedindexes]
 
         reviews = torch.tensor(reviews, dtype=torch.long, device=device)
         # re-allocate values.
         batches[i] = (reviews, [i[0] for i in sortedindexes])
     return batches
-
 
 def saveModels(encoder, backwards, decoder, filepath):
     print("Saving models..", end=" ")

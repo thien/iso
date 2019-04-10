@@ -24,8 +24,10 @@ def trainVAD(
     num_batches,
     x,
     y,
+    yb,
     xLength,
     yLength,
+    ybLength,
     encoder,
     backwards,
     decoder,
@@ -63,9 +65,13 @@ def trainVAD(
     # set up encoder outputs
     encoderOutputs, encoderHidden = encoder(x, encoderHidden, xLength)
 
+    # print("INPUT:",x.shape)
+
+    # print("Encoder Out:", encoderOutputs.shape)
+    # print("Encoder Hidden:", encoderHidden.shape)
+
     # compute backwards outputs
-    backwardOutput, backwardHidden = backwards(torch.flip(
-        y, [0, 1]), yLength, backwardHidden)
+    backwardOutput, backwardHidden = backwards(yb, ybLength, backwardHidden)
 
     # set up the variables for decoder computation
     decoderInput = torch.tensor(
@@ -79,7 +85,8 @@ def trainVAD(
     for t in range(ySeqlength):
         # compute the output of each decoder state
         out = decoder(decoderInput, encoderOutputs,
-                             decoderHidden, back=backwardOutput[:, t])
+                             decoderHidden, 
+                             device,back=backwardOutput[:, t])
 
         # update variables
         decoderOutput, decoderHidden, pred_bow, infer_mu, infer_logvar, prior_mu, prior_logvar = out
@@ -109,11 +116,17 @@ def trainVAD(
         aux_loss += aux
 
         # feed this output to the next input
-        decoderInput = y[:, t]
+        p = random.random()
+        if p > 0.5:
+            decoderInput = y[:, t]
+        else:
+            decoderInput = torch.argmax(decoderOutput, dim=1)
         decoderHidden = decoderHidden.squeeze(0)
 
+    avg_loss = loss/ySeqlength
+
     # calculate gradients
-    loss.backward()
+    avg_loss.backward()
 
     # gradient clipping
     torch.nn.utils.clip_grad_norm_(encoder.parameters(), gradientClip)
@@ -180,17 +193,19 @@ def trainIteration(
             n += 1
             # each batch is composed of the
             # reviews, and a sentence length.
-            x, xLength = dataset[0][batch_num][0], dataset[0][batch_num][1]
-            y, yLength = dataset[1][batch_num][0], dataset[1][batch_num][1]
+            x,   xLength = dataset[0][batch_num][0], dataset[0][batch_num][1]
+            y,   yLength = dataset[1][batch_num][0], dataset[1][batch_num][1]
+            yb, ybLength = dataset[2][batch_num][0], dataset[2][batch_num][1]
 
             # calculate loss.
             loss, ll, kl, aux = trainVAD(
                 device,
                 n,
                 numBatches,
-                x, y,
+                x, y, yb, 
                 xLength,
                 yLength,
+                ybLength,
                 encoder,
                 backwards,
                 decoder,
@@ -226,7 +241,7 @@ def printParameters(parameters):
     Pretty print parameters in the cli.
     """
     maxLen = max([len(k) for k in parameters])
-    print("Paramters:")
+    print("Parameters:")
     for key in parameters:
         padding = " ".join(["" for _ in range(maxLen - len(key) + 5)])
         print(key + padding, parameters[key])
@@ -248,7 +263,6 @@ def defaultParameters():
     """
     Initiates default parameters if none is present.
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if not torch.cuda.is_available():
         parameters = {
@@ -261,20 +275,20 @@ def defaultParameters():
             'useBOW'				: False,
             'bidirectionalEncoder'	: True,
             'reduction'             : 512,
-            'device'                : device,
+            'device'                : "cpu",
         }
     else:
         parameters = {
             'hiddenSize'			: 500,
             'latentSize'			: 400,
-            'batchSize'				: 64,
+            'batchSize'				: 32,
             'iterations'			: 5,
             'learningRate'			: 0.0001,
             'gradientClip'			: 5,
             'useBOW'				: True,
             'bidirectionalEncoder'	: True,
-            'reduction'             : 1,
-            'device'                : device,
+            'reduction'             : 256,
+            'device'                : "cuda",
         }
     return parameters
 
@@ -303,8 +317,13 @@ def initiate(parameters=None):
     useBOW = parameters['useBOW']
     bidirectionalEncoder = parameters['bidirectionalEncoder']
     reduction = parameters['reduction']
+    device = torch.device(parameters['device'])
 
     printParameters(parameters)
+    # save model parameters
+    param_jsonpath = os.path.join(folder_path, "model_parameters.json")
+    with open(param_jsonpath, 'w') as outfile:
+        json.dump(parameters, outfile)
 
     print("Loading dataset..", end=" ")
     dataset = loadDataset()
@@ -327,12 +346,14 @@ def initiate(parameters=None):
 
     # shuffle data rows and split data s.t they can be processed.
     random.shuffle(train)
-    trainx, trainy = [x[0] for x in train[::reduction]], [x[1] for x in train[::reduction]]
+    raw_x, raw_y = [x[0] for x in train[::reduction]], [x[1] for x in train[::reduction]]
     # batchify data.
-    trainx = batchData(trainx, paddingID, device, batchSize, cutoff)
-    trainy = batchData(trainy, paddingID, device, batchSize, cutoff)
+    trainx = batchData(raw_x, paddingID, device, batchSize, cutoff)
+    trainy = batchData(raw_y, paddingID, device, batchSize, cutoff)
+    # the unpadded sequence is used for the backwards rnn.
+    trainy_back = batchData(raw_y, paddingID, device, batchSize, cutoff, backwards=True)
 
-    traindata = (trainx, trainy)
+    traindata = (trainx, trainy, trainy_back)
     print("Done.")
 
     # setup variables for model components initialisation

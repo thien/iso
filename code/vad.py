@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
+from torch.autograd import Variable
 
 from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels
 
@@ -55,6 +56,10 @@ class Encoder(nn.Module):
             # reverse pack_padded_sequence
             output, _ = nn.utils.rnn.pad_packed_sequence(packed_outputs, batch_first=True)
 
+
+        if self.isBidirectional:
+            output = output[:, :, :self.hiddenSize] + output[:, : ,self.hiddenSize:]
+        
         return output, hidden
 
     def initHidden(self, batch_size):
@@ -113,25 +118,39 @@ class Attention(nn.Module):
         self.bidirectionalEncoder = bidirectionalEncoder
         self.hidden_size = hidden_size
 
-        self.attnSize = self.hidden_size * 2 if self.bidirectionalEncoder else self.hidden_size
-        self.attn = nn.Linear(self.attnSize, self.hidden_size)
+        self.attnSize = self.hidden_size
+        # self.attn = nn.Linear(self.attnSize, self.hidden_size)
+        self.attn = nn.Linear(self.hidden_size * 2, hidden_size)
+        self.v = nn.Linear(hidden_size,1)
         
         if xavier:
             init.xavier_uniform_(self.attn.weight)
 
-    def forward(self, encoder_outputs, hidden):
+    def forward(self, encoder_outputs, hidden, device):
         # https://github.com/howardyclo/pytorch-seq2seq-example/blob/master/seq2seq.ipynb
-        # Create variable to store attention energies
-        attn_energies = self.score(hidden, encoder_outputs)
-        attention_weights = F.softmax(attn_energies, dim=1)
-        c = torch.bmm(attention_weights, encoder_outputs).squeeze(1)
-        return c
+        max_len = encoder_outputs.size(1)
+        batch_size = encoder_outputs.size(0)
+        attn_energies = Variable(torch.zeros(batch_size, max_len)).to(device) # B x S
+
+        for b in range(batch_size):
+            # Calculate energy for each encoder output
+            for i in range(max_len):
+                attn_energies[b, i] = self.score(hidden[b, :], encoder_outputs[b, i].unsqueeze(0))
+
+        # print("ENERGY:", attn_energies.shape)
+        attention_weights =  F.softmax(attn_energies, dim=1).unsqueeze(1)
+        # print("Attn:", attention_weights.shape)
+        context = attention_weights.bmm(encoder_outputs) # B x 1 x N
+        # print(context.shape)
+        context = context.transpose(0, 1) # 1 x B x N
+        return context.squeeze(0) # B x N
+        
     
     def score(self, hidden, encoder_output):
-        energy = self.attn(encoder_output).transpose(2, 1)
-        hidden = hidden.unsqueeze(1)
-        score = hidden.bmm(energy)
-        return score
+        energy = self.attn(torch.cat((hidden, encoder_output[0]), 0))
+        # print(energy.shape)
+        energy = self.v(energy)
+        return energy
 
 class Decoder(nn.Module):
     def __init__(self, 
@@ -162,8 +181,6 @@ class Decoder(nn.Module):
         self.embedding = embedding
 
         encoderDim = self.hiddenSize
-        if encoderBidirectional:
-            encoderDim *= 2
 
         gruInputSize = embeddingDim + encoderDim + self.latentSize
    
@@ -175,10 +192,10 @@ class Decoder(nn.Module):
             init.xavier_uniform_(self.gru.weight_ih_l0)
             init.xavier_uniform_(self.out.weight)
 
-    def forward(self, y, encoderOutputs, previousHidden, back=None):
+    def forward(self, y, encoderOutputs, previousHidden, device, back=None):
 
         # CALCULATE ATTENTION ---------------------------------
-        c = self.attention(encoderOutputs, previousHidden)
+        c = self.attention(encoderOutputs, previousHidden, device)
 
         # LATENT SAMPLING -------------------------------------
 
@@ -238,16 +255,23 @@ class Inference(nn.Module):
         super(Inference, self).__init__()
         
         forwardInput = hidden_size * 3
-        if bidirectionalEncoder:
-            forwardInput += hidden_size
         # encode
         self.fc1 = nn.Linear(forwardInput, hidden_size)
         self.mean = nn.Linear(hidden_size, latent_size)
         self.var = nn.Linear(hidden_size, latent_size)
         self.relu = nn.ReLU()
+
+        init.xavier_uniform_(self.fc1.weight)
+        init.xavier_uniform_(self.mean.weight)
+        init.xavier_uniform_(self.var.weight)
         
     def encode(self, h_forward, c, h_backward):
+
+        # print("C:", c.shape)
+        # print("For:", h_forward.shape)
+        # print("bak:", h_backward.shape)
         inputs = torch.cat([h_forward, c, h_backward], 1)
+        # print(inputs.shape)
         h1 = self.relu(self.fc1(inputs))
         z_mu = self.mean(h1)
         z_var = self.var(h1)
@@ -269,14 +293,16 @@ class Prior(nn.Module):
         super(Prior, self).__init__()
         
         forwardInput = hidden_size * 2
-        if bidirectionalEncoder:
-            forwardInput += hidden_size
 
         # encode
         self.fc1  = nn.Linear(forwardInput, hidden_size)
         self.mean = nn.Linear(hidden_size, latent_size)
-        self.var = nn.Linear(hidden_size, latent_size)
+        self.var  = nn.Linear(hidden_size, latent_size)
         self.relu = nn.ReLU()
+
+        init.xavier_uniform_(self.fc1.weight)
+        init.xavier_uniform_(self.mean.weight)
+        init.xavier_uniform_(self.var.weight)
         
     def encode(self, h, c):
         inputs = torch.cat([h, c], 1)
