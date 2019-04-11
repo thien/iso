@@ -80,8 +80,8 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %--- table of contents
-% \fancyhead[RE,LO]{\sffamily {Table of Contents}}
-% \tableofcontents 
+\fancyhead[RE,LO]{\sffamily {Table of Contents}}
+\tableofcontents 
 
 
 % % \clearpage{\pagestyle{empty}\cleardoublepage}
@@ -139,11 +139,11 @@ The premise of this literature survey is to describe the relevant components nec
 
 % - talk about the fact that this is an understudied problem; the described tools are commonly used in other areas of contempoary computer science.
 
-Text generation is a a type of Language Modelling problem, which in itself, is one of the core natural language processing problems. It is used in a variety of contempoary applications, ranging from machine translation, to email response generation, to document summarisation.
+Text generation is a a type of Language Modelling problem, which in itself, is one of the core natural language processing problems. It is used in a variety of contemporary applications, ranging from machine translation, to email response generation, to document summarisation.
 
-In our particular case we imagine a scenario where a client requests the use of our dataset. We would permit them access to said data, but it would reveal the identities of the users in the data. The objective is to have some alternative dataset to ours such that value can be deduced from the data, but the privacy of the users in our original dataset is maintained.
+In our particular case we imagine a scenario where a client requests the use of our dataset. We could permit them access to said data, but it would reveal the identities of the users in the data. The objective is to have some alternative dataset to ours such that value can be deduced from the data, but the privacy of the users in our original dataset is maintained.
 
-This can be accomplished by creating a language model that would increase the lexical variety of our original dataset. This language model would train on our original dataset, and would produce data that is semantically and lexically similar to our original data, but diverges enough such that it could potentially be seen as an entirely new and independent dataset. This new dataset can be assigned to other clients.
+This can be accomplished by creating a language model that would encompass the lexical variety of our original dataset. This language model would train on our original dataset, and would produce data that is semantically and lexically similar to our original data, but diverges enough such that it could potentially be seen as an entirely new and independent dataset. This new dataset can be assigned to other clients.
 
 % problematics of controllable text generation?
 % need to choose responses that are representative of the input, artificially.
@@ -187,7 +187,7 @@ Neural Networks are non-linear statistical models that generate complex relation
 
 \section{Recurrent Neural Networks}
 
-Recurrent neural networks (RNNs) are a class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). RNNs operate over a sequence of variable-length vectors, and produces an output of similarly variable-length vectors. This circumvents a problem introduced with using an MLP, where sentences are not typically fixed length. RNNs can XXXXXXXXXXXXXXX.
+Recurrent neural networks (RNNs) are a class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). RNNs operate over a sequence of variable-length vectors, and produces an output of similarly variable-length vectors. This circumvents a problem introduced with using an MLP, where sentences are not typically fixed length. 
 
 % we need formulas.
 
@@ -204,6 +204,7 @@ Recurrent neural networks (RNNs) are a class of neural networks such that the ou
   
 The architecture of RNNs make it favourable in NLP related problems as words in sentences are typically conditioned on the previous words. Given a sequence of inputs $(x_1, ..., x_M)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_N)$ by performing forward-propagation in a similar to fashion to MLPs, but outputs are chained together as an additional input to other neural networks. This can be visualised best in Figure \ref{rnn}. RNNs are trained using backpropagation-through-time.
 
+When treated as language models, a standard RNN language model predicts each word of a sentence conditioned on the previous word and an evolving hidden state.
 % talk about how much has been done with RNNs
 
 RNNs showed promise but there existed a multitude of problems. Firstly, It became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that would facilitate this feature. This is described as a long range dependency problem. Furthermore, they were especially impractical due to the vanishing and exploding gradient problems having a larger effect on training. This is by design, as the architecture of the network does not provide the affordance to represent relationships between arbitary cells in the network.
@@ -265,9 +266,9 @@ Both gates were introduced to circumvent the issue of long range dependency prob
 	\caption{A diagram of the LSTM model.}
 \end{figure}
  
-LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain information based on the previous inputs through the introduction of gated architectures. XXXXXXX
+LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain information based on the previous inputs through the introduction of gated architectures (\cite{hochreiter_long_1997}).
 
-Introduced by \cite{cho_properties_2014}, GRUs are used to solve the common issue with LSTMs where the training time was relatively slow due to the number of derivatives necessary to compute. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time. They are unable to clearly distinguish between the performance of the two gated units they tested.
+GRUs (\cite{cho_properties_2014}) are used to solve the common issue with LSTMs where the training time was relatively slow due to the number of derivatives necessary to compute. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time. They are unable to clearly distinguish between the performance of the two gated units they tested.
 However, Some research from \cite{chung_empirical_2014} suggests that GRUs were found to perform better than LSTMs on smaller datasets. 
 
 \section{Autoencoders}
@@ -279,18 +280,38 @@ Autoencoders are a specialised form of MLPs where the model attempts to recreate
 Autoencoders are popularised through their use in Machine Translation, Word Embeddings, and document clustering.
 
 % talk about how important this is in the context of the task.
+\subsection{Variational Autoencoders}
 
-\subsection{Measuring Performance}
+Variational Autoencoders (VAEs, \cite{kingma_auto-encoding_2013}) are based on a regularised version of the standard auteoncoder. VAEs forces the encoder to learn latent vectors that roughly follow a gaussian distribution, as opposed to creating a fixed latent vector. In more discrete terms, it replaces the encoder from the standard autoencoder with a learned posterior \textit{recognition model}, $q(\overrightarrow{z}|x)$. This component of the autoencoder paramterises an approximate posterior distribution over $\overrightarrow{z}$, using a neural network conditioned on $x$. This consequently allows us to take advantage of recent advances in variational inference.  Consequently, VAEs introduce two extra vectors, a mean vector and a standard distribution vector, which is fed from the encoder. A sample is taken from the distribution and that is then fed into the decoder. Training this particular model involves learning the parameters involved for our latent distribution.
 
-"Bleu measures precision: how much the words (and/or n-grams) in the machine generated summaries appeared in the human reference summaries.
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=150mm]{diagrams/variational_autoencoders.pdf}
+	\caption{An abstracted model architecture for a variational autoencoder, which takes as input some text, and it's predicted output being the same text as the input.\label{vae}}
+  \end{figure}
 
-Rouge measures recall: how much the words (and/or n-grams) in the human reference summaries appeared in the machine generated summaries.
+  Note that the decoder receives samples from a non-standard normal distribution produced by the encoder. The average of the samples of the different distributions should approximate to a standard normal. This stochasticity allows us to model variability in the results. 
+  
+  Due to variational inference, if VAEs were trained with a standard autoencoder's reconstruction objective, then it would learn to encode it's inputs determinsitically by making variances in \textit{recognition model}, $q(\overrightarrow{z}|x)$ vanishingly small. ( \cite{raiko_techniques_2014}) Instead, the loss function is composed of two components;  a reconstruction loss that involves an expection of the output; and a KL divergence, which measures the relative difference of two probability distributions. In this particular case, we will be comparing the distribution of the posterior distributions against a standard gaussian $ \mathcal{N}(0,1)$). This objective provides a valid lowerbound on the true likelihood of the data, making VAEs a generative model.
+  
+\begin{equation}
+	\label{eqn:elbo}
+	\mathcal{L}(\theta, \phi, x, z) = \mathbb{E}_{q \phi (z|x)}[log \thinspace p_{\theta}(x|z)] - D_{KL}(q_{\phi}(z|x)\thinspace||\thinspace p(z)) \leq log (p(x))
+\end{equation}
 
-Naturally - these results are complementing, as is often the case in precision vs recall. If you have many words from the system results appearing in the human references you will have high Bleu, and if you have many words from the human references appearing in the system results you will have high Rouge."
+\begin{equation}
+	\label{eqn:kl_divergence}
+D_{KL}(P ||Q) = \sum_{x \subset X} P(x) \cdot log (\frac{P(x)}{Q(x)})
+\end{equation}
 
-% https://stackoverflow.com/questions/38045290/text-summarization-evaluation-bleu-vs-rouge
+In other words, it is the expectation of the logarithmic difference between the probabilities $P$ and $Q$, where the expectation of $P$ is already known.
 
-% http://opennmt.net OPENMNT-Py has BLEU/ROUGE on it.
+\subsubsection*{Reparameterisation Trick}
+
+The Gaussian reparameterisation trick (\cite{kingma_auto-encoding_2013}) subverts the issue of performing backpropagation against sampled latent variables through the rearrangement of the gaussian parameters. Instead of sampling $z$ through a gaussian $\mathcal{N}(\mu, \Sigma)$, $z$ can be created by a summation of $\mu$ and some gaussian noise $\epsilon \sim \mathcal{N}(0,1)$ applied to $\Sigma$. This rearrangement allows for derivatives to be calculated with respect to the parameters that are needed for learning.
+
+$$z = \mathcal{N}(\mu, \Sigma) \equiv \mu + \Sigma \cdot \epsilon $$ 
+
 
 \section{Related Work}
 
@@ -315,6 +336,10 @@ Traditionally, Seq2seq would be the most common method of tackling this particul
 % why? remaining certain patterns?
 
 Furthermore, it was discussed by \cite{jiang_why_2018} on the lack of diversity in responses. something something.
+
+\subsection{seq2seq with VAEs}
+
+Instead of passing through the last hidden state drom the encoder to the decoder, a VAE for sentences (\cite{bowman_generating_2015}) proposed using variational inference to deduce the context vector. 
 
 \subsection{Seq2Seq with Attention}
 
@@ -378,32 +403,6 @@ The product of multiple $z$ variables concatenated together, with a weights matr
 
 Sequential models circumvent the referential ambiguity problems with natural language (such as "the cat is on the mat"), with the inherent properties of time based encodings. This does not necessarily translate well to encoder models as there is no sequentiality. To circumvent this, Transformers encode the positions of words at the embedding level, by adding positional encodings of words.
 
-\section{Variational Autoencoders}
-
-Our proposed solution revolves around the use of Variational Autoencoders. Variational Autoencoders (VAEs) introduce a constraint on the encoding network that forces the model to generate latent vectors that roughly follow a gaussian distribution, as opposed to creating a fixed latent vector. Consequently, VAEs introduce two extra vectors, a mean vector and a standard distribution vector, which is fed from the encoder. A sample is taken from the distribution and that is then fed into the decoder. This consequently allows us to leverage bayesian inference. Model training involves learning the parameters involved for our latent distribution.
-
-\begin{figure}[!ht]
-	\centering
-	\includegraphics[width=150mm]{diagrams/variational_autoencoders.pdf}
-	\caption{A simplified model architecture for a variational autoencoder, which takes as input some text, and it's predicted output being the same text as the input.\label{vae}}
-  \end{figure}
-
-  Note that the decoder receives samples from a non-standard normal distribution produced by the encoder. The average of the samples of the different distributions should approximate to a standard normal. This stochasticity allows us to model variability in the results. 
-  
-  Due to the stochastic nature of the network, the loss is composed of two components;  a reconstruction loss that involves an expection of the output; and a KL divergence, which measures the relative difference of two probability distributions. In this particular case, we will be comparing the distribution of the decoder outputs against a standard gaussian $ \mathcal{N}(0,1)$).
-  
-  $$\mathcal{L}(\theta, \phi, x, z) = \mathbb{E}_{q \phi (z|x)}[log \thinspace p_{\theta}(x|z)] - D_{KL}(q_{\phi}(z|x)\thinspace||\thinspace p(z)) $$
-
-$$
-D_{KL}(P ||Q) = \sum_{x \subset X} P(x) \cdot log (\frac{P(x)}{Q(x)})
-$$
-
-In other words, it is the expectation of the logarithmic difference between the probabilities $P$ and $Q$, where the expectation of $P$ is already known.
-
-\subsection*{Reparameterisation Trick}
-- You'll need to perform a reparameterisation trick (since you can't calculate derivatives of samples.) in order to perform backpropagation. (you can't push gradients through a sampling node.)
-  
-$$z = \mu + \sigma \cdot \epsilon $$ where $\epsilon \sim \mathcal{N}(0,1)$. You want to learn $\mu, \sigma$.
 
 \subsection{Conditional Variational Autoencoders}
 
@@ -426,7 +425,8 @@ Samples can be generated from the conditional distribution $p(x|y)$. By changing
 
 In terms of implementation, it happens to be more feasible to concate the class variable to the dataset prior to feeding. This allows the model to retain its characteristics without needing to adjust in order to accomadate the conditioning variables.
 
-\section{Variational Autoregressive Decoders}
+
+\subsection{Variational Autoregressive Decoders}
 
 To increase variability of outcomes produced by the original seq2seq model, \cite{serban_hierarchical_2016}; \cite{zhao_learning_2017} proposed the use of variational autoencoders to seq2seq models. At generation time, the latent variable $z$ can be used as a conditional signal of the decoder in the seq2seq model. Although this introduces variability in the outputs, the variability is not controlled; i.e it is produced from the randomness of $z$. The underlying seq2seq model remains suboptimal.
 
@@ -435,9 +435,6 @@ Introduced by \cite{du_variational_2018}, Variational Autoregressive Decoders (V
 We will be using this model to help solve the variability of outcomes. *WHY?*
 
 VADs use the seq2seq architecture as the base with variable-length queries $x = \{x_1, x_2, ..., x_n\}$, and $y = \{y_1, y_2, ..., y_n\}$ representing the input and output responses respectively. The encoder network is a Bidirectional RNN with GRUs. The decoder network is an unidirectional RNN with GRUs. For each timestep $t$, each GRU in the decoder network is encoded with hidden state $h^d_t$.
-
-\subsection{Components}
-The model is comprised of a variety of components, inspired by the seq2seq network, described earlier.
 
 \subsubsection{Encoder}
 
@@ -455,14 +452,14 @@ The encoder works in a similar fashion to the encoder described in the seq2seq n
 \subsubsection{Backwards}
 
 \begin{align}
-\label{eqn:eqlabel}
+\label{eqn:eqback}
 \overleftarrow{h^d_t} = \overleftarrow{GRU}(y_{t+1}, \overleftarrow{h^d_{t+1}})
 \end{align}
 	
 \subsubsection{Attention}
 
 \begin{equation}
-\label{eq:t}
+\label{eq:attn}
 \begin{aligned}
 	\alpha_{s,t} &= f_{attention}([h^e_d, h^d_{t-1}])\\        
 	c_t &= \sum^m_{s=1}\alpha_{s,t} h^e_s
@@ -512,11 +509,19 @@ This component stems away from \cite{zhao_learning_2017}, as $\boldsymbol{z}$ is
 
 \subsubsection{Auxillary Objective}
 
-An auxillary objective that attempts to predict the bag of words based on the latent variable. Helps to improve the output options.
+An auxillary objective that attempts to predict the bag of words based on the latent variable. Helps to improve the output options. Let $f=MLP_b(z_t) \in \mathcal{R}^V$ where $V$ be the vocabulary size:
+
+\begin{equation}
+	log [p_\xi(y_{bow(t+1,T)}|z_{t:T}) ] = log  \frac{e^{f_{z_{t}}}}{\sum^V_j e^{f_{j}}}
+\end{equation}
 
 \subsubsection{Learning Mechanism}
 
-VADs use a weighted combination of ELBO and the log likelihood loss of the auxillary objective.
+VADs use a weighted combination of ELBO (Equation \ref{eqn:elbo})  the log likelihood loss of the auxillary objective.
+
+\begin{equation}
+	\mathcal{L}'(\theta, \phi, x, c) =\mathcal{L}'(\theta, \phi, x, c) + E_{q_{\phi}(z|c,x,y)}[log(p(x_{bow}|z,c))]
+\end{equation}
 
 \subsubsection{KL Divergence Derivation}
 
@@ -535,6 +540,7 @@ As our model involves using multivariate gaussians, we derive the Kullback-Leibl
 \end{equation}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 \chapter{Contribution}
 
@@ -575,6 +581,32 @@ The polarity word vector is a sum of the polarity value $p$ and the word vector 
 
 Built on PyTorch.
 
+Typically, we start with wanting to have the weights being asymmetric (such that when we perform our gradient descent we would have random starting positions, which would enable us to have a better chance to find the minimum as opposed to having a fixed starting point). Fortunately, pulling from a gaussian distribution is sufficent. The problem here is that we're fixing some parameter for the standard deviation. 
+
+% Xavier [Glorot et al.](http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf)
+
+Xavier 
+proposed to initialise the weights based on a gaussian $Var(w)=\mathcal{N}(0,\frac{2}{|n_{in}| + |n_{out}| })$ where $w$ represents a layer in a network, and $|n_{in}|$ represents the number of neurons feeding into it, and similarly so for $|n_{out}|$. Note that I have used a gaussian distribution, but it can also be uniform. This method has shown a lot of success for sigmoid and tanh based activation functions.
+
+For ReLU based networks, 
+% [Kaiming et al.](https://arxiv.org/pdf/1502.01852.pdf) 
+suggests that the weights should be initialised using $Var(w)=\mathcal{N}(0,\frac{2}{|n_{in}|})$. 
+
+\section{Optimisation Challenges}
+
+Ideally, a model that encodes useful information in the latent variable $\overrightarrow{z}$ will have a non-zero KL divergence term and a relatively small cross-entropy term. Straightforward implementations of our model failed to learn this behaviour.
+
+Due to the sensitivity of our model, which is compounded by the sensitivity of the GRU cells in our model, early implementations of our model would initially ignore $\overrightarrow{z}$ and go after the low hanging fruit during the learning process of the decoder. Once this occurs, the decoder ignores the encoder and gradients between the two components become non-existent, preventing learning.
+
+is it often likely that in a degenerative setting, the latent vector in the model would encorporate a lack of relevant information and is essentially ignored. This results in a KL collapse s.t the KL loss reaches zero, and thus the model is then effectively equivalent to an RNN language model.
+
+\subsection{KL Annealing}
+
+A simple approach by \cite{bowman_generating_2015}, it involves adding a variable weight to the KL term in the cost function at training time. Initially, the weight is zero, forcing the model to encode as much information into the latent variable as much as it can. The weight is then gradually increased, eventually reaching 1. At this stage the weighted cost function is equivalent to the ELBO loss. This could be thought of as annealing from a regular autoencoder towards a variational one.
+
+\subsection{Word Dropout}
+Also proposed by \cite{bowman_generating_2015}, it involves weakening the decoder by removing some conditioning information during training. This is done by randomly replacing a fraction of the conditioned-on word tokens with a generic unknown token UNK, which forces the model to depend on the latent variable $z$ for prediction. This works in a similar fashion to the standard dropout (\cite{srivastava_dropout:_2014}) where connections are dropped between layers of a network, but is applied to the input data of a recurrent cell.
+
 \section{Testing Method}
 
 We'll be using a regressor that determines whether the data produced corresponds to a fake model or from the dataset. This is not used as a loss function (this would consequently create a generative model).
@@ -582,6 +614,19 @@ We'll be using a regressor that determines whether the data produced corresponds
 We compare the performance of the VAD against two baselines, a seq2seq model described above and the Transformer.
 
 Models are computed on an 4.4GHz intel 3770k with a GTX 1080 with 8GB VRAM.
+
+
+\subsection{Measuring Performance}
+
+"Bleu measures precision: how much the words (and/or n-grams) in the machine generated summaries appeared in the human reference summaries.
+
+Rouge measures recall: how much the words (and/or n-grams) in the human reference summaries appeared in the machine generated summaries.
+
+Naturally - these results are complementing, as is often the case in precision vs recall. If you have many words from the system results appearing in the human references you will have high Bleu, and if you have many words from the human references appearing in the system results you will have high Rouge."
+
+% https://stackoverflow.com/questions/38045290/text-summarization-evaluation-bleu-vs-rouge
+
+% http://opennmt.net OPENMNT-Py has BLEU/ROUGE on it.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \chapter{Experimental Results}

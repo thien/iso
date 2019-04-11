@@ -384,7 +384,7 @@
 	month = may,
 	year = {2016},
 	note = {arXiv: 1605.06069},
-	keywords = {Computer Science - Artificial Intelligence, Computer Science - Computation and Language, Computer Science - Machine Learning, Computer Science - Neural and Evolutionary Computing, I.2.7, I.5.1},
+	keywords = {Computer Science - Neural and Evolutionary Computing, Computer Science - Artificial Intelligence, Computer Science - Computation and Language, Computer Science - Machine Learning, I.2.7, I.5.1},
 	file = {arXiv\:1605.06069 PDF:/Users/t/Zotero/storage/GRAMVTBJ/Serban et al. - 2016 - A Hierarchical Latent Variable Encoder-Decoder Mod.pdf:application/pdf;arXiv.org Snapshot:/Users/t/Zotero/storage/E5F8DDQE/1605.html:text/html}
 }
 
@@ -398,5 +398,66 @@
 	month = mar,
 	year = {2017},
 	note = {arXiv: 1703.10960},
-	keywords = {Computer Science - Artificial Intelligence, Computer Science - Computation and Language}
+	keywords = {Computer Science - Artificial Intelligence, Computer Science - Computation and Language},
+	file = {arXiv\:1703.10960 PDF:/Users/t/Zotero/storage/JSUESJHK/Zhao et al. - 2017 - Learning Discourse-level Diversity for Neural Dial.pdf:application/pdf;arXiv.org Snapshot:/Users/t/Zotero/storage/CHKCVSPW/1703.html:text/html}
+}
+
+@article{bowman_generating_2015,
+	title = {Generating {Sentences} from a {Continuous} {Space}},
+	url = {http://arxiv.org/abs/1511.06349},
+	abstract = {The standard recurrent neural network language model (rnnlm) generates sentences one word at a time and does not work from an explicit global sentence representation. In this work, we introduce and study an rnn-based variational autoencoder generative model that incorporates distributed latent representations of entire sentences. This factorization allows it to explicitly model holistic properties of sentences such as style, topic, and high-level syntactic features. Samples from the prior over these sentence representations remarkably produce diverse and well-formed sentences through simple deterministic decoding. By examining paths through this latent space, we are able to generate coherent novel sentences that interpolate between known sentences. We present techniques for solving the diﬃcult learning problem presented by this model, demonstrate its eﬀectiveness in imputing missing words, explore many interesting properties of the model’s latent sentence space, and present negative results on the use of the model in language modeling.},
+	language = {en},
+	urldate = {2019-04-11},
+	journal = {arXiv:1511.06349 [cs]},
+	author = {Bowman, Samuel R. and Vilnis, Luke and Vinyals, Oriol and Dai, Andrew M. and Jozefowicz, Rafal and Bengio, Samy},
+	month = nov,
+	year = {2015},
+	note = {arXiv: 1511.06349},
+	keywords = {Computer Science - Computation and Language, Computer Science - Machine Learning},
+	file = {Bowman et al. - 2015 - Generating Sentences from a Continuous Space.pdf:/Users/t/Zotero/storage/HWDHEYJ8/Bowman et al. - 2015 - Generating Sentences from a Continuous Space.pdf:application/pdf}
+}
+
+@article{raiko_techniques_2014,
+	title = {Techniques for {Learning} {Binary} {Stochastic} {Feedforward} {Neural} {Networks}},
+	url = {http://arxiv.org/abs/1406.2989},
+	abstract = {Stochastic binary hidden units in a multi-layer perceptron (MLP) network give at least three potential beneﬁts when compared to deterministic MLP networks. (1) They allow to learn one-to-many type of mappings. (2) They can be used in structured prediction problems, where modeling the internal structure of the output is important. (3) Stochasticity has been shown to be an excellent regularizer, which makes generalization performance potentially better in general. However, training stochastic networks is considerably more difﬁcult. We study training using M samples of hidden activations per input. We show that the case M = 1 leads to a fundamentally different behavior where the network tries to avoid stochasticity. We propose two new estimators for the training gradient and propose benchmark tests for comparing training algorithms. Our experiments conﬁrm that training stochastic networks is difﬁcult and show that the proposed two estimators perform favorably among all the ﬁve known estimators.},
+	language = {en},
+	urldate = {2019-04-11},
+	journal = {arXiv:1406.2989 [cs, stat]},
+	author = {Raiko, Tapani and Berglund, Mathias and Alain, Guillaume and Dinh, Laurent},
+	month = jun,
+	year = {2014},
+	note = {arXiv: 1406.2989},
+	keywords = {Computer Science - Machine Learning, Computer Science - Neural and Evolutionary Computing, Statistics - Machine Learning},
+	file = {Raiko et al. - 2014 - Techniques for Learning Binary Stochastic Feedforw.pdf:/Users/t/Zotero/storage/V838ID8Q/Raiko et al. - 2014 - Techniques for Learning Binary Stochastic Feedforw.pdf:application/pdf}
+}
+
+@article{hochreiter_long_1997,
+	title = {Long {Short}-{Term} {Memory}},
+	volume = {9},
+	issn = {0899-7667},
+	url = {https://www.mitpressjournals.org/doi/10.1162/neco.1997.9.8.1735},
+	doi = {10.1162/neco.1997.9.8.1735},
+	abstract = {Learning to store information over extended time intervals by recurrent backpropagation takes a very long time, mostly because of insufficient, decaying error backflow. We briefly review Hochreiter's (1991) analysis of this problem, then address it by introducing a novel, efficient, gradient based method called long short-term memory (LSTM). Truncating the gradient where this does not do harm, LSTM can learn to bridge minimal time lags in excess of 1000 discrete-time steps by enforcing constant error flow through constant error carousels within special units. Multiplicative gate units learn to open and close access to the constant error flow. LSTM is local in space and time; its computational complexity per time step and weight is O. 1. Our experiments with artificial data involve local, distributed, real-valued, and noisy pattern representations. In comparisons with real-time recurrent learning, back propagation through time, recurrent cascade correlation, Elman nets, and neural sequence chunking, LSTM leads to many more successful runs, and learns much faster. LSTM also solves complex, artificial long-time-lag tasks that have never been solved by previous recurrent network algorithms.},
+	number = {8},
+	urldate = {2019-04-11},
+	journal = {Neural Computation},
+	author = {Hochreiter, Sepp and Schmidhuber, Jürgen},
+	month = nov,
+	year = {1997},
+	pages = {1735--1780},
+	file = {2604.pdf:/Users/t/Zotero/storage/V2QJ4TUY/2604.pdf:application/pdf;Snapshot:/Users/t/Zotero/storage/2X8HWQES/neco.1997.9.8.html:text/html}
+}
+
+@article{srivastava_dropout:_2014,
+	title = {Dropout: {A} {Simple} {Way} to {Prevent} {Neural} {Networks} from {Overfitting}},
+	volume = {15},
+	shorttitle = {Dropout},
+	url = {http://jmlr.org/papers/v15/srivastava14a.html},
+	urldate = {2019-04-11},
+	journal = {Journal of Machine Learning Research},
+	author = {Srivastava, Nitish and Hinton, Geoffrey and Krizhevsky, Alex and Sutskever, Ilya and Salakhutdinov, Ruslan},
+	year = {2014},
+	pages = {1929--1958},
+	file = {Full Text PDF:/Users/t/Zotero/storage/ADLS4SUC/Srivastava et al. - 2014 - Dropout A Simple Way to Prevent Neural Networks f.pdf:application/pdf;Snapshot:/Users/t/Zotero/storage/AJPRFSKT/srivastava14a.html:text/html;Srivastava et al. - Dropout A Simple Way to Prevent Neural Networks f.pdf:/Users/t/Zotero/storage/ZW85FXMH/Srivastava et al. - Dropout A Simple Way to Prevent Neural Networks f.pdf:application/pdf}
 }

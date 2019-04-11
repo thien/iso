@@ -1,0 +1,38 @@
+\babel@toc {english}{}
+\contentsline {chapter}{\numberline {1}Literature Survey}{2}{chapter.2}
+\contentsline {section}{\numberline {1.1}Artificial Data}{2}{section.3}
+\contentsline {section}{\numberline {1.2}Text Generation}{2}{section.4}
+\contentsline {section}{\numberline {1.3}Language Modelling}{2}{section.5}
+\contentsline {section}{\numberline {1.4}Recurrent Neural Networks}{4}{section.9}
+\contentsline {subsection}{\numberline {1.4.1}LSTMs and GRUs}{4}{subsection.11}
+\contentsline {section}{\numberline {1.5}Autoencoders}{5}{section.13}
+\contentsline {subsection}{\numberline {1.5.1}Variational Autoencoders}{5}{subsection.14}
+\contentsline {section}{\numberline {1.6}Related Work}{7}{section.19}
+\contentsline {subsection}{\numberline {1.6.1}Seq2Seq}{7}{subsection.20}
+\contentsline {subsection}{\numberline {1.6.2}seq2seq with VAEs}{8}{subsection.22}
+\contentsline {subsection}{\numberline {1.6.3}Seq2Seq with Attention}{8}{subsection.23}
+\contentsline {subsection}{\numberline {1.6.4}Transformers}{8}{subsection.25}
+\contentsline {subsubsection}{Self Attention}{9}{section*.27}
+\contentsline {subsubsection}{Positionality Hack}{9}{section*.31}
+\contentsline {subsection}{\numberline {1.6.5}Conditional Variational Autoencoders}{10}{subsection.32}
+\contentsline {subsection}{\numberline {1.6.6}Variational Autoregressive Decoders}{10}{subsection.34}
+\contentsline {subsubsection}{Encoder}{11}{section*.35}
+\contentsline {subsubsection}{Backwards}{11}{section*.37}
+\contentsline {subsubsection}{Attention}{11}{section*.39}
+\contentsline {subsubsection}{Inference Model}{11}{section*.41}
+\contentsline {subsubsection}{Prior Model}{12}{section*.43}
+\contentsline {subsubsection}{Decoder (Variational Autoregressive)}{12}{section*.45}
+\contentsline {subsubsection}{Auxillary Objective}{12}{section*.48}
+\contentsline {subsubsection}{Learning Mechanism}{12}{section*.50}
+\contentsline {subsubsection}{KL Divergence Derivation}{12}{section*.52}
+\contentsline {chapter}{\numberline {2}Contribution}{14}{chapter.54}
+\contentsline {section}{\numberline {2.1}Data Augmentation}{14}{section.55}
+\contentsline {subsection}{\numberline {2.1.1}Embeddings}{15}{subsection.77}
+\contentsline {subsection}{\numberline {2.1.2}Review Prepropressing}{15}{subsection.78}
+\contentsline {subsection}{\numberline {2.1.3}Polarity Calculation}{15}{subsection.79}
+\contentsline {subsection}{\numberline {2.1.4}Implementation}{15}{subsection.81}
+\contentsline {section}{\numberline {2.2}Optimisation Challenges}{15}{section.82}
+\contentsline {subsection}{\numberline {2.2.1}KL Annealing}{16}{subsection.83}
+\contentsline {subsection}{\numberline {2.2.2}Word Dropout}{16}{subsection.84}
+\contentsline {section}{\numberline {2.3}Testing Method}{16}{section.85}
+\contentsline {subsection}{\numberline {2.3.1}Measuring Performance}{16}{subsection.86}
