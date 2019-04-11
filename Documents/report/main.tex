@@ -116,13 +116,11 @@
 
 \section{Artificial Data}
 
-
 The premise of this literature survey is to describe the relevant components necessary to construct our solution, and to also discuss alternative approaches to the problem. 
 
 % talk about the purpose:
 % artificial data for NLP problems.
 % why? lack of resources. datasets limited. unexplored.
-
 
 \section{Text Generation}
 
@@ -133,13 +131,12 @@ The premise of this literature survey is to describe the relevant components nec
 % 	- lots of components
 % 	- present solutions are relatively rudimentary in terms of their throughput.
 
-
 % - we want to increase the lexical variety of the generated texts.
 % 	- why? because we want to create data that looks similar to the original data, so we can use it as interim to other organisations that wish to request data. (That way, we don't reveal the original data in it's entirety.)
 
 % - talk about the fact that this is an understudied problem; the described tools are commonly used in other areas of contempoary computer science.
 
-Text generation is a a type of Language Modelling problem, which in itself, is one of the core natural language processing problems. It is used in a variety of contemporary applications, ranging from machine translation, to email response generation, to document summarisation.
+Text generation is a a type of Language Modeling problem, which in itself, is one of the core natural language processing problems. It is used in a variety of contemporary applications, ranging from machine translation, to email response generation, to document summarisation.
 
 In our particular case we imagine a scenario where a client requests the use of our dataset. We could permit them access to said data, but it would reveal the identities of the users in the data. The objective is to have some alternative dataset to ours such that value can be deduced from the data, but the privacy of the users in our original dataset is maintained.
 
@@ -160,13 +157,13 @@ p(w) = &{} \prod^{|w|}_{t=1}p(w_t|w_1, ..., w_{t-1})
 
 Traditionally, assigning words to probabilities may conflate syntactically dubious sentences but it remains to be a useful method for representing texts.  
 
-In particular, we are more interested in conditional language modelling. This slightly differs from the definition described above - A conditional language model assigns probabilities to sequences of words, $w = (w_1, w_2, ..., w_{i-1})$, given a conditioning variable, $x$. 
+This paper concentrates on conditional language modelling. A conditional language model assigns probabilities to sequences of words, $w = (w_1, w_2, ..., w_{i-1})$, given a conditioning variable, $x$. 
 
 \begin{align}
 	p(\boldmath{w}|x) = &{} \prod^{|w|}_{t=1}p(w_t|x,w_1, ..., w_{t-1})
 \end{align}
 
-There exists different types of models, but we shall start with the n-gram, argued by \cite{le_recurrent_2018} as being the most fundamental. An n-gram is a chunk of n consecutive words. For instance, given the sentence "the quick brown fox \ldots", the respective n-grams are: 
+There exists different types of language models; we start with the n-gram, argued as being the most fundamental (\cite{le_recurrent_2018}). An n-gram is a chunk of n consecutive words in a sequential order. For instance, given the sentence "the quick brown fox \ldots", the respective n-grams are: 
 
 \begin{itemize}  
 	\item unigrams: "the", "quick", "brown", "fox"
@@ -177,17 +174,37 @@ There exists different types of models, but we shall start with the n-gram, argu
 
 The intuition of n-grams was that statistical inference can be applied on the frequency and distribution of of the n-grams, which could be used to predict the next word. However, sparsity is not captured.
 
-% create a better flow
+Later on, modern language models revolve around the use of neural networks (\cite{bengio_neural_2001}), which itself started off with a relatively modest MLP that formed the premise of word prediction. The use of neural networks in language modelling is often called Neural Language Modelling, of NLM for short.
 
-Modern language models revolve around the use of neural networks, which was introduced by \cite{bengio_neural_2001}, with a simple MLP that encoded words. The use of neural networks in language modelling is often called Neural Language Modelling, of NLM for short.
-
-Neural Networks are non-linear statistical models that generate complex relationships between input and output vectors. (This type of neural network architecture is commonly described as the multi-layer perceptron). Note that the input and output vectors are of a fixed dimension, which becomes a problem for our task at hand. Neural Networks evaluate an input using forward propagation, to produce an output. Traditionally, neural networks are trained to produce optimal outputs via the use of backpropagation. 
+Neural Networks are non-linear and computational metaphors of the brain that model arbitary relationships between input and output vectors. (This type of neural network architecture is commonly described as the multi-layer perceptron). Note that the input and output vectors are of a fixed dimension, which becomes a problem for our task at hand. Neural Networks evaluate an input using forward propagation, to produce an output. Traditionally, neural networks are trained to produce optimal outputs via the use of backpropagation. 
 
 % something on neural language models being popular.
 
 \section{Recurrent Neural Networks}
 
-Recurrent neural networks (RNNs) are a class of neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). RNNs operate over a sequence of variable-length vectors, and produces an output of similarly variable-length vectors. This circumvents a problem introduced with using an MLP, where sentences are not typically fixed length. 
+Recurrent neural networks (RNNs) are a class of feed forward neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). RNNs operate over a sequence of variable-length vectors, and produces an output of similarly variable-length vectors. This circumvents a problem introduced with using an MLP, where sentences are not typically fixed length. 
+
+At each time step $t$, a simple RNN takes produces a hidden vector $h_t$, derived from the input vector $x_t$ and the previous state $h_{t-1}$ in the function $h_t = f_w(h_{t-1}, x_t)$. The hidden vector is usually obtained by some affine transformation offset by a bias vector, described in more detail in equation \ref{eq:rnn}. The same function and the same parameters are used at each time step $t$. RNNs typically are not parallelised. 
+
+\begin{equation}
+	\label{eq:rnn}
+	\begin{aligned}
+		h_t &= tanh(W_{hh}h_{t-1}+W_{xh}x_t)
+	\\
+	y_t &= W_{hy}h_t
+	\end{aligned}
+	\end{equation}
+
+RNNs are typically trained with backpropagation through time. The gradient flow $w \leftarrow w - \alpha \frac{\delta L}{\delta w}$ is computed at every timestep, meaning that every path from $W$ to the loss $\mathcal{L}$ needs to be considered.
+
+\begin{equation}
+	\label{eq:btt}
+	\begin{aligned}
+		\frac{\delta L}{\delta w} = \sum^T_{j=0}\sum^j_{k=1}\frac{\delta L_j}{\delta y_j}\frac{\delta y_j}{\delta h_j}(\prod^j_{t=k+1}\frac{\delta h_t}{\delta h_{t-1}})\frac{\delta h_k}{\delta w}
+	\end{aligned}
+	\end{equation}
+
+The product symbol within the loss function in \ref{eq:btt} is the cause of vanishing and exploding gradients.
 
 % we need formulas.
 
@@ -214,62 +231,30 @@ RNNs showed promise but there existed a multitude of problems. Firstly, It becam
 Both gates were introduced to circumvent the issue of long range dependency problems by providing multiple avenues, with each one having a different approach.
 
 \begin{figure}[!ht]
-	\centering
-	\begin{tikzpicture}[
-		prod/.style={circle, draw, inner sep=0pt},
-		ct/.style={circle, draw, inner sep=5pt, ultra thick, minimum width=10mm},
-		ft/.style={circle, draw, minimum width=8mm, inner sep=1pt},
-		filter/.style={circle, draw, minimum width=7mm, inner sep=1pt, path picture={\draw[thick, rounded corners] (path picture bounding box.center)--++(65:2mm)--++(0:1mm);
-		\draw[thick, rounded corners] (path picture bounding box.center)--++(245:2mm)--++(180:1mm);}},
-		mylabel/.style={font=\scriptsize\sffamily},
-		>=LaTeX
-		]
-	
-	\node[ct, label={[mylabel]Cell}] (ct) {$c_t$};
-	\node[filter, right=of ct] (int1) {};
-	\node[prod, right=of int1] (x1) {$\times$}; 
-	\node[right=of x1] (ht) {$h_t$};
-	\node[prod, left=of ct] (x2) {$\times$}; 
-	\node[filter, left=of x2] (int2) {};
-	\node[prod, below=5mm of ct] (x3) {$\times$}; 
-	\node[ft, below=5mm of x3, label={[mylabel]right:Forget Gate}] (ft) {$f_t$};
-	\node[ft, above=of x2, label={[mylabel]left:Input Gate}] (it) {$i_t$};
-	\node[ft, above=of x1, label={[mylabel]left:Output Gate}] (ot) {$o_t$};
-	
-	\foreach \i/\j in {int2/x2, x2/ct, ct/int1, int1/x1,
-				x1/ht, it/x2, ct/it, ct/ot, ot/x1, ft/x3}
-		\draw[->] (\i)--(\j);
-	
-	\draw[->] (ct) to[bend right=45] (ft);
-	
-	\draw[->] (ct) to[bend right=30] (x3);
-	\draw[->] (x3) to[bend right=30] (ct);
-	
-	\node[fit=(int2) (it) (ot) (ft), draw, inner sep=0pt] (fit) {};
-	
-	\draw[<-] (fit.west|-int2) coordinate (aux)--++(180:7mm) node[left]{$x_t$};
-	\draw[<-] ([yshift=1mm]aux)--++(135:7mm);
-	\draw[<-] ([yshift=-1mm]aux)--++(-135:7mm);
-	
-	\draw[<-] (fit.north-|it) coordinate (aux)--++(90:7mm) node[above]{$x_t$};
-	\draw[<-] ([xshift=1mm]aux)--++(45:7mm);
-	\draw[<-] ([xshift=-1mm]aux)--++(135:7mm);
-	
-	\draw[<-] (fit.north-|ot) coordinate (aux)--++(90:7mm) node[above]{$x_t$};
-	\draw[<-] ([xshift=1mm]aux)--++(45:7mm);
-	\draw[<-] ([xshift=-1mm]aux)--++(135:7mm);
-	
-	\draw[<-] (fit.south-|ft) coordinate (aux)--++(-90:7mm) node[below]{$x_t$};
-	\draw[<-] ([xshift=1mm]aux)--++(-45:7mm);
-	\draw[<-] ([xshift=-1mm]aux)--++(-135:7mm);
-	\end{tikzpicture}
-	\caption{A diagram of the LSTM model.}
+\begin{equation}
+  \begin{split}
+    i_t &= \sigma(W_i \cdot [h_{t-1},x_t] + b_i) \\
+    f_t &= \sigma(W_f \cdot [h_{t-1},x_t] + b_f) \\
+		o_t &= \sigma(W_o \cdot [h_{t-1},x_t] + b_o) \\
+		g_t &= \sigma(W_g \cdot [h_{t-1},x_t] + b_g) \\
+		c_t &= f_t \odot c_{t-1} + i_t \odot g_t \\
+		h_t &= o_t \odot tanh(c_t) 
+  \end{split}
+% \quad\leftrightarrow\quad
+	\quad\quad
+  \begin{split}
+		u_t &= \sigma(W_u \cdot [h_{t-1},x_t] + b_u) \\
+		r_t &= \sigma(W_r \cdot [h_{t-1},x_t] + b_r) \\
+		c_t &= tanh(Ww_{t-1}+U(r_t \odot h_{t-1})) \\
+		h_t &= (1-u_{t})\odot h_{t-1} + u_t \odot c_t
+  \end{split}
+\end{equation}
+\caption{Equations for LSTM cells (left) and GRU cells (right).}
 \end{figure}
  
-LSTM (Long Short Term Memory) is a type of RNN unit that attempts to retain information based on the previous inputs through the introduction of gated architectures (\cite{hochreiter_long_1997}).
+LSTM (Long Short Term Memory; \cite{hochreiter_long_1997}) are a type of RNN cell that attempts to retain information based on the previous inputs through the introduction of gated architectures. 
 
-GRUs (\cite{cho_properties_2014}) are used to solve the common issue with LSTMs where the training time was relatively slow due to the number of derivatives necessary to compute. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time. They are unable to clearly distinguish between the performance of the two gated units they tested.
-However, Some research from \cite{chung_empirical_2014} suggests that GRUs were found to perform better than LSTMs on smaller datasets. 
+GRUs (Gated Recurrent Units; \cite{cho_properties_2014}) are functionally similar to LSTMs, but uses less parameters. Within the GRU architecture, a feature to retain the previous weights remain, but there exists an direct path to the input data from the output, allowing a reduction in training time. They are unable to clearly distinguish between the performance of the two gated units they tested. \cite{chung_empirical_2014} suggests that GRUs were found to perform at least equivalent to LSTMs but show slight improvements on smaller datasets. 
 
 \section{Autoencoders}
 
