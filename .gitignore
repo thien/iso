@@ -1,4 +1,5 @@
 code/models/*
+code/__pycache__/*
 Samples/.ipynb_checkpoints/*
 Videos/*
 Datasets/*
