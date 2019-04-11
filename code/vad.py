@@ -157,7 +157,7 @@ class Attention(nn.Module):
         concat_input = torch.cat([context_vector, hidden], -1)
 
         # (batch_size, seq_len=1, encoder_hidden_size * num_directions + decoder_hidden_size) => (batch_size, seq_len=1, decoder_hidden_size)
-        concat_output = F.tanh(self.W_c(concat_input)).squeeze(1)
+        concat_output = torch.tanh(self.W_c(concat_input)).squeeze(1)
         
         # Prepare returns:
         # (batch_size, seq_len=1, max_src_len) => (batch_size, max_src_len)
@@ -332,7 +332,9 @@ class CBOW(nn.Module):
         super(CBOW, self).__init__()
         
         self.bow = nn.Linear(latent_size, vocabulary_size)
+        self.sigmoid = nn.LogSigmoid()
 
     def forward(self, z):
-        vocab = -F.log_softmax(self.bow(z), dim=1)
+        # vocab = -F.log_softmax(self.bow(z), dim=1)
+        vocab = -self.sigmoid(self.bow(z))
         return vocab

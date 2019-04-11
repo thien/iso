@@ -96,17 +96,25 @@ def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
     return kld
 
 
-def bow_loss(ref_bow, pred_bow):
-    bow_loss = ref_bow * pred_bow
-    bow_loss = torch.sum(bow_loss, dim=1)
+def bow_loss(future_y_labels, y_mask, pred_bow):
+    # cvae implementation
+    bow_guess = pred_bow.gather(1, future_y_labels)
+    bow_guess = bow_guess * y_mask
+    bow_loss = torch.sum(bow_guess, 1)
     avg_bow_loss = torch.mean(bow_loss)
     return avg_bow_loss
+    # else:
+    #     bow_loss = ref_bow * pred_bow
+    #     bow_loss = torch.sum(bow_loss, dim=1)
+    #     avg_bow_loss = torch.mean(bow_loss)
+    #     return avg_bow_loss
 
 def recon_loss(y_predicted, y):
     y_onehot = torch.tensor(batch_size, num_classes).zero_()
     return None
 
-def loss_function(batch_num,
+def loss_function(epoch,
+                  batch_num,
                   num_batches,
                   y_predicted,
                   y,
@@ -114,44 +122,44 @@ def loss_function(batch_num,
                   inference_logvar,
                   prior_mu,
                   prior_logvar,
-                  ref_bow,
+                  future_y_labels,
+                  ref_bow_mask,
                   pred_bow,
                   criterion_r,
                   criterion_bow,
                   use_latent=True):
 
     # compute reconstruction loss
-    LL = criterion_r(y_predicted, y)
+    ll_loss = criterion_r(y_predicted, y)
 
     # compute KLD
-    KL = 0
+    kl_loss = 0
     if use_latent:
-        KL = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
-        KL = torch.mean(KL)
+        kl_loss = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
+        kl_loss = torch.mean(kl_loss)
         # KL Annealing
-        kl_weight = (batch_num)/min(num_batches, 10000)
-        kl_weight = min(kl_weight, 1.0)
-        KL *= kl_weight
+        if epoch < 2:
+            kl_weight = (batch_num)/min(num_batches, 1000)
+            kl_weight = min(kl_weight, 1.0)
+            kl_loss *= kl_weight
 
-    elbo = LL + KL
-
-    aux = 0
+    aux_loss = 0
     if use_latent:
         # compute auxillary loss
-        aux = bow_loss(pred_bow, ref_bow)
+        aux_loss = bow_loss(future_y_labels, ref_bow_mask, pred_bow)
         # weight auxillary loss
-        alpha = 0.00001
-        aux *= alpha
+        alpha = 10
+        aux_loss *= alpha
 
-    return elbo + aux, LL, KL, aux
+    return ll_loss, kl_loss, aux_loss
 
 def plotBatchLoss(iteration, losses, kl, aux, folder_path):
     x = [i for i in range(1, len(losses)+1)]
-    labels = ["KL", "Auxiliary", "LL"]
+    labels = ["LL", "KL", "Auxiliary"]
 
-    plt.stackplot(x, kl, aux, losses, labels=labels)
+    plt.stackplot(x, losses, kl, aux, labels=labels)
     plt.legend()
-    plt.ylim(top=15)
+    # plt.ylim(top=15)
     title = 'Learning Loss during Iteration ' + str(iteration)
     plt.title(title)
     plt.ylabel('Loss')

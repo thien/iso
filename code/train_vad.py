@@ -71,6 +71,7 @@ def evalVAD(x,
 
 def trainVAD(
     device,
+    epoch,
     batch_num,
     num_batches,
     x,
@@ -102,14 +103,12 @@ def trainVAD(
     decoderOpt.zero_grad()
 
     # set default loss
-    loss = 0
-    ll_loss = 0
-    kl_loss = 0
-    aux_loss = 0
+    loss, ll_loss, kl_loss, aux_loss = 0, 0, 0, 0
 
     # initalise input and target lengths, and vocab size
     ySeqlength, batchSize = yLength[0], x.shape[0]
     vocabularySize = decoder.embedding.weight.shape[0]
+
     # set up encoder and backward hidden vectors
     encoderHidden = encoder.initHidden(batchSize).to(device)
     backwardHidden = backwards.initHidden(batchSize).to(device)
@@ -127,6 +126,9 @@ def trainVAD(
     decoderHidden = torch.sum(encoderHidden, dim=0)
     decoderOutput = None
 
+    # randomly determine teacher forcing with equal probability
+    teacher_forcing = True if random.random() > 0.5 else False
+
     # Run through the decoder one step at a time. This seems to be common practice across
     # all of the seq2seq based implementations I've come across on GitHub.
     for t in range(ySeqlength):
@@ -142,14 +144,12 @@ def trainVAD(
         # update variables
         decoderOutput, decoderHidden, pred_bow, infer_mu, infer_logvar, prior_mu, prior_logvar = out
 
-        # compute reference CBOW
-        ref_bow = torch.ones(batchSize, vocabularySize).to(device)
-        ref_bow.scatter_(1, y[:, t:], 0)
-
-        # print("DECODER OUTPUT",decoderOutput.shape)
+        # compute reference CBOW to compare our predictions to.
+        ref_bow_mask = (y[:, t:] != word2id['<pad>']).float()
 
         # calculate the loss
-        seqloss, ll, kl, aux = loss_function(
+        ll, kl, aux = loss_function(
+            epoch,
             batch_num,
             num_batches,
             decoderOutput,
@@ -158,32 +158,35 @@ def trainVAD(
             infer_logvar,
             prior_mu,
             prior_logvar,
-            ref_bow,
+            y[:, t:],
+            ref_bow_mask,
             pred_bow,
             criterion_r,
             criterion_bow,
             use_latent)
 
-        loss += seqloss
+        loss += ll + kl + aux
         ll_loss += ll
         kl_loss += kl
         aux_loss += aux
 
-        # feed this output to the next input
-        decoderInput = y[:, t]
-        # else:
-        #     decoderInput = torch.argmax(decoderOutput, dim=1)
+        if teacher_forcing:
+            # feed this output to the next input
+            decoderInput = y[:, t]
+        else:
+            decoderInput = torch.argmax(decoderOutput, dim=1)
         decoderHidden = decoderHidden.squeeze(0)
 
+    # normalise loss
     avg_loss = loss/ySeqlength
 
     # calculate gradients
     avg_loss.backward()
 
     # gradient clipping
-    torch.nn.utils.clip_grad_norm_(encoder.parameters(), gradientClip)
+    torch.nn.utils.clip_grad_norm_(encoder.parameters(),   gradientClip)
     torch.nn.utils.clip_grad_norm_(backwards.parameters(), gradientClip)
-    torch.nn.utils.clip_grad_norm_(decoder.parameters(), gradientClip)
+    torch.nn.utils.clip_grad_norm_(decoder.parameters(),   gradientClip)
 
     # gradient descent
     decoderOpt.step()
@@ -191,14 +194,13 @@ def trainVAD(
     encoderOpt.step()
 
     # return avg losses for plotting.
-    avg_loss = loss.item()/ySeqlength
     avg_llloss = ll_loss.item()/ySeqlength
     avg_klloss, avg_auxloss = 0,0
     if use_latent:
         avg_klloss = kl_loss.item()/ySeqlength
         avg_auxloss = aux_loss.item()/ySeqlength
 
-    return avg_loss, avg_llloss, avg_klloss, avg_auxloss
+    return avg_loss.item(), avg_llloss, avg_klloss, avg_auxloss
 
 def trainIteration(
         device,
@@ -229,7 +231,7 @@ def trainIteration(
     numBatches = len(dataset[0])
 
     for j in range(1, iterations + 1):
-        print("Iteration", j)
+        print("Epoch", j)
         # set up variables needed for training.
         n = -1
 
@@ -252,12 +254,12 @@ def trainIteration(
             y,   yLength = dataset[1][batch_num][0], dataset[1][batch_num][1]
             yb, ybLength = dataset[2][batch_num][0], dataset[2][batch_num][1]
 
-            x = x.to(device)
-            y = y.to(device)
-            yb = yb.to(device)
+            # send to cuda.
+            x, y, yb = x.to(device), y.to(device), yb.to(device)
             # calculate loss.
             loss, ll, kl, aux = trainVAD(
                 device,
+                j,
                 n,
                 numBatches,
                 x, y, yb, 
@@ -338,15 +340,15 @@ def defaultParameters():
         }
     else:
         parameters = {
-            'hiddenSize'			: 512,
-            'latentSize'			: 400,
-            'batchSize'				: 32,
-            'iterations'			: 10,
+            'hiddenSize'			: 350,
+            'latentSize'			: 300,
+            'batchSize'				: 64,
+            'iterations'			: 200,
             'learningRate'			: 0.0001,
-            'gradientClip'			: 5,
+            'gradientClip'			: 1,
             'useBOW'				: True,
             'bidirectionalEncoder'	: True,
-            'reduction'             : 1,
+            'reduction'             : 8,
             'device'                : "cuda",
             'useLatent'             : True,
         }
