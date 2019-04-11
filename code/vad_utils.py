@@ -95,6 +95,17 @@ def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
                            - torch.div(torch.exp(var_1), torch.exp(var_2)), 1)
     return kld
 
+
+def bow_loss(ref_bow, pred_bow):
+    bow_loss = ref_bow * pred_bow
+    bow_loss = torch.sum(bow_loss, dim=1)
+    avg_bow_loss = torch.mean(bow_loss)
+    return avg_bow_loss
+
+def recon_loss(y_predicted, y):
+    y_onehot = torch.tensor(batch_size, num_classes).zero_()
+    return None
+
 def loss_function(batch_num,
                   num_batches,
                   y_predicted,
@@ -127,9 +138,9 @@ def loss_function(batch_num,
     aux = 0
     if use_latent:
         # compute auxillary loss
-        aux = criterion_bow(pred_bow, ref_bow)
+        aux = bow_loss(pred_bow, ref_bow)
         # weight auxillary loss
-        alpha =  5
+        alpha = 0.00001
         aux *= alpha
 
     return elbo + aux, LL, KL, aux
@@ -190,14 +201,13 @@ def batchData(dataset, padID, device, batchsize=32, cutoff=50, backwards=False):
         # i.e. we don't need another token identifying the end of the subsequence.
 
         # get the reviews based on the sorted batch lengths
-    
 
         if not backwards:
             reviews = [padSeq(batch[i[1]], cutoff, padID) for i in sortedindexes]
         else:
             reviews = [padSeq(batch[i[1]], cutoff, padID, backwards) for i in sortedindexes]
 
-        reviews = torch.tensor(reviews, dtype=torch.long, device=device)
+        reviews = torch.tensor(reviews, dtype=torch.long)
         # re-allocate values.
         batches[i] = (reviews, [i[0] for i in sortedindexes])
     return batches

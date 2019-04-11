@@ -18,6 +18,57 @@ torch.manual_seed(seed)
 random.seed(seed)
 np.random.seed(seed)
 
+
+def evalVAD(x,
+             xLength,
+             y,
+             yLength,
+             encoder,
+             decoder,
+             device,
+             criterion,
+             word2id
+            ):
+    
+    loss = 0
+    
+    # initalise input and target lengths
+    inputLength = x[0].size(0)
+    targetLength = y[0].size(0)
+    batchSize = x.shape[0]
+
+    # set up encoder computation
+    encoderHidden = encoder.initHidden(batchSize).to(device)
+    
+    # set up encoder outputs
+    encoderOutputs, encoderHidden = encoder(x, encoderHidden, xLength)
+
+    # set up the variables for decoder computation
+    decoderInput = torch.tensor([word2id["<sos>"]] * batchSize, dtype=torch.long, device=device)
+    
+    decoderHidden = encoderHidden[-1]
+    decoderOutput = None
+    decoderOutputs = []
+    
+    # Run through the decoder one step at a time. This seems to be common practice across
+    # all of the seq2seq based implementations I've come across on GitHub.
+    for t in range(yLength[0]):
+        # compute the output of each decoder state
+        decoderOutput, decoderHidden = decoder(
+            decoderInput, 
+            encoderOutputs,  
+            xLength, 
+            decoderHidden, 
+            device,
+            back=None)
+
+        decoderOutputs.append(decoderOutput)
+
+        decoderInput = decoderOutput.argmax(1)
+        decoderHidden = decoderHidden.squeeze(0)
+        
+    return decoderOutputs, loss
+
 def trainVAD(
     device,
     batch_num,
@@ -71,25 +122,31 @@ def trainVAD(
 
     # set up the variables for decoder computation
     decoderInput = torch.tensor(
-        [[word2id["<sos>"]]] * batchSize, dtype=torch.long, device=device)
+        [word2id["<sos>"]] * batchSize, dtype=torch.long, device=device)
 
-    decoderHidden = encoderHidden[-1]
+    decoderHidden = torch.sum(encoderHidden, dim=0)
     decoderOutput = None
 
     # Run through the decoder one step at a time. This seems to be common practice across
     # all of the seq2seq based implementations I've come across on GitHub.
     for t in range(ySeqlength):
         # compute the output of each decoder state
-        out = decoder(decoderInput, encoderOutputs, xLength,
-                             decoderHidden, 
-                             device,back=backwardOutput[:, t])
+        out = decoder(decoderInput, 
+                      encoderOutputs,
+                      xLength,
+                      decoderHidden, 
+                      device,
+                      back=backwardOutput[:, t]
+                      )
 
         # update variables
         decoderOutput, decoderHidden, pred_bow, infer_mu, infer_logvar, prior_mu, prior_logvar = out
 
         # compute reference CBOW
-        ref_bow = torch.FloatTensor(batchSize, vocabularySize).zero_().to(device)
-        ref_bow.scatter_(1, y[:, t:], 1)
+        ref_bow = torch.ones(batchSize, vocabularySize).to(device)
+        ref_bow.scatter_(1, y[:, t:], 0)
+
+        # print("DECODER OUTPUT",decoderOutput.shape)
 
         # calculate the loss
         seqloss, ll, kl, aux = loss_function(
@@ -195,6 +252,9 @@ def trainIteration(
             y,   yLength = dataset[1][batch_num][0], dataset[1][batch_num][1]
             yb, ybLength = dataset[2][batch_num][0], dataset[2][batch_num][1]
 
+            x = x.to(device)
+            y = y.to(device)
+            yb = yb.to(device)
             # calculate loss.
             loss, ll, kl, aux = trainVAD(
                 device,
@@ -245,8 +305,7 @@ def printParameters(parameters):
         padding = " ".join(["" for _ in range(maxLen - len(key) + 5)])
         print(key + padding, parameters[key])
 
-def initiateDirectory(folder_path, model_base_dir="models"):
-    folder_path = os.path.join(model_base_dir, folder_path)
+def initiateDirectory(folder_path):
     # create directory as it does not exist yet.
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
@@ -279,21 +338,21 @@ def defaultParameters():
         }
     else:
         parameters = {
-            'hiddenSize'			: 256,
-            'latentSize'			: 2,
+            'hiddenSize'			: 512,
+            'latentSize'			: 400,
             'batchSize'				: 32,
-            'iterations'			: 100,
+            'iterations'			: 10,
             'learningRate'			: 0.0001,
             'gradientClip'			: 5,
             'useBOW'				: True,
             'bidirectionalEncoder'	: True,
-            'reduction'             : 128,
+            'reduction'             : 1,
             'device'                : "cuda",
-            'useLatent'             : False,
+            'useLatent'             : True,
         }
     return parameters
 
-def initiate(parameters=None):
+def initiate(parameters=None, model_base_dir="models"):
     """
     Loads model parameters, setup file directories and trains
     model with specified params.
@@ -305,7 +364,8 @@ def initiate(parameters=None):
 
     # by default we set the folder_path folder to the current datetime
     folder_path = datetime.datetime.now().strftime("%Y%m%d %H-%M-%S")
-    
+    folder_path = os.path.join(model_base_dir, folder_path)
+
     # initiate parameter variables
     hiddenSize = parameters['hiddenSize']
     latentSize = parameters['latentSize']
@@ -384,7 +444,7 @@ def initiate(parameters=None):
     modelDecoder = Decoder(embedding, vocabularySize,
                            paddingID, batchSize, maxReviewLength, hiddenSize, latentSize, bidirectionalEncoder).to(device)
 
-    criterion_r = nn.NLLLoss(ignore_index=paddingID)
+    criterion_r   = nn.CrossEntropyLoss(ignore_index=paddingID)
     criterion_bow = nn.BCEWithLogitsLoss()
 
     print("Done.")
@@ -406,19 +466,6 @@ def initiate(parameters=None):
                    printEvery=1000)
 
     saveModels(modelEncoder, modelBackwards, modelDecoder, folder_path)
-
-    # # clear memory s.t we can use it on the next model.
-    # del modelEncoder
-    # del modelBackwards
-    # del modelDecoder
-    # del folder_path
-    # del traindata
-    # del train_x
-    # del train_y
-    # del weightMatrix
-    # del dataset
-    # del embedding
-    # torch.cuda.empty_cache()
-
+    
 if __name__ == "__main__":
     initiate()

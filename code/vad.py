@@ -232,7 +232,6 @@ class Decoder(nn.Module):
         # get output word
         embedded = self.embedding(y).squeeze(1)
 
-        # print(embedded.shape, c.shape, z.shape)
         # combine inputs together
         inputs = torch.cat([embedded,c,z], 1).unsqueeze(1)
 
@@ -246,8 +245,7 @@ class Decoder(nn.Module):
         output = output.squeeze(1)
         output = torch.cat((output, c), 1)
         output = self.out(output)
-        output = F.log_softmax(output, dim=1)
-
+    
         if self.training:
             return output, hidden, sbow, infer_mu, infer_logvar, prior_mu, prior_logvar
         else:
@@ -336,5 +334,5 @@ class CBOW(nn.Module):
         self.bow = nn.Linear(latent_size, vocabulary_size)
 
     def forward(self, z):
-        vocab = self.bow(z)
+        vocab = -F.log_softmax(self.bow(z), dim=1)
         return vocab
