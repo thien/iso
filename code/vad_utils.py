@@ -7,6 +7,7 @@ import pickle
 import matplotlib
 matplotlib.use('Agg')
 from torch.autograd import Variable
+import torch.nn.functional as F
 
 from matplotlib import cm
 import matplotlib.pyplot as plt
@@ -123,6 +124,7 @@ def loss_function(epoch,
                   prior_mu,
                   prior_logvar,
                   future_y_labels,
+                  ref_bow_t_mask,
                   ref_bow_mask,
                   pred_bow,
                   criterion_r,
@@ -130,7 +132,12 @@ def loss_function(epoch,
                   use_latent=True):
 
     # compute reconstruction loss
-    ll_loss = criterion_r(y_predicted, y)
+    # ll_loss = criterion_r(y_predicted, y)
+    ll_loss = F.cross_entropy(y_predicted.view(-1, y_predicted.size(-1)), y.reshape(-1), reduce=False).view(y_predicted.size()[:-1])
+    # print(ll_loss.shape, ref_bow_t_mask.shape)
+    ll_loss = torch.mean(ll_loss * ref_bow_t_mask)
+    # compute mean
+    # ll_loss = ll_loss.mean()
 
     # compute KLD
     kl_loss = 0
@@ -139,8 +146,9 @@ def loss_function(epoch,
         kl_loss = torch.mean(kl_loss)
         # KL Annealing
         if epoch < 2:
-            kl_weight = (batch_num)/min(num_batches, 1000)
-            kl_weight = min(kl_weight, 1.0)
+            kl_cap = 50
+            kl_weight_count = (epoch-1)*num_batches + batch_num
+            kl_weight = kl_weight_count / kl_cap
             kl_loss *= kl_weight
 
     aux_loss = 0

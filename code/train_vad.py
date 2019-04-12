@@ -127,7 +127,7 @@ def trainVAD(
     decoderOutput = None
 
     # randomly determine teacher forcing with equal probability
-    teacher_forcing = True if random.random() > 0.5 else False
+    teacher_forcing = True if random.random() > (1-0.2) else False
 
     # Run through the decoder one step at a time. This seems to be common practice across
     # all of the seq2seq based implementations I've come across on GitHub.
@@ -145,7 +145,8 @@ def trainVAD(
         decoderOutput, decoderHidden, pred_bow, infer_mu, infer_logvar, prior_mu, prior_logvar = out
 
         # compute reference CBOW to compare our predictions to.
-        ref_bow_mask = (y[:, t:] != word2id['<pad>']).float()
+        ref_bow_mask =   (y[:, t:] != word2id['<pad>']).detach().float()
+        ref_bow_t_mask = (y[:, t]  != word2id['<pad>']).detach().float()
 
         # calculate the loss
         ll, kl, aux = loss_function(
@@ -159,6 +160,7 @@ def trainVAD(
             prior_mu,
             prior_logvar,
             y[:, t:],
+            ref_bow_t_mask,
             ref_bow_mask,
             pred_bow,
             criterion_r,
@@ -342,17 +344,21 @@ def defaultParameters():
         parameters = {
             'hiddenSize'			: 350,
             'latentSize'			: 300,
-            'batchSize'				: 64,
-            'iterations'			: 200,
+            'batchSize'				: 32,
+            'iterations'			: 20,
             'learningRate'			: 0.0001,
             'gradientClip'			: 1,
             'useBOW'				: True,
             'bidirectionalEncoder'	: True,
-            'reduction'             : 8,
+            'reduction'             : 4,
             'device'                : "cuda",
             'useLatent'             : True,
         }
+
     return parameters
+
+def what():
+    return None
 
 def initiate(parameters=None, model_base_dir="models"):
     """
