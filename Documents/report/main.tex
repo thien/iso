@@ -181,8 +181,10 @@ Neural Networks are non-linear and computational metaphors of the brain that mod
 % something on neural language models being popular.
 
 \section{Recurrent Neural Networks}
-
+\label{rnn}
 Recurrent neural networks (RNNs) are a class of feed forward neural networks such that the outputs are not necessarily restricted and discrete (as opposed to the MLP). RNNs operate over a sequence of variable-length vectors, and produces an output of similarly variable-length vectors. This circumvents a problem introduced with using an MLP, where sentences are not typically fixed length. 
+
+The architecture of RNNs make it favourable in NLP related problems as words in sentences are typically conditioned on the previous words. When treated as language models, a standard RNN language model predicts each word of a sentence conditioned on the previous word and an evolving hidden state.
 
 At each time step $t$, a simple RNN takes produces a hidden vector $h_t$, derived from the input vector $x_t$ and the previous state $h_{t-1}$ in the function $h_t = f_w(h_{t-1}, x_t)$. The hidden vector is usually obtained by some affine transformation offset by a bias vector, described in more detail in equation \ref{eq:rnn}. The same function and the same parameters are used at each time step $t$. RNNs typically are not parallelised. 
 
@@ -195,7 +197,7 @@ At each time step $t$, a simple RNN takes produces a hidden vector $h_t$, derive
 	\end{aligned}
 	\end{equation}
 
-RNNs are typically trained with backpropagation through time. The gradient flow $w \leftarrow w - \alpha \frac{\delta L}{\delta w}$ is computed at every timestep, meaning that every path from $W$ to the loss $\mathcal{L}$ needs to be considered.
+RNNs are typically trained with backpropagation through time. The gradient flow $w \leftarrow w - \alpha ({\delta L}/{\delta w})$ is computed at every timestep, meaning that every path from $W$ to the loss $\mathcal{L}$ needs to be considered.
 
 \begin{equation}
 	\label{eq:btt}
@@ -204,27 +206,9 @@ RNNs are typically trained with backpropagation through time. The gradient flow 
 	\end{aligned}
 	\end{equation}
 
-The product symbol within the loss function in \ref{eq:btt} is the cause of vanishing and exploding gradients.
 
-% we need formulas.
-
-% we need illustrations
-
-% this is an integral part of the design report
-
-\begin{figure}[!ht]
-      
-	\centering
-	\includegraphics[width=100mm]{diagrams/rnn.jpeg}
-	\caption{Rectangles represent vectors, with red being the input, blue the output, and green representing the state of the RNNs. Arrows represent  functions. From left to right: (1) an MLP. (2,3,4,5) are examples of different styles of recurrent neural networks, describing the different types of input and output combinations. (Diagram from \cite{karpathy_unreasonable_2015}) \label{rnn}} 
-  \end{figure}
-  
-The architecture of RNNs make it favourable in NLP related problems as words in sentences are typically conditioned on the previous words. Given a sequence of inputs $(x_1, ..., x_M)$, a standard RNN computes a sequence of outputs $(y_1, ..., y_N)$ by performing forward-propagation in a similar to fashion to MLPs, but outputs are chained together as an additional input to other neural networks. This can be visualised best in Figure \ref{rnn}. RNNs are trained using backpropagation-through-time.
-
-When treated as language models, a standard RNN language model predicts each word of a sentence conditioned on the previous word and an evolving hidden state.
-% talk about how much has been done with RNNs
-
-RNNs showed promise but there existed a multitude of problems. Firstly, It became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that would facilitate this feature. This is described as a long range dependency problem. Furthermore, they were especially impractical due to the vanishing and exploding gradient problems having a larger effect on training. This is by design, as the architecture of the network does not provide the affordance to represent relationships between arbitary cells in the network.
+Typically, there are two caveats with training RNNs. One of which involves the sensitivity of the gradients: The product symbol within the loss function in \ref{eq:btt} is the cause of vanishing and exploding gradients. The sensitivity of the gradients make it especially difficult to train RNNs. 
+Additionally, it became aparrent that it was very difficult for RNNs to leverage relationships between potentially relevant inputs and outputs - there isn't necessarily a clear indicator in the architecture that would facilitate this feature. This is described as a long range dependency problem.
 
 \subsection{LSTMs and GRUs} 
 
@@ -258,16 +242,22 @@ GRUs (Gated Recurrent Units; \cite{cho_properties_2014}) are functionally simila
 
 \section{Autoencoders}
 
-Autoencoders are a specialised form of MLPs where the model attempts to recreate the inputs on the output. Autoencoders typically have a neural network layer in the model where its dimension is smaller than the input space, therefore representing a dimensionality reduction in the data. Autoencoders are composed of two different principal components, an encoder network $\alpha$ and a decoder network $\beta$, such that $\alpha : X \rightarrow F$ and $\beta : F \rightarrow X$. Measuring the success of the reconstruction is deduced by a reconstruction loss formula. This reconstruction loss comapres the output of the decoder and compares it against the input of the encoder. The two networks are trained together in a manner that allows them to preserve the input as much as possible.
+% need citation
+Autoencoders are a specialised form of neural networks where the model attempts to recreate the inputs on the output. Autoencoders typically have  layer in the model where its dimension is smaller than the input space, therefore representing a dimensionality reduction in the data. 
+% need reference to PCA
+
+Autoencoders are composed of two different principal components, an encoder network $\alpha$ and a decoder network $\beta$, such that $\alpha : X \rightarrow F$ and $\beta : F \rightarrow X$. Measuring the success of the reconstruction is deduced by a reconstruction loss formula. This reconstruction loss comapres the output of the decoder and compares it against the input of the encoder. The two networks are trained together in a manner that allows them to preserve the input as much as possible.
 % definitely need a diagram for autoencoders
 % what is it good for?
 
-Autoencoders are popularised through their use in Machine Translation, Word Embeddings, and document clustering.
+% talk about how hard it is to understand the structure of the latent variable and how this prevents us from sampling.
+
+Autoencoders are popularised through their use in Machine Translation, Word Embeddings, and document clustering. 
 
 % talk about how important this is in the context of the task.
 \subsection{Variational Autoencoders}
 
-Variational Autoencoders (VAEs, \cite{kingma_auto-encoding_2013}) are based on a regularised version of the standard auteoncoder. VAEs forces the encoder to learn latent vectors that roughly follow a gaussian distribution, as opposed to creating a fixed latent vector. In more discrete terms, it replaces the encoder from the standard autoencoder with a learned posterior \textit{recognition model}, $q(\overrightarrow{z}|x)$. This component of the autoencoder paramterises an approximate posterior distribution over $\overrightarrow{z}$, using a neural network conditioned on $x$. This consequently allows us to take advantage of recent advances in variational inference.  Consequently, VAEs introduce two extra vectors, a mean vector and a standard distribution vector, which is fed from the encoder. A sample is taken from the distribution and that is then fed into the decoder. Training this particular model involves learning the parameters involved for our latent distribution.
+Variational Autoencoders (VAEs, \cite{kingma_auto-encoding_2013}) are based on a regularised version of the standard auteoncoder. VAEs forces the encoder to learn parameters of a gaussian distribution - a mean and a covariance - as opposed to creating a fixed latent vector. In more discrete terms, it replaces the encoder from the standard autoencoder with a learned posterior \textit{recognition model}, $q(\overrightarrow{z}|x)$. This component of the autoencoder parameterises an approximate posterior distribution over $\overrightarrow{z}$, using a neural network conditioned on $x$. This consequently allows us to take advantage of recent advances in variational inference.  A sample is taken from a gaussian using the learned parameters, which is then fed into the decoder. Training this particular model involves learning the parameters involved for our latent distribution.
 
 \begin{figure}[!ht]
 	\centering
@@ -275,9 +265,9 @@ Variational Autoencoders (VAEs, \cite{kingma_auto-encoding_2013}) are based on a
 	\caption{An abstracted model architecture for a variational autoencoder, which takes as input some text, and it's predicted output being the same text as the input.\label{vae}}
   \end{figure}
 
-  Note that the decoder receives samples from a non-standard normal distribution produced by the encoder. The average of the samples of the different distributions should approximate to a standard normal. This stochasticity allows us to model variability in the results. 
-  
-  Due to variational inference, if VAEs were trained with a standard autoencoder's reconstruction objective, then it would learn to encode it's inputs determinsitically by making variances in \textit{recognition model}, $q(\overrightarrow{z}|x)$ vanishingly small. ( \cite{raiko_techniques_2014}) Instead, the loss function is composed of two components;  a reconstruction loss that involves an expection of the output; and a KL divergence, which measures the relative difference of two probability distributions. In this particular case, we will be comparing the distribution of the posterior distributions against a standard gaussian $ \mathcal{N}(0,1)$). This objective provides a valid lowerbound on the true likelihood of the data, making VAEs a generative model.
+Note that the decoder receives samples from a non-standard normal distribution produced by the encoder. The average of the samples of the different distributions should approximate to a standard normal. This stochasticity allows us to model variability in the results. 
+
+If VAEs were trained with a standard autoencoder's reconstruction objective, then it would learn to encode it's inputs determinsitically by making variances in \textit{recognition model}, $q(\overrightarrow{z}|x)$ vanishingly small. (\cite{raiko_techniques_2014}) Instead, the loss function for VAEs is composed of two components; a reconstruction loss that involves an expection of the output; and a KL divergence (see Equation \ref{eqn:kl_divergence}), which measures the distribution of the posterior distributions against a standard gaussian $ \mathcal{N}(0,1)$). This objective provides a valid lowerbound on the true likelihood of the data, making VAEs a generative model.
   
 \begin{equation}
 	\label{eqn:elbo}
@@ -288,45 +278,68 @@ Variational Autoencoders (VAEs, \cite{kingma_auto-encoding_2013}) are based on a
 	\label{eqn:kl_divergence}
 D_{KL}(P ||Q) = \sum_{x \subset X} P(x) \cdot log (\frac{P(x)}{Q(x)})
 \end{equation}
-
 In other words, it is the expectation of the logarithmic difference between the probabilities $P$ and $Q$, where the expectation of $P$ is already known.
 
 \subsubsection*{Reparameterisation Trick}
 
-The Gaussian reparameterisation trick (\cite{kingma_auto-encoding_2013}) subverts the issue of performing backpropagation against sampled latent variables through the rearrangement of the gaussian parameters. Instead of sampling $z$ through a gaussian $\mathcal{N}(\mu, \Sigma)$, $z$ can be created by a summation of $\mu$ and some gaussian noise $\epsilon \sim \mathcal{N}(0,1)$ applied to $\Sigma$. This rearrangement allows for derivatives to be calculated with respect to the parameters that are needed for learning.
-
 $$z = \mathcal{N}(\mu, \Sigma) \equiv \mu + \Sigma \cdot \epsilon $$ 
 
 
-\section{Related Work}
+The Gaussian reparameterisation trick (\cite{kingma_auto-encoding_2013}) subverts the issue of performing backpropagation against sampled latent variables through the rearrangement of the gaussian parameters. Instead of sampling $z$ through a gaussian $\mathcal{N}(\mu, \Sigma)$, $z$ can be created by a summation of $\mu$ and some gaussian noise $\epsilon \sim \mathcal{N}(0,1)$ applied to $\Sigma$. This rearrangement allows for derivatives to be calculated with respect to the parameters that are needed for learning.
 
 
-\subsection{Seq2Seq}
+\subsection{Conditional Variational Autoencoders}
 
-Seq2Seq, introduced by \cite{sutskever_sequence_2014} is a type of neural architecture that models relationships between sequences. In our particular scenario, this could be seen as a modern interpretation of the autoencoder. Seq2Seq comprises of two layers - Encoders and Decoders - which are both are represented with RNNs. This allows the architecture to take in arbitarily sized vectors, and allowing it to output similarly arbitary sized vectors. This flexibility makes it especially adventageous to NLP related problems.
+In a VAE, the decoder class cannot produce outputs of a particular class on demand. CVAEs are an improved model of the original VAE architecture by conditioning on another description of the data, a class descriptor $y$. 
 
 \begin{figure}[!ht]
       
 	\centering
-	\includegraphics[width=100mm]{diagrams/seq2seq.pdf}
-	\caption{An abstracted model of the seq2seq architecture, where the encoder (pink) takes in the input sequence, and the decoder (blue) shows the output sequence.\label{seq2seq}}
+	\includegraphics[width=150mm]{diagrams/conditional_variational_autoencoders.pdf}
+	\caption{A model architecture for a CVAE, which includes the label being fed into the encoder and decoder networks. \label{cvae_diagram}}
   \end{figure}
 
-/ something good about seq2seq.
+During training time, a class (represented by some arbitary vector) is fed at the same time to the encoder and decoder. To generate an output that depends on $y$ we feed that number to the decoder along with a random point in the latent space sampled from a standard normal distribution.
 
-Traditionally, Seq2seq would be the most common method of tackling this particular problem, but it also presents problems that make it suboptimal. Seq2seq models have shown to be effective in reponse generation, but XXXXX
+Samples can be generated from the conditional distribution $p(x|y)$. By changing the value of $y$, we can get corresponding samples $x \sim p(x|y)$. The system no longer relies on the latent space to encode what output is necessary; instead the latent space encodes other information that can distinguish itself based on the differing $y$ values.
 
-% fix this sentence. why is there lack of variabiity?
-% but \cite{serban_hierarchical_2016}; \cite{zhao_learning_2017} suggest that one of the primary causes of the lack of variability of responses could be boiled down to the lack of model variability.
-% why? remaining certain patterns?
+% However, it was found by \cite{du_variational_2018} that since the responses were generated from the same latent variable (induced by the class), it was difficult to model high-variability in responses.
 
-Furthermore, it was discussed by \cite{jiang_why_2018} on the lack of diversity in responses. something something.
+% That being said, using this model alone is not sufficent. If we train the dataset on a vanilla VAE, assuming that the dataset can be encapsulated and modelled in such a manner that allows it to be processed in the model, outputs from the VAE alone will only produce some latent representive of the mean of the training data. 
 
-\subsection{seq2seq with VAEs}
+In terms of implementation, it happens to be more feasible to concate the class variable to the dataset prior to feeding. This allows the model to retain its characteristics without needing to adjust in order to accomadate the conditioning variables.
 
-Instead of passing through the last hidden state drom the encoder to the decoder, a VAE for sentences (\cite{bowman_generating_2015}) proposed using variational inference to deduce the context vector. 
 
-\subsection{Seq2Seq with Attention}
+\section{Related Work}
+
+\subsection{Sequence To Sequence}
+
+Sequence to Sequence, (seq2seq, \cite{sutskever_sequence_2014}) is a type of neural language model that models relationships between sequences. In our particular scenario, this could be seen as a modern interpretation of the autoencoder. Seq2Seq comprises of two components, encoders and decoders, both of which are represented with RNN models (although can be replaced with LSTM or GRU cells). The last hidden state value of the encoder is recognised as the context variable, which encodes the characteristics of the input sequence. This is used as the first hidden vector value for the decoder. 
+
+\begin{figure}[!ht]
+		
+\centering
+\includegraphics[width=100mm]{diagrams/seq2seq.pdf}
+\caption{An abstracted model of the seq2seq architecture, where the encoder (pink) takes in the input sequence, and the decoder (blue) shows the output sequence.\label{seq2seq}}
+\end{figure}
+
+Seq2seq models have shown to be effective in reponse generation, but is no longer considered to be state of the art. For instance, the context variable itself is considered to be bottlenecked as it has to encompass the entire input sequence in a single vector. As we've discussed earlier in Section \ref{rnn}, the training mechanism is subject to vanishing and exploding gradients; it becomes increasingly difficult to retain information about earlier parts of the sequence as opposed to recent parts of the sequence in the encoder stages as a consequence. We explain later about approaches to mitigate the issue.
+
+Furthermore, the responses produced from a vanilla seq2seq model tends to lack lexical diversity and richness (\cite{serban_hierarchical_2016}, \cite{zhao_learning_2017}, \cite{jiang_why_2018}). There tends to be many causes, but one reason (which we tackle in the paper) is due to the lack of statistical inferencing. The model itself lacks the possibilty of presenting a variety of lexical responses in the decoder, in a manner that a VAE could.
+
+\subsubsection{Variational Context}
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=100mm]{diagrams/seq2seqvae.png}
+	\caption{The core structure of the VAE language model - words are represented as embedded vectors (\cite{bowman_generating_2015}). \label{seq2seq_attn}}
+\end{figure}
+
+Instead of passing through the last hidden state drom the encoder to the decoder, it is possible to encode the context variable produced from the encoder in the form of gaussian parameters in a similar fashion to how VAEs are designed (\cite{bowman_generating_2015}).  
+
+The model is trained in a similar fashion to VAEs in general (see Equation \ref{eqn:elbo}) but utilises additional mechanisms to force the language model to encode features into the gaussian parameters. We explain these features in further detail in Section \ref{optimisation_challenges}.
+
+\subsubsection{Attention Mechanisms}
 
 \begin{figure}[!ht]
       
@@ -336,10 +349,12 @@ Instead of passing through the last hidden state drom the encoder to the decoder
 \end{figure}
 % https://guillaumegenthial.github.io/sequence-to-sequence.html
 
-Further work by \cite{bahdanau_neural_2014} improved the original seq2seq model by providing an attention mechanism. The attention mechanism looks at all of the inputs from the hidden states of the encoders so far. This allows the decoder network to "attend" to different parts of the source input at each step of the output generation. This circumvents the need to encode the full source input into a fixed-length vector, helping it deal with long-range dependency problems.
+In addition to the context vector, the decoder can also retrieve information on the encoder values using attention (\cite{bahdanau_neural_2014}). This mechanism looks at all of the inputs from the hidden states of the encoders so far. This allows the decoder network to "attend" to different parts of the source input at each step of the output generation. This circumvents the need to encode the full source input into a fixed-length vector, helping it deal with long-range dependency problems.
 
 % fix this section
-Furthermore, this attention mechanism allows the model to learn what to attend to based on the input sequence and what it has so far, represented through a weighted combination of the two. \cite{bahdanau_neural_2014} have found this to work especially well in machine translation problems where languages which are relatively well aligned (such as English and German) - The decoder is most likely able to choose to attend to the response generation sequentially, such that the first output from the decoder can be generated based on the properties of the first input of the encoder and so on.
+Furthermore, this attention mechanism allows the model to learn what to attend to based on the input sequence and what it has so far, represented through a weighted combination of the two.
+
+Attention mechanisms were found to perform particularly well in machine translation problems where languages which are relatively well aligned (such as English and German). The decoder is most likely able to choose to attend to the response generation sequentially, such that the first output from the decoder can be generated based on the properties of the first input of the encoder and so on.
 
 % mention the limitations of Seq2seq for your problem and ways they could be addressed (VAEs, etc.), describe the VAE approach and your motivation to pick it, introduce the VAE paper you work with in details.
 
@@ -352,16 +367,9 @@ Furthermore, this attention mechanism allows the model to learn what to attend t
 	\caption{The transformer model architecture.\cite{vaswani_attention_2017} \label{transformer}}
   \end{figure}
 
-\cite{vaswani_attention_2017} introduced the idea that it is possible to avoid the use of RNNs altogether and focus on leveraging the attention mechanism introduced in seq2seq. The resulting network architecture utilises stacked layers of residual networks for the encoder and the decoder. This adds improvements to computational throughput as sequences can be computed in parallel.
-
-% talk about multihead attention
-
-% taalk about removing recursion/recurrentness of the network
-% mention that this will be used as the baseline
-% "for text generation techniques, we will use this as the baseline"
+Transformers (\cite{vaswani_attention_2017}) are a neural language model that avoids the use of RNNs altogether and focuses on using solely the attention mechanism (\cite{bahdanau_neural_2014}). The model consequently  utilises stacked layers of residual networks for the encoder and the decoder that encodes attentive properties of the input, described as self attention heads. This shift in architecture affords improvements to computational throughput, and can also be computed in parallel.
 
 \subsubsection{Self Attention}
-
 
 \begin{align}
 \label{eqn:eqlabel}
@@ -388,30 +396,13 @@ The product of multiple $z$ variables concatenated together, with a weights matr
 
 Sequential models circumvent the referential ambiguity problems with natural language (such as "the cat is on the mat"), with the inherent properties of time based encodings. This does not necessarily translate well to encoder models as there is no sequentiality. To circumvent this, Transformers encode the positions of words at the embedding level, by adding positional encodings of words.
 
-
-\subsection{Conditional Variational Autoencoders}
-
-Although VAEs are more robust when compared to their original autoencoder counterparts, the decoder class cannot produce outputs of a particular class on demand. CVAEs are an improved model of the original VAE architecture by conditioning on another description of the data, a class descriptor $y$. 
-
-\begin{figure}[!ht]
-      
-	\centering
-	\includegraphics[width=150mm]{diagrams/conditional_variational_autoencoders.pdf}
-	\caption{A model architecture for a CVAE, which includes the label being fed into the encoder and decoder networks. \label{cvae_diagram}}
-  \end{figure}
-
-During training time, a class (represented by some arbitary vector) is fed at the same time to the encoder and decoder. To generate an output that depends on $y$ we feed that number to the decoder along with a random point in the latent space sampled from a standard normal distribution.
-
-Samples can be generated from the conditional distribution $p(x|y)$. By changing the value of $y$, we can get corresponding samples $x \sim p(x|y)$. The system no longer relies on the latent space to encode what output is necessary; instead the latent space encodes other information that can distinguish itself based on the differing $y$ values.
-
-% However, it was found by \cite{du_variational_2018} that since the responses were generated from the same latent variable (induced by the class), it was difficult to model high-variability in responses.
-
-% That being said, using this model alone is not sufficent. If we train the dataset on a vanilla VAE, assuming that the dataset can be encapsulated and modelled in such a manner that allows it to be processed in the model, outputs from the VAE alone will only produce some latent representive of the mean of the training data. 
-
-In terms of implementation, it happens to be more feasible to concate the class variable to the dataset prior to feeding. This allows the model to retain its characteristics without needing to adjust in order to accomadate the conditioning variables.
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\subsection{Variational Autoregressive Decoders}
+\chapter{Model}
+
+
+\section{Variational Autoregressive Decoders}
 
 To increase variability of outcomes produced by the original seq2seq model, \cite{serban_hierarchical_2016}; \cite{zhao_learning_2017} proposed the use of variational autoencoders to seq2seq models. At generation time, the latent variable $z$ can be used as a conditional signal of the decoder in the seq2seq model. Although this introduces variability in the outputs, the variability is not controlled; i.e it is produced from the randomness of $z$. The underlying seq2seq model remains suboptimal.
 
@@ -510,13 +501,13 @@ VADs use a weighted combination of ELBO (Equation \ref{eqn:elbo})  the log likel
 
 \subsubsection{KL Divergence Derivation}
 
-As our model involves using multivariate gaussians, we derive the Kullback-Leibler distance such that we can calculate the loss for our distributions. Notice that we retain the means and covariances for our gaussian distributions. Let $\mu_1, \sigma_1 \rightarrow \mathcal{N}(\mu_1,\sigma_1)$ be our first distribution, and $\mu_2, \sigma_2 \rightarrow \mathcal{N}(\mu_2,\sigma_2)$ be our second distribution. By deriving this, we would be able to calculate a derivative friendly loss function for our models.
+Let $\mu_1, \sigma_1 \rightarrow \mathcal{N}(\mu_1,\sigma_1)$ be our first distribution, and $\mu_2, \sigma_2 \rightarrow \mathcal{N}(\mu_2,\sigma_2)$ be our second distribution. By deriving this, we would be able to calculate a derivative friendly loss function for our models.
 
 \begin{equation}
 	\label{eq:t}
 	\begin{aligned}
 	KL &= \int \left[\log( p(x)) - \log( q(x)) \right]\ p(x)\ dx \\
-	&= \frac{1}{2}\left[\log\frac{|\Sigma_2|}{|\Sigma_1|} - d + tr(\Sigma_2^{-1}\Sigma_1) + (\mu_2 - \mu_1)^T \Sigma_2^{-1}(\mu_2 - \mu_1)\right] \\
+	% &= \frac{1}{2}\left[\log\frac{|\Sigma_2|}{|\Sigma_1|} - d + tr(\Sigma_2^{-1}\Sigma_1) + (\mu_2 - \mu_1)^T \Sigma_2^{-1}(\mu_2 - \mu_1)\right] \\
 	&= \int \left[ \frac{1}{2} \log\frac{|\Sigma_2|}{|\Sigma_1|} - \frac{1}{2} (x-\mu_1)^T\Sigma_1^{-1}(x-\mu_1) + \frac{1}{2} (x-\mu_2)^T\Sigma_2^{-1}(x-\mu_2) \right] \times p(x) dx \\
 	&= \frac{1}{2} \log\frac{|\Sigma_2|}{|\Sigma_1|} - \frac{1}{2} \text{tr}\ \left\{E[(x - \mu_1)(x - \mu_1)^T] \ \Sigma_1^{-1} \right\} + \frac{1}{2} E[(x - \mu_2)^T \Sigma_2^{-1} (x - \mu_2)] \\
 	&= \frac{1}{2} \log\frac{|\Sigma_2|}{|\Sigma_1|} - \frac{1}{2} \text{tr}\ \{I_d \} + \frac{1}{2} (\mu_1 - \mu_2)^T \Sigma_2^{-1} (\mu_1 - \mu_2) + \frac{1}{2} \text{tr} \{ \Sigma_2^{-1} \Sigma_1 \} \\
@@ -524,10 +515,6 @@ As our model involves using multivariate gaussians, we derive the Kullback-Leibl
 \end{aligned}
 \end{equation}
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-\chapter{Contribution}
 
 Although these models have been used in NMT related problems, sequence generation is often unexplored within NLP. We propose using models that traditionally perform well in NMT problems and adapt them for use with sequence generation problems. 
 
@@ -578,12 +565,19 @@ For ReLU based networks,
 suggests that the weights should be initialised using $Var(w)=\mathcal{N}(0,\frac{2}{|n_{in}|})$. 
 
 \section{Optimisation Challenges}
+\label{optimisation_challenges}
 
 Ideally, a model that encodes useful information in the latent variable $\overrightarrow{z}$ will have a non-zero KL divergence term and a relatively small cross-entropy term. Straightforward implementations of our model failed to learn this behaviour.
 
 Due to the sensitivity of our model, which is compounded by the sensitivity of the GRU cells in our model, early implementations of our model would initially ignore $\overrightarrow{z}$ and go after the low hanging fruit during the learning process of the decoder. Once this occurs, the decoder ignores the encoder and gradients between the two components become non-existent, preventing learning.
 
 is it often likely that in a degenerative setting, the latent vector in the model would encorporate a lack of relevant information and is essentially ignored. This results in a KL collapse s.t the KL loss reaches zero, and thus the model is then effectively equivalent to an RNN language model.
+
+\subsection{Teacher Forcing}
+
+Teacher Forcing (\cite{williams_learning_1989}) is a concept of using real target outputs as each next input in the decoder sequence as opposed to using the decoder's guess. This causes the model to converge faster, but may exhibit instability when the trained network is exploited.
+
+Outputs can be observed when using teacher forced decoders that read with coherent grammar but can wander far from the correct response. Typically, this can be controlled with a probability $p$ such that the decoder sequence has a $p$ chance of using teacher forcing during training.
 
 \subsection{KL Annealing}
 
@@ -594,7 +588,11 @@ Also proposed by \cite{bowman_generating_2015}, it involves weakening the decode
 
 \section{Testing Method}
 
-We'll be using a regressor that determines whether the data produced corresponds to a fake model or from the dataset. This is not used as a loss function (this would consequently create a generative model).
+We benchmark the performance of our model against a regular seq2seq network, alongside a transformer. 
+
+The objective is to 
+
+her the data produced corresponds to a fake model or from the dataset. This is not used as a loss function (this would consequently create a generative model).
 
 We compare the performance of the VAD against two baselines, a seq2seq model described above and the Transformer.
 
@@ -616,6 +614,7 @@ Naturally - these results are complementing, as is often the case in precision v
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \chapter{Experimental Results}
 
+% \chapter{Future Work}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \chapter{Conclusion}
