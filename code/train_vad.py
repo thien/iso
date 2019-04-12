@@ -1,5 +1,5 @@
 from vad import Encoder, Backwards, Attention, Decoder, Inference, Prior, CBOW
-from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels
+from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels, saveLossMeasurements, initiateDirectory
 
 import os
 import datetime
@@ -118,6 +118,7 @@ def trainVAD(
 
     # compute backwards outputs
     backwardOutput, backwardHidden = backwards(yb, ybLength, backwardHidden)
+    backwardHidden = backwardHidden.detach()
 
     # set up the variables for decoder computation
     decoderInput = torch.tensor(
@@ -178,7 +179,7 @@ def trainVAD(
         else:
             decoderInput = torch.argmax(decoderOutput, dim=1)
         decoderHidden = decoderHidden.squeeze(0)
-
+        decoderHidden = decoderHidden.detach()
     # normalise loss
     avg_loss = loss/ySeqlength
 
@@ -295,7 +296,13 @@ def trainIteration(
             aux_losses.append(aux)
 
             if batch_num % 10 == 0:
+                # plot chart and save chart (for debugging)
                 plotBatchLoss(j, ll_losses, kl_losses, aux_losses, folder_path)
+                # save loss stats
+                saveLossMeasurements(j, folder_path, ll_losses, kl_losses, aux_losses)
+
+        # save loss stats & the end
+        saveLossMeasurements(j, folder_path, ll_losses, kl_losses, aux_losses)
 
         saveModels(encoder, backwards, decoder, folder_path)
 
@@ -309,14 +316,7 @@ def printParameters(parameters):
         padding = " ".join(["" for _ in range(maxLen - len(key) + 5)])
         print(key + padding, parameters[key])
 
-def initiateDirectory(folder_path):
-    # create directory as it does not exist yet.
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
-    
-    return folder_path
-
-def copyDatasetParams(folder_path, dataset_parameters_file="dataset_parameters.json"):
+def copyComponentFile(folder_path, dataset_parameters_file="dataset_parameters.json"):
     # copy the dataset parameters into the model directory so we have an idea on
     # what dataset the model parameters are trained with.
     copyfile(dataset_parameters_file, os.path.join(folder_path, dataset_parameters_file))
@@ -357,9 +357,6 @@ def defaultParameters():
 
     return parameters
 
-def what():
-    return None
-
 def initiate(parameters=None, model_base_dir="models"):
     """
     Loads model parameters, setup file directories and trains
@@ -390,7 +387,16 @@ def initiate(parameters=None, model_base_dir="models"):
 
     folder_path = initiateDirectory(folder_path)
     # copy dataset parameters
-    copyDatasetParams(folder_path)
+    copyComponentFile(folder_path)
+
+    # copy the other files.
+    backup_dir = os.path.join(folder_path, "backups")
+    backup_dir = initiateDirectory(backup_dir)
+
+    component_files = ['train_vad.py', 'vad.py', 'vad_utils.py', 'vad_evaluate.ipynb', 'Data Preprocessing.ipynb', 'Dataset.ipynb']
+    for component in component_files:
+        copyComponentFile(backup_dir, component)
+
     # save model parameters
     param_jsonpath = os.path.join(folder_path, "model_parameters.json")
     with open(param_jsonpath, 'w') as outfile:

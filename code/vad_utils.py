@@ -2,16 +2,38 @@ import os
 from io import open
 import torch
 import pickle
-# plotting
+import numpy as np
+
+from tempfile import mkdtemp
+from torch.autograd import Variable
+import torch.nn.functional as F
+
 # plotting
 import matplotlib
 matplotlib.use('Agg')
-from torch.autograd import Variable
-import torch.nn.functional as F
 
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+
+def initiateDirectory(folder_path):
+    # create directory as it does not exist yet.
+    if not os.path.isdir(folder_path):
+        os.makedirs(folder_path)
+    
+    return folder_path
+
+def saveLossMeasurements(epoch, folder_path, reconstruction, kl, aux, filename="results"):
+    # create container of losses.
+    container = np.array([reconstruction, kl, aux])
+    container = np.transpose(container)
+    path = os.path.join(folder_path, filename)
+    path = initiateDirectory(path)
+    # setup filename 
+    filename = "epoch_" + str(epoch) + filename + ".csv"
+    filepath = os.path.join(path, filename)
+    # dump
+    np.savetxt(filepath, container, delimiter=", ",  fmt="%.4f")
 
 def loadDataset(path='../Datasets/Reviews/dataset_ready.pkl'):
     return pickle.load(open(path, 'rb'))
@@ -95,7 +117,6 @@ def gaussian_kld(recog_mu, recog_logvar, prior_mu, prior_logvar):
                                                  2), torch.exp(var_2))
                            - torch.div(torch.exp(var_1), torch.exp(var_2)), 1)
     return kld
-
 
 def bow_loss(future_y_labels, y_mask, pred_bow):
     # cvae implementation
