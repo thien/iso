@@ -358,49 +358,50 @@ Attention mechanisms were found to perform particularly well in machine translat
 
 % mention the limitations of Seq2seq for your problem and ways they could be addressed (VAEs, etc.), describe the VAE approach and your motivation to pick it, introduce the VAE paper you work with in details.
 
-\subsection{Transformers}
+% \subsection{Transformers}
 
-\begin{figure}[!ht]
+% \begin{figure}[!ht]
       
-	\centering
-	\includegraphics[width=60mm]{diagrams/transformers.png}
-	\caption{The transformer model architecture.\cite{vaswani_attention_2017} \label{transformer}}
-  \end{figure}
+% 	\centering
+% 	\includegraphics[width=60mm]{diagrams/transformers.png}
+% 	\caption{The transformer model architecture.\cite{vaswani_attention_2017} \label{transformer}}
+%   \end{figure}
 
-Transformers (\cite{vaswani_attention_2017}) are a neural language model that avoids the use of RNNs altogether and focuses on using solely the attention mechanism (\cite{bahdanau_neural_2014}). The model consequently  utilises stacked layers of residual networks for the encoder and the decoder that encodes attentive properties of the input, described as self attention heads. This shift in architecture affords improvements to computational throughput, and can also be computed in parallel.
+% Transformers (\cite{vaswani_attention_2017}) are a neural language model that avoids the use of RNNs altogether and focuses on using solely the attention mechanism (\cite{bahdanau_neural_2014}). The model consequently  utilises stacked layers of residual networks for the encoder and the decoder that encodes attentive properties of the input, described as self attention heads. This shift in architecture affords improvements to computational throughput, and can also be computed in parallel.
 
-\subsubsection{Self Attention}
+% \subsubsection{Self Attention}
 
-\begin{align}
-\label{eqn:eqlabel}
-\begin{split}
-	Q = X \cdot W^Q \\
-	K = X \cdot W^K \\
-	V = X \cdot W^V 
-\end{split}
-\end{align}
+% \begin{align}
+% \label{eqn:eqlabel}
+% \begin{split}
+% 	Q = X \cdot W^Q \\
+% 	K = X \cdot W^K \\
+% 	V = X \cdot W^V 
+% \end{split}
+% \end{align}
 
-Self attention mechanisms involve three components, a Query $Q$, Key $K$, and Value $V$. 
+% Self attention mechanisms involve three components, a Query $Q$, Key $K$, and Value $V$. 
 
-\begin{equation}
-	z = \sigma(\frac{Q \cdot K^T}{\sqrt{d_k}})\cdot V
-\end{equation}
+% \begin{equation}
+% 	z = \sigma(\frac{Q \cdot K^T}{\sqrt{d_k}})\cdot V
+% \end{equation}
 
-The product of multiple $z$ variables concatenated together, with a weights matrix $W^O$ a multihead attention $\boldsymbol{z}' = \lbrack z_1,...,z_n \rbrack \cdot W^O$. 
+% The product of multiple $z$ variables concatenated together, with a weights matrix $W^O$ a multihead attention $\boldsymbol{z}' = \lbrack z_1,...,z_n \rbrack \cdot W^O$. 
 
-\begin{equation}
-	\boldsymbol{r} = f_{NN}(\boldsymbol{z})
-\end{equation}
+% \begin{equation}
+% 	\boldsymbol{r} = f_{NN}(\boldsymbol{z})
+% \end{equation}
 
-\subsubsection{Positionality Hack}
+% \subsubsection{Positionality Hack}
 
-Sequential models circumvent the referential ambiguity problems with natural language (such as "the cat is on the mat"), with the inherent properties of time based encodings. This does not necessarily translate well to encoder models as there is no sequentiality. To circumvent this, Transformers encode the positions of words at the embedding level, by adding positional encodings of words.
+% Sequential models circumvent the referential ambiguity problems with natural language (such as "the cat is on the mat"), with the inherent properties of time based encodings. This does not necessarily translate well to encoder models as there is no sequentiality. To circumvent this, Transformers encode the positions of words at the embedding level, by adding positional encodings of words.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \chapter{Model}
 
+In this chapter we discuss the current implementation in detail. It builds on the knowledge in the first chapter, and the model itself is a combination of features described above.
 
 \section{Variational Autoregressive Decoders}
 
@@ -411,6 +412,8 @@ Introduced by \cite{du_variational_2018}, Variational Autoregressive Decoders (V
 We will be using this model to help solve the variability of outcomes. *WHY?*
 
 VADs use the seq2seq architecture as the base with variable-length queries $x = \{x_1, x_2, ..., x_n\}$, and $y = \{y_1, y_2, ..., y_n\}$ representing the input and output responses respectively. The encoder network is a Bidirectional RNN with GRUs. The decoder network is an unidirectional RNN with GRUs. For each timestep $t$, each GRU in the decoder network is encoded with hidden state $h^d_t$.
+
+% need a diagram
 
 \subsubsection{Encoder}
 
@@ -423,7 +426,7 @@ VADs use the seq2seq architecture as the base with variable-length queries $x = 
 \end{split}
 \end{align}
 
-The encoder works in a similar fashion to the encoder described in the seq2seq network. 
+The encoder works in a similar fashion to the encoder described in the seq2seq network. The only changes here we see is that the encoder described in the implementation leverages bi-directionality. This leverages the sequentiality of the sequence in both directions (left to right, and vice versa.) This is made possible by stacking two recurrent cells on top of each other. 
 
 \subsubsection{Backwards}
 
@@ -431,7 +434,9 @@ The encoder works in a similar fashion to the encoder described in the seq2seq n
 \label{eqn:eqback}
 \overleftarrow{h^d_t} = \overleftarrow{GRU}(y_{t+1}, \overleftarrow{h^d_{t+1}})
 \end{align}
-	
+
+The backwards RNN is one of the components used to condition the latent variable $z$ in the decoder. During training, the backwards RNN takes as input the training outputs $y$ and outputs hidden vectors in a sequential manner.
+
 \subsubsection{Attention}
 
 \begin{equation}
@@ -447,7 +452,6 @@ The encoder works in a similar fashion to the encoder described in the seq2seq n
 
 \subsubsection{Inference Model}
 
-
 \begin{equation}
 \label{eq:t}
 \begin{aligned}
@@ -457,6 +461,8 @@ f_{infer}([\overrightarrow{h^d_{t-1}}, c_t, \overleftarrow{h^d_t}])
 q_{\theta}(z_t|\boldsymbol{y}, \boldsymbol{x}) &= \mathcal{N}(\mu^i, \sigma^i)
 \end{aligned}
 \end{equation}
+
+The inference model attempts to create a posterior distribution $z$ using the conditioned output, the attention weights, and the decoder outputs.
 
 \subsubsection{Prior Model}
 
@@ -515,8 +521,9 @@ Let $\mu_1, \sigma_1 \rightarrow \mathcal{N}(\mu_1,\sigma_1)$ be our first distr
 \end{aligned}
 \end{equation}
 
+We derive the KL Divergence as we no longer measure the distance of our posterior distribution against a standard gaussian. We instead train the 
 
-Although these models have been used in NMT related problems, sequence generation is often unexplored within NLP. We propose using models that traditionally perform well in NMT problems and adapt them for use with sequence generation problems. 
+% Although these models have been used in NMT related problems, sequence generation is often unexplored within NLP. We propose using models that traditionally perform well in NMT problems and adapt them for use with sequence generation problems. 
 
 \section{Data Augmentation}
 
@@ -551,7 +558,9 @@ The polarity word vector is a sum of the polarity value $p$ and the word vector 
 
 \subsection{Implementation}
 
-Built on PyTorch.
+Built on PyTorch. Models take a considerable amount of time to train, which does not necessarily align with rapid evolution of the implementation. Components are typically built with states in mind such that when running a model, it keeps a state of the source codes at the time of running in its own results container. This allows us to repeat the results using the code produced at the time.
+
+\subsubsection{Weight Initialisation}
 
 Typically, we start with wanting to have the weights being asymmetric (such that when we perform our gradient descent we would have random starting positions, which would enable us to have a better chance to find the minimum as opposed to having a fixed starting point). Fortunately, pulling from a gaussian distribution is sufficent. The problem here is that we're fixing some parameter for the standard deviation. 
 
@@ -566,6 +575,8 @@ suggests that the weights should be initialised using $Var(w)=\mathcal{N}(0,\fra
 
 \section{Optimisation Challenges}
 \label{optimisation_challenges}
+
+In addition to the fact that RNNs itself are difficult to train (see Section \ref{rnn}), it is commonly the case that the latent variable is often ignored during training.
 
 Ideally, a model that encodes useful information in the latent variable $\overrightarrow{z}$ will have a non-zero KL divergence term and a relatively small cross-entropy term. Straightforward implementations of our model failed to learn this behaviour.
 
@@ -601,13 +612,40 @@ Models are computed on an 4.4GHz intel 3770k with a GTX 1080 with 8GB VRAM.
 
 \subsection{Measuring Performance}
 
+To understand the quality of our models, we subject them to BLEU (\cite{papineni_bleu:_2001}) and ROUGE (\cite{lin_rouge:_2004}) scores at each epoch to measure the quality of our responses. These measurements are used alongside the Loss, which will measure the rate of learning.
+
+
+
+BLEU (\cite{papineni_bleu:_2001}) is originally defined with $n$-gram precision $p_n$ by summing the $n$-gram matches for every hypothesis sentence $S$ in the test corpus $C$. In our particular case, we use unigrams.
+
+\begin{figure}[!ht]
+	\begin{equation}
+		\begin{split}
+			p_n = \frac
+			{\sum_{S\in C} \sum_{ngram\in S} Count_{clip}(ngram)}
+			{\sum_{S\in C} \sum_{ngram\in S} Count(ngram)}
+		\end{split}
+	% \quad\leftrightarrow\quad
+		\quad\quad
+		\begin{split}
+			p_n = \frac
+			{\sum_{S\in C} \sum_{ngram\in S} Count_{matched}(ngram)}
+			{\sum_{S\in C} \sum_{ngram\in S} Count(ngram)}
+		\end{split}
+	\end{equation}
+	\caption{Equations for BLEU (left) and ROUGE  (right).}
+	\end{figure}
+
+% https://stackoverflow.com/questions/38045290/text-summarization-evaluation-bleu-vs-rouge
+
+Although both equations look very similar, BLEU  BLEU introduces a brevity penalty term, and also compute the n-gram match for several size of n-grams (unlike the ROUGE-n, where there is only one chosen n-gram size). 
+
 "Bleu measures precision: how much the words (and/or n-grams) in the machine generated summaries appeared in the human reference summaries.
 
 Rouge measures recall: how much the words (and/or n-grams) in the human reference summaries appeared in the machine generated summaries.
 
 Naturally - these results are complementing, as is often the case in precision vs recall. If you have many words from the system results appearing in the human references you will have high Bleu, and if you have many words from the human references appearing in the system results you will have high Rouge."
 
-% https://stackoverflow.com/questions/38045290/text-summarization-evaluation-bleu-vs-rouge
 
 % http://opennmt.net OPENMNT-Py has BLEU/ROUGE on it.
 
