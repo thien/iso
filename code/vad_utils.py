@@ -166,7 +166,8 @@ def loss_function(epoch,
                   ref_bow_t_mask,
                   ref_bow_mask,
                   pred_bow,
-                  use_latent=True):
+                  use_latent=True,
+                  useBOW=True):
 
     # compute reconstruction loss
     # ll_loss = criterion_r(y_predicted, y)
@@ -191,7 +192,7 @@ def loss_function(epoch,
             kl_loss *= kl_weight
 
     aux_loss = 0
-    if use_latent:
+    if use_latent and useBOW:
         # compute auxillary loss
         aux_loss = bow_loss(future_y_labels, ref_bow_mask, pred_bow)
         # weight auxillary loss

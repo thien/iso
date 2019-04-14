@@ -171,7 +171,8 @@ class Decoder(nn.Module):
                 hiddenSize, 
                 latentSize, 
                 encoderBidirectional,
-                xavier=False):
+                xavier=False,
+                useLatent=True):
 
         super(Decoder, self).__init__()
         self.hiddenSize = hiddenSize
@@ -344,7 +345,8 @@ class VAD(nn.Module):
                 useLatent,
                 maxSeqLength,
                 bidirectionalEncoder,
-                teacherTrainingP=1):
+                teacherTrainingP=1,
+                useBOW=True):
 
         super(VAD, self).__init__()
 
@@ -356,13 +358,14 @@ class VAD(nn.Module):
         self.paddingID = paddingID
         self.useLatent = useLatent
         self.maxSeqLength = maxSeqLength
+        self.useBOW = useBOW
 
         self.encoder = Encoder(embedding, vocabularySize,
                            paddingID, hiddenSize, bidirectionalEncoder)
         self.backwards = Backwards(embedding, vocabularySize,
                                paddingID, hiddenSize, bidirectionalEncoder)
         self.decoder = Decoder(embedding, vocabularySize,
-                           paddingID, maxSeqLength, hiddenSize, latentSize, bidirectionalEncoder)
+                           paddingID, maxSeqLength, hiddenSize, latentSize, bidirectionalEncoder, useLatent=self.useLatent)
 
         # helper variables
         self.epoch = 0
@@ -445,10 +448,13 @@ class VAD(nn.Module):
                 decoderOutput, decoderHidden = out
 
             if self.training and loss_function is not None:
-                # compute reference CBOW to compare predictions to.
-                bow_mask = (y[:, t:] != self.paddingID).detach().float()
-                bowt_mask = (y[:, t] != self.paddingID).detach().float()
-                
+                if self.useBOW:
+                    # compute reference CBOW to compare predictions to.
+                    bow_mask = (y[:, t:] != self.paddingID).detach().float()
+                    bowt_mask = (y[:, t] != self.paddingID).detach().float()
+                else:
+                    bow_mask, bowt_mask = None
+
                 # compute loss
                 ll, kl, aux = loss_function(
                     self.epoch,
@@ -464,7 +470,8 @@ class VAD(nn.Module):
                     bowt_mask,
                     bow_mask,
                     p_bow,
-                    self.useLatent
+                    self.useLatent,
+                    self.useBOW
                 )
                 
                 # update loss values

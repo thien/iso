@@ -36,16 +36,16 @@ def defaultParameters():
     else:
         parameters = {
             'hiddenSize'			: 512,
-            'latentSize'			: 10,
+            'latentSize'			: 400,
             'batchSize'				: 32,
             'iterations'			: 50,
             'learningRate'			: 0.0001,
             'gradientClip'			: 1,
-            'useBOW'				: False,
+            'useBOW'				: True,
             'bidirectionalEncoder'	: True,
             'reduction'             : 8,
             'device'                : "cuda",
-            'useLatent'             : False,
+            'useLatent'             : True,
             'teacherTrainingP'      : 1.0
         }
 
@@ -146,14 +146,14 @@ def initiate(parameters, model_base_dir="models"):
     model = VAD(embedding, 
             paddingID,
             sosID,
-            batchSize,
             hiddenSize,
             vocabularySize,
             latentSize,
             useLatent,
             maxReviewLength,
             bidirectionalEncoder,
-            teacherTrainingP).to(device)
+            teacherTrainingP,
+            useBOW=useBOW).to(device)
     model.device = device
 
     criterion_r   = nn.CrossEntropyLoss(ignore_index=paddingID)
