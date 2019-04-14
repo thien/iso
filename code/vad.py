@@ -12,8 +12,6 @@ from torch.autograd import Variable
 
 from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels, sequence_mask, masked_cross_entropy
 
-
-
 class Encoder(nn.Module):
     """
     This'll be a bi-directional GRU.
@@ -169,7 +167,6 @@ class Decoder(nn.Module):
                 embedding, 
                 vocabularySize, 
                 padding_id, 
-                batchSize, 
                 outputSize, 
                 hiddenSize, 
                 latentSize, 
@@ -250,9 +247,6 @@ class Decoder(nn.Module):
             return output, hidden, sbow, infer_mu, infer_logvar, prior_mu, prior_logvar
         else:
             return output, hidden
-
-    def initHidden(self):
-        return torch.zeros(self.batchSize, 1, self.hiddenSize) 
 
 class Inference(nn.Module):
     """
@@ -338,3 +332,174 @@ class CBOW(nn.Module):
         # vocab = -F.log_softmax(self.bow(z), dim=1)
         vocab = -self.sigmoid(self.bow(z))
         return vocab
+
+class VAD(nn.Module):
+    def __init__(self, 
+                embedding, 
+                paddingID,
+                sosID,
+                hiddenSize,
+                vocabularySize,
+                latentSize,
+                useLatent,
+                maxSeqLength,
+                bidirectionalEncoder,
+                teacherTrainingP=1):
+
+        super(VAD, self).__init__()
+
+        self.hiddenSize = hiddenSize
+        self.vocabSize = vocabularySize
+        self.latentSize = latentSize
+        self.teacherTraining = teacherTrainingP
+        self.sosID = sosID
+        self.paddingID = paddingID
+        self.useLatent = useLatent
+        self.maxSeqLength = maxSeqLength
+
+        self.encoder = Encoder(embedding, vocabularySize,
+                           paddingID, hiddenSize, bidirectionalEncoder)
+        self.backwards = Backwards(embedding, vocabularySize,
+                               paddingID, hiddenSize, bidirectionalEncoder)
+        self.decoder = Decoder(embedding, vocabularySize,
+                           paddingID, maxSeqLength, hiddenSize, latentSize, bidirectionalEncoder)
+
+        # helper variables
+        self.epoch = 0
+        self.batchNum = 0
+        self.numBatches = 0 
+
+    def forward(self, inputs, loss_function=None):
+        """
+        performs a forward pass of the model. Performs different actions
+        based on whether the model is in train() mode or eval() mode.
+
+        parameters:
+        inputs:
+            # if it's in training, inputs looks like this:
+            ((x_train, x_lengths), (y_train, y_lengths), (yb_train, yb_lengths))
+
+            # if it's in eval mode, inputs looks like this:
+            (x_train, x_lengths)
+        """
+
+        if self.training and loss_function is None:
+            raise Exception('The model is in .training() mode but a loss function was not passed through.')
+
+        # set up input (and output if training) data.
+        # we also set up loss values if needed.
+        x, xLength = inputs[0][0], inputs[0][1]
+        batchSize = x.shape[0]
+        if self.training:
+            yb, ybLength = inputs[2][0], inputs[2][1]
+            y, yLength = inputs[1][0], inputs[1][1]
+            # determine the length of the longest output seq.
+            maxYLength = yLength[0]
+            # setup loss containers
+            loss, ll_loss, kl_loss, aux_loss = 0, 0, 0, 0
+
+        # run Encoder
+        encoderHidden = self.encoder.initHidden(batchSize).to(self.device)
+        encoderOutputs, encoderHidden = self.encoder(x, encoderHidden, xLength)
+
+        if self.training:
+            # compute Backwards
+            backwardHidden = self.backwards.initHidden(batchSize).to(self.device)
+            backwardOutput, backwardHidden = self.backwards(yb, ybLength, backwardHidden)
+            backwardHidden = backwardHidden.detach()
+
+        # set up variables for decoder computation
+        decoderInput = torch.tensor([self.sosID] * batchSize, dtype=torch.long, device=self.device)
+        # decoderHidden = torch.sum(encoderHidden, dim=0)
+        decoderHidden = encoderHidden[-1]
+        decoderOutput = None # for the current container
+        decoderOutputs = []  # the whole sequence.
+
+        # determine whether to teacher force or not.
+        teacher_force = False if random.random() > self.teacherTraining else True
+
+        range_limit = self.maxSeqLength
+        if self.training:
+            range_limit = maxYLength
+
+        # Run through the decoder one step at a time. This seems to be common practice across
+        # all of the seq2seq based implementations I've come across on GitHub.
+        for t in range(range_limit):
+
+            # set up backward output variable independently.
+            back = backwardOutput[:, t] if self.training else None
+
+            # perform decoder response at time t
+            out = self.decoder(
+                decoderInput,
+                encoderOutputs,
+                xLength,
+                decoderHidden,
+                self.device,
+                back=back)
+
+            # update variables
+            if self.training:
+                decoderOutput, decoderHidden, p_bow, i_mu, i_logvar, p_mu, p_logvar = out
+            else:
+                decoderOutput, decoderHidden = out
+
+            if self.training and loss_function is not None:
+                # compute reference CBOW to compare predictions to.
+                bow_mask = (y[:, t:] != self.paddingID).detach().float()
+                bowt_mask = (y[:, t] != self.paddingID).detach().float()
+                
+                # compute loss
+                ll, kl, aux = loss_function(
+                    self.epoch,
+                    self.batchNum,
+                    self.numBatches,
+                    decoderOutput,
+                    y[:, t],
+                    i_mu,
+                    i_logvar,
+                    p_mu,
+                    p_logvar,
+                    y[:, t:],
+                    bowt_mask,
+                    bow_mask,
+                    p_bow,
+                    self.useLatent
+                )
+                
+                # update loss values
+                loss += ll + kl + aux
+                ll_loss += ll
+                kl_loss += kl
+                aux_loss += aux
+            
+            # store response
+            decoderOutputs.append(decoderOutput)
+            # detach the decoderHidden values (we want to save memory!)
+            decoderHidden = decoderHidden.squeeze(0).detach()
+
+            # set up input for next timestep
+            if self.training and teacher_force:
+                # feed this output to the next input
+                decoderInput = y[:, t]
+            else:
+                decoderInput = decoderOutput.argmax(1)
+
+        if self.training:
+            # normalise loss values before returning them
+            avg_loss    = loss/range_limit
+            avg_llloss  = ll_loss.item()/range_limit
+            avg_klloss  = 0
+            avg_auxloss = 0
+            if self.useLatent:
+                avg_klloss  = kl_loss.item()/range_limit
+                avg_auxloss = aux_loss.item()/range_limit
+            
+            # setup loss container
+            loss_container = (avg_loss, avg_llloss, avg_klloss, avg_auxloss)
+
+            return decoderOutputs, loss_container
+        else:
+            return decoderOutputs
+
+

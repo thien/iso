@@ -16,6 +16,24 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
+from shutil import copyfile
+
+import csv
+
+def copyComponentFile(folder_path, dataset_parameters_file="dataset_parameters.json"):
+    # copy the dataset parameters into the model directory so we have an idea on
+    # what dataset the model parameters are trained with.
+    copyfile(dataset_parameters_file, os.path.join(folder_path, dataset_parameters_file))
+
+def printParameters(parameters):
+    """
+    Pretty print parameters in the cli.
+    """
+    maxLen = max([len(k) for k in parameters])
+    for key in parameters:
+        padding = " ".join(["" for _ in range(maxLen - len(key) + 5)])
+        print(key + padding, parameters[key])
+
 def initiateDirectory(folder_path):
     # create directory as it does not exist yet.
     if not os.path.isdir(folder_path):
@@ -148,13 +166,11 @@ def loss_function(epoch,
                   ref_bow_t_mask,
                   ref_bow_mask,
                   pred_bow,
-                  criterion_r,
-                  criterion_bow,
                   use_latent=True):
 
     # compute reconstruction loss
     # ll_loss = criterion_r(y_predicted, y)
-    ll_loss = F.cross_entropy(y_predicted.view(-1, y_predicted.size(-1)), y.reshape(-1), reduce=False).view(y_predicted.size()[:-1])
+    ll_loss = F.cross_entropy(y_predicted.view(-1, y_predicted.size(-1)), y.reshape(-1), reduction='none').view(y_predicted.size()[:-1])
     # print(ll_loss.shape, ref_bow_t_mask.shape)
     ll_loss = torch.mean(ll_loss * ref_bow_t_mask)
     # compute mean
@@ -167,8 +183,10 @@ def loss_function(epoch,
         kl_loss = torch.mean(kl_loss)
         # KL Annealing
         if epoch < 2:
-            kl_cap = 50
-            kl_weight_count = (epoch-1)*num_batches + batch_num
+            kl_cap = 1000
+            # print(epoch, num_batches, batch_num)
+            kl_weight_count = max((epoch-1)*num_batches,0) + batch_num
+            # print("KL_WEIGHT CAP:", kl_weight_count)
             kl_weight = kl_weight_count / kl_cap
             kl_loss *= kl_weight
 
@@ -255,3 +273,35 @@ def saveModels(encoder, backwards, decoder, filepath):
     torch.save(backwards.state_dict(),  os.path.join(filepath, 'backwards.pth'))
     torch.save(decoder.state_dict(),  os.path.join(filepath, 'decoder.pth'))
     print("Done.")
+
+def saveModel(vad, filepath):
+    print("Saving model..", end=" ")
+    torch.save(vad.state_dict(), os.path.join(filepath, 'vad.pth'))
+    print("Done.")
+
+def saveEvalOutputs(folder_path, results, epochs, folder_name="outputs"):
+    output_dir = os.path.join(folder_path, folder_name)
+    output_dir = initiateDirectory(output_dir)
+    filename = "epoch_" + str(epochs) + ".csv"
+    filepath = os.path.join(output_dir, filename)
+    with open(filepath, 'w') as myfile:
+        wr = csv.writer(myfile, delimiter='\t', quoting=csv.QUOTE_ALL)
+        wr.writerows(results)
+
+def responseID2Word(id2word, outputs):
+    entries = []
+    for batch_line in outputs:
+        entry = [torch.argmax(batch_line[i]).cpu().item() for i in range(len(batch_line))]
+        entries.append([id2word[i] for i in entry])
+     
+    words = []
+    for i in range(len(outputs[0])):
+        tokens = [entries[j][i] for j in range(len(entries))]
+        # find the eos token
+        try:
+            tokenpos = tokens.index("<eos>")
+        except:
+            tokenpos = len(tokens)
+        # remove extra eos tokens and padding values if they exist.
+        words.append(" ".join(tokens[:tokenpos+1]))
+    return words

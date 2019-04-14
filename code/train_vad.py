@@ -1,5 +1,5 @@
 from vad import Encoder, Backwards, Attention, Decoder, Inference, Prior, CBOW
-from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels, saveLossMeasurements, initiateDirectory
+from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels, saveLossMeasurements, initiateDirectory, printParameters
 
 import os
 import datetime
@@ -17,7 +17,6 @@ seed = 1337
 torch.manual_seed(seed)
 random.seed(seed)
 np.random.seed(seed)
-
 
 def evalVAD(x,
              xLength,
@@ -306,16 +305,6 @@ def trainIteration(
 
         saveModels(encoder, backwards, decoder, folder_path)
 
-def printParameters(parameters):
-    """
-    Pretty print parameters in the cli.
-    """
-    maxLen = max([len(k) for k in parameters])
-    print("Parameters:")
-    for key in parameters:
-        padding = " ".join(["" for _ in range(maxLen - len(key) + 5)])
-        print(key + padding, parameters[key])
-
 def copyComponentFile(folder_path, dataset_parameters_file="dataset_parameters.json"):
     # copy the dataset parameters into the model directory so we have an idea on
     # what dataset the model parameters are trained with.
@@ -342,22 +331,22 @@ def defaultParameters():
         }
     else:
         parameters = {
-            'hiddenSize'			: 350,
-            'latentSize'			: 300,
+            'hiddenSize'			: 512,
+            'latentSize'			: 400,
             'batchSize'				: 32,
             'iterations'			: 20,
             'learningRate'			: 0.0001,
             'gradientClip'			: 1,
-            'useBOW'				: True,
+            'useBOW'				: False,
             'bidirectionalEncoder'	: True,
             'reduction'             : 4,
             'device'                : "cuda",
-            'useLatent'             : True,
+            'useLatent'             : False,
         }
 
     return parameters
 
-def initiate(parameters=None, model_base_dir="models"):
+def initiate(parameters, model_base_dir="models"):
     """
     Loads model parameters, setup file directories and trains
     model with specified params.
@@ -482,4 +471,8 @@ def initiate(parameters=None, model_base_dir="models"):
     saveModels(modelEncoder, modelBackwards, modelDecoder, folder_path)
     
 if __name__ == "__main__":
-    initiate()
+    # load default parameters if they don't exist.
+    if parameters is None:
+        parameters = defaultParameters()
+
+    initiate(parameters)
