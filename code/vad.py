@@ -448,12 +448,13 @@ class VAD(nn.Module):
                 decoderOutput, decoderHidden = out
 
             if self.training and loss_function is not None:
+                bowt_mask = (y[:, t] != self.paddingID).detach().float()
+
                 if self.useBOW:
                     # compute reference CBOW to compare predictions to.
                     bow_mask = (y[:, t:] != self.paddingID).detach().float()
-                    bowt_mask = (y[:, t] != self.paddingID).detach().float()
                 else:
-                    bow_mask, bowt_mask = None
+                    bow_mask = None
 
                 # compute loss
                 ll, kl, aux = loss_function(
