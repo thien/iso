@@ -196,6 +196,9 @@ def trainModel(device,
     
     numTrainingBatches = len(traindata[0])
     numEvalBatches = len(valdata[0])
+    # # cap the number of evalBatches because storing responses is expensive!
+    # numEvalBatches = min(numEvalBatches, 50)
+
     model.numBatches = numTrainingBatches
 
     for epoch in tqdm(range(0,numEpochs)):
@@ -236,16 +239,14 @@ def trainModel(device,
             kl_losses.append(kl)
             aux_losses.append(aux)
             
-            # print("LOSS:",loss.item(), "LL:", ll, "KL:", kl, "AUX:",aux)
-
             if n % 10 == 0:
                 plotBatchLoss(epoch, ll_losses, kl_losses, aux_losses, folder_path)
                 saveLossMeasurements(epoch, folder_path, ll_losses, kl_losses, aux_losses)
 
-        # clear memory
-        del x,y,yb
-        if model.device.type == "cuda":
-            torch.cuda.empty_cache()
+            # clear memory
+            del x,y,yb
+            if model.device.type == "cuda":
+                torch.cuda.empty_cache()
         
         # ---------------------------------
 
@@ -259,21 +260,24 @@ def trainModel(device,
         model.eval()
         
         results = []
-        for n in tqdm(range(0,numEvalBatches)):
-            x,   xLength = valdata[1][n][0], valdata[1][n][1]
-            y,   yLength = valdata[1][n][0], valdata[1][n][1]
-            x, y = x.to(device), y.to(device)
-            # get output and loss values
-            input_data = ((x,xLength), (y,yLength))
-            responses  = model(input_data)
-            results.append(responses)
+        with torch.no_grad():
+            for n in tqdm(range(0,numEvalBatches)):
+                x,   xLength = valdata[1][n][0], valdata[1][n][1]
+                # y,   yLength = valdata[1][n][0], valdata[1][n][1]
+                x = x.to(device)
+                # get output and loss values
+                input_data = [(x,xLength)]
+                responses = model(input_data)
+                responses = [entry.detach().cpu() for entry in responses]
+                responses = responseID2Word(id2word, responses)
+                results.append(responses)
 
-        results = [responseID2Word(id2word, resp) for resp in results]
-        # write the responses to file.
         saveEvalOutputs(folder_path, results, epoch)
+
+        if model.device.type == "cuda":
+            torch.cuda.empty_cache()
 
 if __name__ == "__main__":
     # load default parameters if they don't exist.
     parameters = defaultParameters()
-
     initiate(parameters)

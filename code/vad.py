@@ -481,7 +481,7 @@ class VAD(nn.Module):
                 aux_loss += aux
             
             # store response
-            decoderOutputs.append(decoderOutput)
+            decoderOutputs.append(decoderOutput.detach())
             # detach the decoderHidden values (we want to save memory!)
             decoderHidden = decoderHidden.squeeze(0).detach()
 

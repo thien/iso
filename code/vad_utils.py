@@ -304,5 +304,8 @@ def responseID2Word(id2word, outputs):
         except:
             tokenpos = len(tokens)
         # remove extra eos tokens and padding values if they exist.
-        words.append(" ".join(tokens[:tokenpos+1]))
+        tokens = tokens[:tokenpos+1]
+        # somehow there could be a ["<sos>"] in the list
+        tokens = [x if (x != ["<sos>"]) else "<sos>" for x in tokens]
+        words.append(" ".join(tokens))
     return words
