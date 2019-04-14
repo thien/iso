@@ -12,28 +12,26 @@
 \contentsline {subsection}{\numberline {1.6.1}Sequence To Sequence}{7}{subsection.24}
 \contentsline {subsubsection}{Variational Context}{8}{section*.26}
 \contentsline {subsubsection}{Attention Mechanisms}{9}{section*.28}
-\contentsline {subsection}{\numberline {1.6.2}Transformers}{9}{subsection.30}
-\contentsline {subsubsection}{Self Attention}{10}{section*.32}
-\contentsline {subsubsection}{Positionality Hack}{10}{section*.36}
-\contentsline {chapter}{\numberline {2}Model}{11}{chapter.37}
-\contentsline {section}{\numberline {2.1}Variational Autoregressive Decoders}{11}{section.38}
-\contentsline {subsubsection}{Encoder}{11}{section*.39}
-\contentsline {subsubsection}{Backwards}{11}{section*.41}
-\contentsline {subsubsection}{Attention}{12}{section*.43}
-\contentsline {subsubsection}{Inference Model}{12}{section*.45}
-\contentsline {subsubsection}{Prior Model}{12}{section*.47}
-\contentsline {subsubsection}{Decoder (Variational Autoregressive)}{12}{section*.49}
-\contentsline {subsubsection}{Auxillary Objective}{12}{section*.52}
-\contentsline {subsubsection}{Learning Mechanism}{13}{section*.54}
-\contentsline {subsubsection}{KL Divergence Derivation}{13}{section*.56}
-\contentsline {section}{\numberline {2.2}Data Augmentation}{13}{section.58}
-\contentsline {subsection}{\numberline {2.2.1}Embeddings}{13}{subsection.80}
-\contentsline {subsection}{\numberline {2.2.2}Review Prepropressing}{13}{subsection.81}
-\contentsline {subsection}{\numberline {2.2.3}Polarity Calculation}{14}{subsection.82}
-\contentsline {subsection}{\numberline {2.2.4}Implementation}{14}{subsection.84}
-\contentsline {section}{\numberline {2.3}Optimisation Challenges}{15}{section.85}
-\contentsline {subsection}{\numberline {2.3.1}Teacher Forcing}{15}{subsection.86}
-\contentsline {subsection}{\numberline {2.3.2}KL Annealing}{15}{subsection.87}
-\contentsline {subsection}{\numberline {2.3.3}Word Dropout}{15}{subsection.88}
-\contentsline {section}{\numberline {2.4}Testing Method}{16}{section.89}
-\contentsline {subsection}{\numberline {2.4.1}Measuring Performance}{16}{subsection.90}
+\contentsline {chapter}{\numberline {2}Model}{10}{chapter.30}
+\contentsline {section}{\numberline {2.1}Variational Autoregressive Decoders}{10}{section.31}
+\contentsline {subsubsection}{Encoder}{10}{section*.32}
+\contentsline {subsubsection}{Backwards}{11}{section*.34}
+\contentsline {subsubsection}{Attention}{11}{section*.36}
+\contentsline {subsubsection}{Inference Model}{11}{section*.38}
+\contentsline {subsubsection}{Prior Model}{11}{section*.40}
+\contentsline {subsubsection}{Decoder (Variational Autoregressive)}{11}{section*.42}
+\contentsline {subsubsection}{Auxillary Objective}{12}{section*.45}
+\contentsline {subsubsection}{Learning Mechanism}{12}{section*.47}
+\contentsline {subsubsection}{KL Divergence Derivation}{12}{section*.49}
+\contentsline {section}{\numberline {2.2}Data Augmentation}{12}{section.51}
+\contentsline {subsection}{\numberline {2.2.1}Embeddings}{12}{subsection.73}
+\contentsline {subsection}{\numberline {2.2.2}Review Prepropressing}{13}{subsection.74}
+\contentsline {subsection}{\numberline {2.2.3}Polarity Calculation}{13}{subsection.75}
+\contentsline {subsection}{\numberline {2.2.4}Implementation}{13}{subsection.77}
+\contentsline {subsubsection}{Weight Initialisation}{14}{section*.78}
+\contentsline {section}{\numberline {2.3}Optimisation Challenges}{14}{section.79}
+\contentsline {subsection}{\numberline {2.3.1}Teacher Forcing}{14}{subsection.80}
+\contentsline {subsection}{\numberline {2.3.2}KL Annealing}{15}{subsection.81}
+\contentsline {subsection}{\numberline {2.3.3}Word Dropout}{15}{subsection.82}
+\contentsline {section}{\numberline {2.4}Testing Method}{15}{section.83}
+\contentsline {subsection}{\numberline {2.4.1}Measuring Performance}{15}{subsection.84}
