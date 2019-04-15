@@ -36,16 +36,16 @@ def defaultParameters():
     else:
         parameters = {
             'hiddenSize'			: 512,
-            'latentSize'			: 400,
+            'latentSize'			: 2,
             'batchSize'				: 32,
             'iterations'			: 50,
             'learningRate'			: 0.0001,
             'gradientClip'			: 1,
-            'useBOW'				: True,
+            'useBOW'				: False,
             'bidirectionalEncoder'	: True,
-            'reduction'             : 8,
+            'reduction'             : 128,
             'device'                : "cuda",
-            'useLatent'             : True,
+            'useLatent'             : False,
             'teacherTrainingP'      : 1.0
         }
 
@@ -156,7 +156,7 @@ def initiate(parameters, model_base_dir="models"):
             useBOW=useBOW).to(device)
     model.device = device
 
-    criterion_r   = nn.CrossEntropyLoss(ignore_index=paddingID)
+    criterion_r = nn.CrossEntropyLoss(ignore_index=paddingID)
     criterion_bow = nn.BCEWithLogitsLoss()
 
     # setup model optimiser
@@ -196,17 +196,16 @@ def trainModel(device,
     
     numTrainingBatches = len(traindata[0])
     numEvalBatches = len(valdata[0])
-    # # cap the number of evalBatches because storing responses is expensive!
-    # numEvalBatches = min(numEvalBatches, 50)
 
     model.numBatches = numTrainingBatches
+    # setup indexes for each epoch.
+    indexes = [i for i in range(numTrainingBatches)]
 
     for epoch in tqdm(range(0,numEpochs)):
 
         model.train()
         model.epoch = epoch
         # create random indexes s.t we shuffle the training batches.
-        indexes = [i for i in range(numTrainingBatches)]
         random.shuffle(indexes)
         # setup loss containers.
         losses, ll_losses, kl_losses, aux_losses = [], [], [], []
@@ -225,7 +224,7 @@ def trainModel(device,
 
             # get output and loss values
             input_data = ((x,xLength), (y,yLength), (yb, ybLength))
-            _, loss_container = model(input_data, loss_function)
+            _, loss_container = model(input_data, loss_function, criterion_r)
             loss, ll, kl, aux = loss_container
             # gradient descent step
             optimiser.zero_grad()
@@ -242,11 +241,6 @@ def trainModel(device,
             if n % 10 == 0:
                 plotBatchLoss(epoch, ll_losses, kl_losses, aux_losses, folder_path)
                 saveLossMeasurements(epoch, folder_path, ll_losses, kl_losses, aux_losses)
-
-            # clear memory
-            del x,y,yb
-            if model.device.type == "cuda":
-                torch.cuda.empty_cache()
         
         # ---------------------------------
 
@@ -262,8 +256,7 @@ def trainModel(device,
         results = []
         with torch.no_grad():
             for n in tqdm(range(0,numEvalBatches)):
-                x,   xLength = valdata[1][n][0], valdata[1][n][1]
-                # y,   yLength = valdata[1][n][0], valdata[1][n][1]
+                x, xLength = valdata[1][n][0], valdata[1][n][1]
                 x = x.to(device)
                 # get output and loss values
                 input_data = [(x,xLength)]

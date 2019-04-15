@@ -372,7 +372,7 @@ class VAD(nn.Module):
         self.batchNum = 0
         self.numBatches = 0 
 
-    def forward(self, inputs, loss_function=None):
+    def forward(self, inputs, loss_function=None, criterion_r=None):
         """
         performs a forward pass of the model. Performs different actions
         based on whether the model is in train() mode or eval() mode.
@@ -472,7 +472,8 @@ class VAD(nn.Module):
                     bow_mask,
                     p_bow,
                     self.useLatent,
-                    self.useBOW
+                    self.useBOW,
+                    criterion_r
                 )
                 
                 # update loss values

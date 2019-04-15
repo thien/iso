@@ -167,15 +167,15 @@ def loss_function(epoch,
                   ref_bow_mask,
                   pred_bow,
                   use_latent=True,
-                  useBOW=True):
+                  useBOW=True,
+                  criterion_r=None):
 
     # compute reconstruction loss
-    # ll_loss = criterion_r(y_predicted, y)
-    ll_loss = F.cross_entropy(y_predicted.view(-1, y_predicted.size(-1)), y.reshape(-1), reduction='none').view(y_predicted.size()[:-1])
-    # print(ll_loss.shape, ref_bow_t_mask.shape)
-    ll_loss = torch.mean(ll_loss * ref_bow_t_mask)
-    # compute mean
-    # ll_loss = ll_loss.mean()
+    if criterion_r is not None:
+        ll_loss = criterion_r(y_predicted, y)
+    else:
+        ll_loss = F.cross_entropy(y_predicted.view(-1, y_predicted.size(-1)), y.reshape(-1), reduction='none').view(y_predicted.size()[:-1])
+        ll_loss = torch.mean(ll_loss * ref_bow_t_mask)
 
     # compute KLD
     kl_loss = 0
@@ -276,9 +276,8 @@ def saveModels(encoder, backwards, decoder, filepath):
     print("Done.")
 
 def saveModel(vad, filepath):
-    print("Saving model..", end=" ")
     torch.save(vad.state_dict(), os.path.join(filepath, 'vad.pth'))
-    print("Done.")
+
 
 def saveEvalOutputs(folder_path, results, epochs, folder_name="outputs"):
     output_dir = os.path.join(folder_path, folder_name)
@@ -307,5 +306,6 @@ def responseID2Word(id2word, outputs):
         tokens = tokens[:tokenpos+1]
         # somehow there could be a ["<sos>"] in the list
         tokens = [x if (x != ["<sos>"]) else "<sos>" for x in tokens]
+        # create string
         words.append(" ".join(tokens))
     return words
