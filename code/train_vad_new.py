@@ -1,5 +1,6 @@
 from vad import VAD
 from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModel, saveLossMeasurements, initiateDirectory, printParameters, copyComponentFile, saveEvalOutputs, responseID2Word
+from vad_statistics import Statistics
 
 import os
 import datetime
@@ -31,22 +32,24 @@ def defaultParameters():
             'reduction'             : 512,
             'device'                : "cpu",
             'useLatent'             : True,
-            'teacherTrainingP'      : 0.3
+            'teacherTrainingP'      : 0.3,
+            'customLLLoss'          : False,
         }
     else:
         parameters = {
             'hiddenSize'			: 512,
-            'latentSize'			: 2,
+            'latentSize'			: 400,
             'batchSize'				: 32,
-            'iterations'			: 50,
-            'learningRate'			: 0.0001,
+            'iterations'			: 200,
+            'learningRate'			: 0.001,
             'gradientClip'			: 1,
-            'useBOW'				: False,
+            'useBOW'				: True,
             'bidirectionalEncoder'	: True,
             'reduction'             : 128,
             'device'                : "cuda",
-            'useLatent'             : False,
-            'teacherTrainingP'      : 1.0
+            'useLatent'             : True,
+            'teacherTrainingP'      : 1,
+            'customLLLoss'          : True
         }
 
     return parameters
@@ -54,8 +57,8 @@ def defaultParameters():
 def initiate(parameters, model_base_dir="models"):
     
     # by default we set the folder_path folder to the current datetime
-    folder_path = datetime.datetime.now().strftime("%Y%m%d %H-%M-%S")
-    folder_path = os.path.join(model_base_dir, folder_path)
+    folder_name = datetime.datetime.now().strftime("%Y%m%d %H-%M-%S")
+    folder_path = os.path.join(model_base_dir, folder_name)
 
     # initiate parameter variables
     hiddenSize = parameters['hiddenSize']
@@ -69,6 +72,7 @@ def initiate(parameters, model_base_dir="models"):
     reduction = parameters['reduction']
     teacherTrainingP = parameters['teacherTrainingP']
     useLatent = parameters['useLatent']
+    customLLLoss = parameters['customLLLoss']
     device = torch.device(parameters['device'])
 
     printParameters(parameters)
@@ -156,7 +160,10 @@ def initiate(parameters, model_base_dir="models"):
             useBOW=useBOW).to(device)
     model.device = device
 
-    criterion_r = nn.CrossEntropyLoss(ignore_index=paddingID)
+    if customLLLoss:
+        criterion_r = None
+    else:
+        criterion_r = nn.CrossEntropyLoss(ignore_index=paddingID)
     criterion_bow = nn.BCEWithLogitsLoss()
 
     # setup model optimiser
@@ -179,6 +186,9 @@ def initiate(parameters, model_base_dir="models"):
             )
 
     saveModel(model, folder_path)
+
+    # once we're done with training we can do some stats!
+    Statistics(folder_name).express()
 
 def trainModel(device,
                traindata,

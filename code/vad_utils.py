@@ -288,6 +288,16 @@ def saveEvalOutputs(folder_path, results, epochs, folder_name="outputs"):
         wr = csv.writer(myfile, delimiter='\t', quoting=csv.QUOTE_ALL)
         wr.writerows(results)
 
+
+def convertRealID2Word(id2word, y, padtag="<pad>", toString=True):
+    # convert word IDs into actual words
+    entries = [[id2word[x.item()] for x in y[entry].cpu()] for entry in range(len(y))]
+    # filter out padding tags.
+    entries = [[x for x in y if x != padtag] for y in entries]
+    # if toString is enabled then turn sequences to tags.
+    entries = [" ".join(y) for y in entries] if toString else entries
+    return entries
+
 def responseID2Word(id2word, outputs):
     entries = []
     for batch_line in outputs:
