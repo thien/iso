@@ -1,5 +1,5 @@
 from vad import VAD
-from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModel, saveLossMeasurements, initiateDirectory, printParameters, copyComponentFile, saveEvalOutputs, responseID2Word
+from vad_utils import prepDataset, loss_function, plotBatchLoss, batchData, loadDataset, saveModel, saveLossMeasurements, initiateDirectory, printParameters, copyComponentFile, saveEvalOutputs, responseID2Word
 from vad_statistics import Statistics
 
 import os
@@ -13,6 +13,8 @@ from tqdm import tqdm
 import json
 from shutil import copyfile
 
+from torch.utils.data import DataLoader
+from multiprocessing import cpu_count
 
 def defaultParameters():
     """
@@ -40,12 +42,12 @@ def defaultParameters():
             'hiddenSize'			: 512,
             'latentSize'			: 400,
             'batchSize'				: 32,
-            'iterations'			: 200,
+            'iterations'			: 100,
             'learningRate'			: 0.001,
             'gradientClip'			: 1,
             'useBOW'				: True,
             'bidirectionalEncoder'	: True,
-            'reduction'             : 128,
+            'reduction'             : 12,
             'device'                : "cuda",
             'useLatent'             : True,
             'teacherTrainingP'      : 1,
@@ -115,21 +117,23 @@ def initiate(parameters, model_base_dir="models"):
     print("Batching Data..", end=" ")
 
     # shuffle data rows and split data s.t they can be processed.
-    random.shuffle(train)
-    raw_x, raw_y = [x[0] for x in train[::reduction]], [x[1] for x in train[::reduction]]
-    # batchify data.
-    trainx = batchData(raw_x, paddingID, device, batchSize, cutoff)
-    trainy = batchData(raw_y, paddingID, device, batchSize, cutoff)
-    # the unpadded sequence is used for the backwards rnn.
-    trainy_back = batchData(raw_y, paddingID, device, batchSize, cutoff, backwards=True)
+    # random.shuffle(train)
+    # raw_x, raw_y = [x[0] for x in train[::reduction]], [x[1] for x in train[::reduction]]
+    # # batchify data.
+    # trainx = batchData(raw_x, paddingID, device, batchSize, cutoff)
+    # trainy = batchData(raw_y, paddingID, device, batchSize, cutoff)
+    # # the unpadded sequence is used for the backwards rnn.
+    # trainy_back = batchData(raw_y, paddingID, device, batchSize, cutoff, backwards=True)
 
-    traindata = (trainx, trainy, trainy_back)
+    # traindata = (trainx, trainy, trainy_back)
 
-    val_x, val_y = [x[0] for x in val[::reduction]], [x[1] for x in val[::reduction]]
+    traindata = prepDataset(train, reduction, cutoff, train=True, step=reduction)
+    valdata   = prepDataset(val, reduction, cutoff, train=False, step=reduction)
+    # val_x, val_y = [x[0] for x in val[::reduction]], [x[1] for x in val[::reduction]]
 
-    valx = batchData(val_x, paddingID, device, batchSize, cutoff)
-    valy = batchData(val_y, paddingID, device, batchSize, cutoff)
-    valdata = (valx, valy)
+    # valx = batchData(val_x, paddingID, device, batchSize, cutoff)
+    # valy = batchData(val_y, paddingID, device, batchSize, cutoff)
+    # valdata = (valx, valy)
     print("Done.")
 
     # setup variables for model components initialisation
@@ -176,6 +180,7 @@ def initiate(parameters, model_base_dir="models"):
                model,
                optimiser,
                iterations,
+               batchSize,
                learningRate,
                word2id,
                id2word,
@@ -196,6 +201,7 @@ def trainModel(device,
                model,
                optimiser,
                numEpochs,
+               batchSize,
                learningRate,
                word2id,
                id2word,
@@ -209,32 +215,30 @@ def trainModel(device,
 
     model.numBatches = numTrainingBatches
     # setup indexes for each epoch.
-    indexes = [i for i in range(numTrainingBatches)]
-
     for epoch in tqdm(range(0,numEpochs)):
-
         model.train()
+
+        train_loader = DataLoader(
+            dataset=traindata,
+            batch_size=batchSize,
+            shuffle=True,
+            num_workers=cpu_count()-1,
+            pin_memory=torch.cuda.is_available()
+        )
+
         model.epoch = epoch
-        # create random indexes s.t we shuffle the training batches.
-        random.shuffle(indexes)
         # setup loss containers.
         losses, ll_losses, kl_losses, aux_losses = [], [], [], []
         # iterate through the training batches
-        for n in tqdm(range(len(indexes))):
+        for n, batch in enumerate(train_loader):
             model.batchNum = n
-            # load batch number based on the shuffled list
-            batch_number = indexes[n]
-            # each batch is composed of the reviews, and a sentence length.
-            
-            x,   xLength = traindata[0][n][0], traindata[0][n][1]
-            y,   yLength = traindata[1][n][0], traindata[1][n][1]
-            yb, ybLength = traindata[2][n][0], traindata[2][n][1]
-            # send to cuda (if warranted)
-            x, y, yb = x.to(device), y.to(device), yb.to(device)
 
+            batch['input'] = batch['input'].to(device)
+            batch['target'] = batch['target'].to(device)
+            batch['reverse'] = batch['reverse'].to(device)
+    
             # get output and loss values
-            input_data = ((x,xLength), (y,yLength), (yb, ybLength))
-            _, loss_container = model(input_data, loss_function, criterion_r)
+            _, loss_container = model(batch, loss_function, criterion_r)
             loss, ll, kl, aux = loss_container
             # gradient descent step
             optimiser.zero_grad()
@@ -260,17 +264,24 @@ def trainModel(device,
 
         # ---------------------------------
 
+        val_loader = DataLoader(
+            dataset=valdata,
+            batch_size=batchSize,
+            shuffle=False,
+            num_workers=cpu_count()-1,
+            pin_memory=torch.cuda.is_available()
+        )
+
         # evaluate model
         model.eval()
         
         results = []
         with torch.no_grad():
-            for n in tqdm(range(0,numEvalBatches)):
-                x, xLength = valdata[1][n][0], valdata[1][n][1]
-                x = x.to(device)
+            for n, batch in enumerate(val_loader):
+                model.batchNum = n
+                batch['input'] = batch['input'].to(device)
                 # get output and loss values
-                input_data = [(x,xLength)]
-                responses = model(input_data)
+                responses = model(batch)
                 responses = [entry.detach().cpu() for entry in responses]
                 responses = responseID2Word(id2word, responses)
                 results.append(responses)

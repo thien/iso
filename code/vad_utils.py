@@ -60,7 +60,7 @@ def sequence_mask(sequence_length, max_len=None):
     """
     Caution: Input and Return are VARIABLE.
     """
-    sequence_length = torch.tensor(sequence_length)
+    # sequence_length = torch.tensor(sequence_length)
     if max_len is None:
         max_len = sequence_length.data.max()
     batch_size = sequence_length.size(0)
@@ -268,6 +268,40 @@ def batchData(dataset, padID, device, batchsize=32, cutoff=50, backwards=False):
         batches[i] = (reviews, [i[0] for i in sortedindexes])
     return batches
 
+def prepDataset(dataset, padID, cutoff=50, train=True, step=1):
+    def pad(row, padID, maxLen):
+        return row + [padID for _ in range(maxLen - len(row))]
+    
+    # get input lengths
+    inp_l = np.array([len(seq[0]) for seq in dataset])
+    out_l = np.array([len(seq[1]) for seq in dataset])
+
+    if train:
+        # get reverse of outputs
+        output_reverse = np.array([seq[1][::-1] for seq in dataset])
+        
+    # we want each row to be input, output, output_reverse, input_length, output_length
+    # (output_reverse_length is the same as output length)
+    inp   = np.array([pad(seq[0], padID, cutoff) for seq in dataset])
+    out   = np.array([pad(seq[1], padID, cutoff) for seq in dataset])
+    if train:
+        out_r = np.array([pad(seq, padID, cutoff) for seq in output_reverse])
+    # set up variables for use in DataLoader
+    
+    if train:
+        return [{"input":inp[i], 
+            "target":out[i],
+            "reverse":out_r[i],
+            "input_length":inp_l[i],
+            "target_length":out_l[i]
+            } for i in range(len(dataset))][::step]
+    else:
+        return [{"input":inp[i], 
+            "target":out[i],
+            "input_length":inp_l[i],
+            "target_length":out_l[i]
+            } for i in range(len(dataset))][::step]
+
 def saveModels(encoder, backwards, decoder, filepath):
     print("Saving models..", end=" ")
     torch.save(encoder.state_dict(),  os.path.join(filepath, 'encoder.pth'))
@@ -278,7 +312,6 @@ def saveModels(encoder, backwards, decoder, filepath):
 def saveModel(vad, filepath):
     torch.save(vad.state_dict(), os.path.join(filepath, 'vad.pth'))
 
-
 def saveEvalOutputs(folder_path, results, epochs, folder_name="outputs"):
     output_dir = os.path.join(folder_path, folder_name)
     output_dir = initiateDirectory(output_dir)
@@ -287,7 +320,6 @@ def saveEvalOutputs(folder_path, results, epochs, folder_name="outputs"):
     with open(filepath, 'w') as myfile:
         wr = csv.writer(myfile, delimiter='\t', quoting=csv.QUOTE_ALL)
         wr.writerows(results)
-
 
 def convertRealID2Word(id2word, y, padtag="<pad>", toString=True):
     # convert word IDs into actual words

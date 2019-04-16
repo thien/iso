@@ -296,12 +296,12 @@ class Statistics:
         self.loadDatasetFromModel()
         self.loadModelOutputs()
  
-        self.plotChart(step=100, ylim=5)
+        self.plotChart(step=50, ylim=5)
         stats = self.processItems(self.processPredictions, [ep for ep in range(len(self.outputs))])
         # stats = [self.processPredictions(epoch) for epoch in range(len(self.outputs))]
         self.chartBLEUROUGE(stats)
         self.dumpStats(stats)
 
 if __name__ == "__main__":
-    s = Statistics("20190416 10-59-43")
+    s = Statistics("20190416 17-47-35")
     s.express()

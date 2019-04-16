@@ -42,12 +42,16 @@ class Encoder(nn.Module):
             init.xavier_uniform_(self.gru.weight_ih_l0_reverse)
     
     def forward(self, x, hidden, x_length=None):
+        # sort for pack_padded_sequence
+        sorted_lengths, sorted_idx = torch.sort(x_length, descending=True)
+        x = x[sorted_idx]
+
         # load the input into the embedding before doing GRU computation.
         embed = self.embedding(x)
 
         if x_length is not None:
             # load pack_padded_sequence so PyTorch knows when to not compute rubbish
-            packed_emb = nn.utils.rnn.pack_padded_sequence(embed, x_length, batch_first=True)
+            packed_emb = nn.utils.rnn.pack_padded_sequence(embed, sorted_lengths.data.tolist(), batch_first=True)
         
         # load it through the GRU
         packed_outputs, hidden = self.gru(packed_emb, hidden)
@@ -55,8 +59,8 @@ class Encoder(nn.Module):
         if x_length is not None:
             # reverse pack_padded_sequence
             output, _ = nn.utils.rnn.pad_packed_sequence(packed_outputs, batch_first=True)
-
-
+            _, reversed_idx = torch.sort(sorted_idx)
+            output = output[reversed_idx]
         if self.isBidirectional:
             output = output[:, :, :self.hiddenSize] + output[:, : ,self.hiddenSize:]
         
@@ -93,12 +97,16 @@ class Backwards(nn.Module):
             init.xavier_uniform_(self.gru.weight_ih_l0)
         
     def forward(self, x, x_length, hidden):
+        # sort for pack_padded_sequence
+        sorted_lengths, sorted_idx = torch.sort(x_length, descending=True)
+        x = x[sorted_idx]
+
         # load the input into the embedding before doing GRU computation.
         embed = self.embedding(x)
 
         if x_length is not None:
             # load pack_padded_sequence so PyTorch knows when to not compute rubbish
-            packed_emb = nn.utils.rnn.pack_padded_sequence(embed, x_length, batch_first=True)
+            packed_emb = nn.utils.rnn.pack_padded_sequence(embed, sorted_lengths.data.tolist(), batch_first=True)
 
         # load it through the GRU
         output, hidden = self.gru(packed_emb, hidden)
@@ -106,7 +114,8 @@ class Backwards(nn.Module):
         if x_length is not None:
             # reverse pack_padded_sequence
             output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
-
+            _, reversed_idx = torch.sort(sorted_idx)
+            output = output[reversed_idx]
         return output, hidden
 
     def initHidden(self, batchSize):
@@ -388,18 +397,18 @@ class VAD(nn.Module):
 
         if self.training and loss_function is None:
             raise Exception('The model is in .training() mode but a loss function was not passed through.')
-
+        
         # set up input (and output if training) data.
         # we also set up loss values if needed.
-        x, xLength = inputs[0][0], inputs[0][1]
+        x, xLength = inputs['input'], inputs['input_length']
         batchSize = x.shape[0]
-        if self.training:
-            yb, ybLength = inputs[2][0], inputs[2][1]
-            y, yLength = inputs[1][0], inputs[1][1]
-            # determine the length of the longest output seq.
-            maxYLength = yLength[0]
-            # setup loss containers
+        if 'target' in inputs:
+            y, yLength = inputs['target'], inputs['target_length']
+            maxYLength = torch.max(yLength).item()
             loss, ll_loss, kl_loss, aux_loss = 0, 0, 0, 0
+        if 'reverse' in inputs:
+            yb = inputs['reverse']
+
 
         # run Encoder
         encoderHidden = self.encoder.initHidden(batchSize).to(self.device)
@@ -408,7 +417,7 @@ class VAD(nn.Module):
         if self.training:
             # compute Backwards
             backwardHidden = self.backwards.initHidden(batchSize).to(self.device)
-            backwardOutput, backwardHidden = self.backwards(yb, ybLength, backwardHidden)
+            backwardOutput, backwardHidden = self.backwards(yb, yLength, backwardHidden)
             backwardHidden = backwardHidden.detach()
 
         # set up variables for decoder computation
