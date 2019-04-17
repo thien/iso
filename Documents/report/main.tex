@@ -102,6 +102,7 @@
 
 % % Figure~\ref{fig:logo} is an example of a figure. 
 
+% We subject our models against the Amazon reviews Dataset (\cite{he_ups_2016}).
 
 % - Talk about the problem definition
 % - talk about what you done
@@ -179,6 +180,11 @@ Later on, modern language models revolve around the use of neural networks (\cit
 Neural Networks are non-linear and computational metaphors of the brain that model arbitary relationships between input and output vectors. (This type of neural network architecture is commonly described as the multi-layer perceptron). Note that the input and output vectors are of a fixed dimension, which becomes a problem for our task at hand. Neural Networks evaluate an input using forward propagation, to produce an output. Traditionally, neural networks are trained to produce optimal outputs via the use of backpropagation. 
 
 % something on neural language models being popular.
+
+\section{Dataset}
+
+
+For our models we use the Amazon Reviews dataset by\cite{he_ups_2016}. This particular dataset is relatively unforgiving as opposed to using language translation.
 
 \section{Recurrent Neural Networks}
 \label{rnn}
@@ -534,7 +540,7 @@ We derive the KL Divergence as we no longer measure the distance of our posterio
 \caption{A sample review and the augmented data. Note that for each sequence from line 3 onwards has the identity sequence contatenated before it. \label{aug_1}}
 \end{figure}
 
-The dataset produced has to be augmented in order for the model to process them. 
+Spacy is used. The dataset produced has to be augmented in order for the model to process them. 
 
 \subsection{Embeddings}
 
@@ -599,9 +605,7 @@ Also proposed by \cite{bowman_generating_2015}, it involves weakening the decode
 
 \section{Testing Method}
 
-We benchmark the performance of our model against a regular seq2seq network, alongside a transformer. 
-
-The objective is to 
+We benchmark the performance of our model against a regular seq2seq network.
 
 her the data produced corresponds to a fake model or from the dataset. This is not used as a loss function (this would consequently create a generative model).
 
@@ -612,9 +616,9 @@ Models are computed on an 4.4GHz intel 3770k with a GTX 1080 with 8GB VRAM.
 
 \subsection{Measuring Performance}
 
-To understand the quality of our models, we subject them to BLEU (\cite{papineni_bleu:_2001}) and ROUGE (\cite{lin_rouge:_2004}) scores at each epoch to measure the quality of our responses. These measurements are used alongside the Loss, which will measure the rate of learning.
 
 
+To understand the quality of our models, we subject them to the BLEU (\cite{papineni_bleu:_2001}) and ROUGE (\cite{lin_rouge:_2004}) emperical scores at each epoch to quantify the quality of our responses. These measurements are used alongside the Loss, and human analysis of the results.
 
 BLEU (\cite{papineni_bleu:_2001}) is originally defined with $n$-gram precision $p_n$ by summing the $n$-gram matches for every hypothesis sentence $S$ in the test corpus $C$. In our particular case, we use unigrams.
 
@@ -638,11 +642,9 @@ BLEU (\cite{papineni_bleu:_2001}) is originally defined with $n$-gram precision 
 
 % https://stackoverflow.com/questions/38045290/text-summarization-evaluation-bleu-vs-rouge
 
-Although both equations look very similar, BLEU  BLEU introduces a brevity penalty term, and also compute the n-gram match for several size of n-grams (unlike the ROUGE-n, where there is only one chosen n-gram size). 
+Although both equations look very similar,  BLEU introduces a brevity penalty term, and also compute the n-gram match for several sizes of n-grams (unlike the ROUGE-n, where there is only one chosen n-gram size). 
 
-"Bleu measures precision: how much the words (and/or n-grams) in the machine generated summaries appeared in the human reference summaries.
-
-Rouge measures recall: how much the words (and/or n-grams) in the human reference summaries appeared in the machine generated summaries.
+Additionally, we use BLEU to measure the precision performance, i.e. how much the words (and/or n-grams) in the model responses appeared in the responses from the dataset. ROUGE is used in a similar fashion for recall.
 
 Naturally - these results are complementing, as is often the case in precision vs recall. If you have many words from the system results appearing in the human references you will have high Bleu, and if you have many words from the human references appearing in the system results you will have high Rouge."
 
