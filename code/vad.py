@@ -12,8 +12,6 @@ from torch.autograd import Variable
 
 from vad_utils import loss_function, plotBatchLoss, batchData, loadDataset, saveModels, sequence_mask, masked_cross_entropy
 
-
-
 class Encoder(nn.Module):
     """
     This'll be a bi-directional GRU.
@@ -44,12 +42,16 @@ class Encoder(nn.Module):
             init.xavier_uniform_(self.gru.weight_ih_l0_reverse)
     
     def forward(self, x, hidden, x_length=None):
+        # sort for pack_padded_sequence
+        sorted_lengths, sorted_idx = torch.sort(x_length, descending=True)
+        x = x[sorted_idx]
+
         # load the input into the embedding before doing GRU computation.
         embed = self.embedding(x)
 
         if x_length is not None:
             # load pack_padded_sequence so PyTorch knows when to not compute rubbish
-            packed_emb = nn.utils.rnn.pack_padded_sequence(embed, x_length, batch_first=True)
+            packed_emb = nn.utils.rnn.pack_padded_sequence(embed, sorted_lengths.data.tolist(), batch_first=True)
         
         # load it through the GRU
         packed_outputs, hidden = self.gru(packed_emb, hidden)
@@ -57,8 +59,8 @@ class Encoder(nn.Module):
         if x_length is not None:
             # reverse pack_padded_sequence
             output, _ = nn.utils.rnn.pad_packed_sequence(packed_outputs, batch_first=True)
-
-
+            _, reversed_idx = torch.sort(sorted_idx)
+            output = output[reversed_idx]
         if self.isBidirectional:
             output = output[:, :, :self.hiddenSize] + output[:, : ,self.hiddenSize:]
         
@@ -95,12 +97,16 @@ class Backwards(nn.Module):
             init.xavier_uniform_(self.gru.weight_ih_l0)
         
     def forward(self, x, x_length, hidden):
+        # sort for pack_padded_sequence
+        sorted_lengths, sorted_idx = torch.sort(x_length, descending=True)
+        x = x[sorted_idx]
+
         # load the input into the embedding before doing GRU computation.
         embed = self.embedding(x)
 
         if x_length is not None:
             # load pack_padded_sequence so PyTorch knows when to not compute rubbish
-            packed_emb = nn.utils.rnn.pack_padded_sequence(embed, x_length, batch_first=True)
+            packed_emb = nn.utils.rnn.pack_padded_sequence(embed, sorted_lengths.data.tolist(), batch_first=True)
 
         # load it through the GRU
         output, hidden = self.gru(packed_emb, hidden)
@@ -108,7 +114,8 @@ class Backwards(nn.Module):
         if x_length is not None:
             # reverse pack_padded_sequence
             output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
-
+            _, reversed_idx = torch.sort(sorted_idx)
+            output = output[reversed_idx]
         return output, hidden
 
     def initHidden(self, batchSize):
@@ -169,12 +176,12 @@ class Decoder(nn.Module):
                 embedding, 
                 vocabularySize, 
                 padding_id, 
-                batchSize, 
                 outputSize, 
                 hiddenSize, 
                 latentSize, 
                 encoderBidirectional,
-                xavier=False):
+                xavier=False,
+                useLatent=True):
 
         super(Decoder, self).__init__()
         self.hiddenSize = hiddenSize
@@ -250,9 +257,6 @@ class Decoder(nn.Module):
             return output, hidden, sbow, infer_mu, infer_logvar, prior_mu, prior_logvar
         else:
             return output, hidden
-
-    def initHidden(self):
-        return torch.zeros(self.batchSize, 1, self.hiddenSize) 
 
 class Inference(nn.Module):
     """
@@ -338,3 +342,182 @@ class CBOW(nn.Module):
         # vocab = -F.log_softmax(self.bow(z), dim=1)
         vocab = -self.sigmoid(self.bow(z))
         return vocab
+
+class VAD(nn.Module):
+    def __init__(self, 
+                embedding, 
+                paddingID,
+                sosID,
+                hiddenSize,
+                vocabularySize,
+                latentSize,
+                useLatent,
+                maxSeqLength,
+                bidirectionalEncoder,
+                teacherTrainingP=1,
+                useBOW=True):
+
+        super(VAD, self).__init__()
+
+        self.hiddenSize = hiddenSize
+        self.vocabSize = vocabularySize
+        self.latentSize = latentSize
+        self.teacherTraining = teacherTrainingP
+        self.sosID = sosID
+        self.paddingID = paddingID
+        self.useLatent = useLatent
+        self.maxSeqLength = maxSeqLength
+        self.useBOW = useBOW
+
+        self.encoder = Encoder(embedding, vocabularySize,
+                           paddingID, hiddenSize, bidirectionalEncoder)
+        self.backwards = Backwards(embedding, vocabularySize,
+                               paddingID, hiddenSize, bidirectionalEncoder)
+        self.decoder = Decoder(embedding, vocabularySize,
+                           paddingID, maxSeqLength, hiddenSize, latentSize, bidirectionalEncoder, useLatent=self.useLatent)
+
+        # helper variables
+        self.epoch = 0
+        self.batchNum = 0
+        self.numBatches = 0 
+
+    def forward(self, inputs, loss_function=None, criterion_r=None):
+        """
+        performs a forward pass of the model. Performs different actions
+        based on whether the model is in train() mode or eval() mode.
+
+        parameters:
+        inputs:
+            # if it's in training, inputs looks like this:
+            ((x_train, x_lengths), (y_train, y_lengths), (yb_train, yb_lengths))
+
+            # if it's in eval mode, inputs looks like this:
+            (x_train, x_lengths)
+        """
+
+        if self.training and loss_function is None:
+            raise Exception('The model is in .training() mode but a loss function was not passed through.')
+        
+        # set up input (and output if training) data.
+        # we also set up loss values if needed.
+        x, xLength = inputs['input'], inputs['input_length']
+        batchSize = x.shape[0]
+        if 'target' in inputs:
+            y, yLength = inputs['target'], inputs['target_length']
+            maxYLength = torch.max(yLength).item()
+            loss, ll_loss, kl_loss, aux_loss = 0, 0, 0, 0
+        if 'reverse' in inputs:
+            yb = inputs['reverse']
+
+
+        # run Encoder
+        encoderHidden = self.encoder.initHidden(batchSize).to(self.device)
+        encoderOutputs, encoderHidden = self.encoder(x, encoderHidden, xLength)
+
+        if self.training:
+            # compute Backwards
+            backwardHidden = self.backwards.initHidden(batchSize).to(self.device)
+            backwardOutput, backwardHidden = self.backwards(yb, yLength, backwardHidden)
+            backwardHidden = backwardHidden.detach()
+
+        # set up variables for decoder computation
+        decoderInput = torch.tensor([self.sosID] * batchSize, dtype=torch.long, device=self.device)
+        # decoderHidden = torch.sum(encoderHidden, dim=0)
+        decoderHidden = encoderHidden[-1]
+        decoderOutput = None # for the current container
+        decoderOutputs = []  # the whole sequence.
+
+        # determine whether to teacher force or not.
+        teacher_force = False if random.random() > self.teacherTraining else True
+
+        range_limit = self.maxSeqLength
+        if self.training:
+            range_limit = maxYLength
+
+        # Run through the decoder one step at a time. This seems to be common practice across
+        # all of the seq2seq based implementations I've come across on GitHub.
+        for t in range(range_limit):
+
+            # set up backward output variable independently.
+            back = backwardOutput[:, t] if self.training else None
+
+            # perform decoder response at time t
+            out = self.decoder(
+                decoderInput,
+                encoderOutputs,
+                xLength,
+                decoderHidden,
+                self.device,
+                back=back)
+
+            # update variables
+            if self.training:
+                decoderOutput, decoderHidden, p_bow, i_mu, i_logvar, p_mu, p_logvar = out
+            else:
+                decoderOutput, decoderHidden = out
+
+            if self.training and loss_function is not None:
+                bowt_mask = (y[:, t] != self.paddingID).detach().float()
+
+                if self.useBOW:
+                    # compute reference CBOW to compare predictions to.
+                    bow_mask = (y[:, t:] != self.paddingID).detach().float()
+                else:
+                    bow_mask = None
+
+                # compute loss
+                ll, kl, aux = loss_function(
+                    self.epoch,
+                    self.batchNum,
+                    self.numBatches,
+                    decoderOutput,
+                    y[:, t],
+                    i_mu,
+                    i_logvar,
+                    p_mu,
+                    p_logvar,
+                    y[:, t:],
+                    bowt_mask,
+                    bow_mask,
+                    p_bow,
+                    self.useLatent,
+                    self.useBOW,
+                    criterion_r
+                )
+                
+                # update loss values
+                loss += ll + kl + aux
+                ll_loss += ll
+                kl_loss += kl
+                aux_loss += aux
+            
+            # store response
+            decoderOutputs.append(decoderOutput.detach())
+            # detach the decoderHidden values (we want to save memory!)
+            decoderHidden = decoderHidden.squeeze(0).detach()
+
+            # set up input for next timestep
+            if self.training and teacher_force:
+                # feed this output to the next input
+                decoderInput = y[:, t]
+            else:
+                decoderInput = decoderOutput.argmax(1)
+
+        if self.training:
+            # normalise loss values before returning them
+            avg_loss    = loss/range_limit
+            avg_llloss  = ll_loss.item()/range_limit
+            avg_klloss  = 0
+            avg_auxloss = 0
+            if self.useLatent:
+                avg_klloss  = kl_loss.item()/range_limit
+                avg_auxloss = aux_loss.item()/range_limit
+            
+            # setup loss container
+            loss_container = (avg_loss, avg_llloss, avg_klloss, avg_auxloss)
+
+            return decoderOutputs, loss_container
+        else:
+            return decoderOutputs
+
+

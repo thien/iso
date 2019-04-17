@@ -16,6 +16,24 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
+from shutil import copyfile
+
+import csv
+
+def copyComponentFile(folder_path, dataset_parameters_file="dataset_parameters.json"):
+    # copy the dataset parameters into the model directory so we have an idea on
+    # what dataset the model parameters are trained with.
+    copyfile(dataset_parameters_file, os.path.join(folder_path, dataset_parameters_file))
+
+def printParameters(parameters):
+    """
+    Pretty print parameters in the cli.
+    """
+    maxLen = max([len(k) for k in parameters])
+    for key in parameters:
+        padding = " ".join(["" for _ in range(maxLen - len(key) + 5)])
+        print(key + padding, parameters[key])
+
 def initiateDirectory(folder_path):
     # create directory as it does not exist yet.
     if not os.path.isdir(folder_path):
@@ -42,7 +60,7 @@ def sequence_mask(sequence_length, max_len=None):
     """
     Caution: Input and Return are VARIABLE.
     """
-    sequence_length = torch.tensor(sequence_length)
+    # sequence_length = torch.tensor(sequence_length)
     if max_len is None:
         max_len = sequence_length.data.max()
     batch_size = sequence_length.size(0)
@@ -148,17 +166,16 @@ def loss_function(epoch,
                   ref_bow_t_mask,
                   ref_bow_mask,
                   pred_bow,
-                  criterion_r,
-                  criterion_bow,
-                  use_latent=True):
+                  use_latent=True,
+                  useBOW=True,
+                  criterion_r=None):
 
     # compute reconstruction loss
-    # ll_loss = criterion_r(y_predicted, y)
-    ll_loss = F.cross_entropy(y_predicted.view(-1, y_predicted.size(-1)), y.reshape(-1), reduce=False).view(y_predicted.size()[:-1])
-    # print(ll_loss.shape, ref_bow_t_mask.shape)
-    ll_loss = torch.mean(ll_loss * ref_bow_t_mask)
-    # compute mean
-    # ll_loss = ll_loss.mean()
+    if criterion_r is not None:
+        ll_loss = criterion_r(y_predicted, y)
+    else:
+        ll_loss = F.cross_entropy(y_predicted.view(-1, y_predicted.size(-1)), y.reshape(-1), reduction='none').view(y_predicted.size()[:-1])
+        ll_loss = torch.mean(ll_loss * ref_bow_t_mask)
 
     # compute KLD
     kl_loss = 0
@@ -167,13 +184,15 @@ def loss_function(epoch,
         kl_loss = torch.mean(kl_loss)
         # KL Annealing
         if epoch < 2:
-            kl_cap = 50
-            kl_weight_count = (epoch-1)*num_batches + batch_num
+            kl_cap = 1000
+            # print(epoch, num_batches, batch_num)
+            kl_weight_count = max((epoch-1)*num_batches,0) + batch_num
+            # print("KL_WEIGHT CAP:", kl_weight_count)
             kl_weight = kl_weight_count / kl_cap
             kl_loss *= kl_weight
 
     aux_loss = 0
-    if use_latent:
+    if use_latent and useBOW:
         # compute auxillary loss
         aux_loss = bow_loss(future_y_labels, ref_bow_mask, pred_bow)
         # weight auxillary loss
@@ -249,9 +268,86 @@ def batchData(dataset, padID, device, batchsize=32, cutoff=50, backwards=False):
         batches[i] = (reviews, [i[0] for i in sortedindexes])
     return batches
 
+def prepDataset(dataset, padID, cutoff=50, train=True, step=1):
+    def pad(row, padID, maxLen):
+        return row + [padID for _ in range(maxLen - len(row))]
+    
+    # get input lengths
+    inp_l = np.array([len(seq[0]) for seq in dataset])
+    out_l = np.array([len(seq[1]) for seq in dataset])
+
+    if train:
+        # get reverse of outputs
+        output_reverse = np.array([seq[1][::-1] for seq in dataset])
+        
+    # we want each row to be input, output, output_reverse, input_length, output_length
+    # (output_reverse_length is the same as output length)
+    inp   = np.array([pad(seq[0], padID, cutoff) for seq in dataset])
+    out   = np.array([pad(seq[1], padID, cutoff) for seq in dataset])
+    if train:
+        out_r = np.array([pad(seq, padID, cutoff) for seq in output_reverse])
+    # set up variables for use in DataLoader
+    
+    if train:
+        return [{"input":inp[i], 
+            "target":out[i],
+            "reverse":out_r[i],
+            "input_length":inp_l[i],
+            "target_length":out_l[i]
+            } for i in range(len(dataset))][::step]
+    else:
+        return [{"input":inp[i], 
+            "target":out[i],
+            "input_length":inp_l[i],
+            "target_length":out_l[i]
+            } for i in range(len(dataset))][::step]
+
 def saveModels(encoder, backwards, decoder, filepath):
     print("Saving models..", end=" ")
     torch.save(encoder.state_dict(),  os.path.join(filepath, 'encoder.pth'))
     torch.save(backwards.state_dict(),  os.path.join(filepath, 'backwards.pth'))
     torch.save(decoder.state_dict(),  os.path.join(filepath, 'decoder.pth'))
     print("Done.")
+
+def saveModel(vad, filepath):
+    torch.save(vad.state_dict(), os.path.join(filepath, 'vad.pth'))
+
+def saveEvalOutputs(folder_path, results, epochs, folder_name="outputs"):
+    output_dir = os.path.join(folder_path, folder_name)
+    output_dir = initiateDirectory(output_dir)
+    filename = "epoch_" + str(epochs) + ".csv"
+    filepath = os.path.join(output_dir, filename)
+    with open(filepath, 'w') as myfile:
+        wr = csv.writer(myfile, delimiter='\t', quoting=csv.QUOTE_ALL)
+        wr.writerows(results)
+
+def convertRealID2Word(id2word, y, padtag="<pad>", toString=True):
+    # convert word IDs into actual words
+    entries = [[id2word[x.item()] for x in y[entry].cpu()] for entry in range(len(y))]
+    # filter out padding tags.
+    entries = [[x for x in y if x != padtag] for y in entries]
+    # if toString is enabled then turn sequences to tags.
+    entries = [" ".join(y) for y in entries] if toString else entries
+    return entries
+
+def responseID2Word(id2word, outputs):
+    entries = []
+    for batch_line in outputs:
+        entry = [torch.argmax(batch_line[i]).cpu().item() for i in range(len(batch_line))]
+        entries.append([id2word[i] for i in entry])
+     
+    words = []
+    for i in range(len(outputs[0])):
+        tokens = [entries[j][i] for j in range(len(entries))]
+        # find the eos token
+        try:
+            tokenpos = tokens.index("<eos>")
+        except:
+            tokenpos = len(tokens)
+        # remove extra eos tokens and padding values if they exist.
+        tokens = tokens[:tokenpos+1]
+        # somehow there could be a ["<sos>"] in the list
+        tokens = [x if (x != ["<sos>"]) else "<sos>" for x in tokens]
+        # create string
+        words.append(" ".join(tokens))
+    return words
