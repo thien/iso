@@ -409,7 +409,6 @@ class VAD(nn.Module):
         if 'reverse' in inputs:
             yb = inputs['reverse']
 
-
         # run Encoder
         encoderHidden = self.encoder.initHidden(batchSize).to(self.device)
         encoderOutputs, encoderHidden = self.encoder(x, encoderHidden, xLength)

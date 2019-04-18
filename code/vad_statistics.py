@@ -13,9 +13,12 @@ import re
 import json
 import pickle
 import torch
-from vad_utils import loadDataset, batchData, convertRealID2Word
+from vad_utils import loadDataset, batchData, convertRealID2Word, prepDataset
 from tqdm import tqdm
 from multiprocessing import Pool
+
+from torch.utils.data import DataLoader
+from multiprocessing import cpu_count
 
 from nltk.translate.bleu_score import sentence_bleu
 plt.rc('text',usetex=True)
@@ -26,7 +29,7 @@ plt.rc('figure', **{'dpi': 200})
 
 
 class Statistics:
-    def __init__(self, model_folder):
+    def __init__(self, model_folder, verbose=False):
         # configuration variables
         self.model_folder = model_folder
         self.parent_foldername = "models"
@@ -40,12 +43,14 @@ class Statistics:
         self.charts_ext = ".pdf"
         self.model_parameters_filename = "model_parameters.json"
         self.dataset_parameters_filename = "dataset_parameters.json"
-
+        
         # loaded when initiated
+        self.verb = verbose
         self.parameters = None
         self.useKL = True
         self.useBOW = True
         self.results = None
+        self.dataset = None
 
         self.valx_tokens = None
         self.valy_tokens = None
@@ -66,8 +71,13 @@ class Statistics:
         
         # retrieve .csv files.
         if len(files) < 1: return
-        parts = re.match(self.results_csv_re, files[0], re.I).groups()
+     
+        # retrieve only csvs
         files = [i for i in files if (i[-4:].lower() == ".csv")]
+        if self.verb:
+            print("Loading", len(files), "results..", end=" ")
+        parts = re.match(self.results_csv_re, files[-1], re.I).groups()
+        
         # sort by epochs (increasing order)
         numbs = sorted([int(re.findall('\d+', i )[0]) for i in files])
         
@@ -83,8 +93,11 @@ class Statistics:
             else:
                 results = np.vstack((results,ents))
         self.results = results
+        self.printFinish()
 
     def plotChart(self, step=100, ylim=6):
+        if self.verb:
+            print("Plotting loss chart..", end=" ")
         if self.results is None:
             raise Exception('There are no results to plot from. Please run loadResults()')
         recon = self.results[:,0]
@@ -112,16 +125,65 @@ class Statistics:
         filepath = os.path.join(directory, filename)
         plt.savefig(filepath, bbox_inches='tight')
         plt.close()
+  
+        self.printFinish()
 
     def loadModelParameters(self):
+        if self.verb:
+            print("Loading model parameters..", end=" ")
         # we want to load the model parameters
         filepath = os.path.join(self.parent_foldername,self.model_folder, self.model_parameters_filename)
         with open(filepath, "r") as f:
             self.parameters = json.load(f)
+        
+        self.printFinish()
+
+    def loadPenn(self):
+        if self.verb:
+            print("Loading Penn data..", end=" ")
+        # shallow integration of the sentenceVAE codebase s.t. we can
+        # load the penn dataset.
+        from sendata_utils import to_var, idx2word, expierment_name, PTB
+        from collections import OrderedDict, defaultdict
+
+        splits = ['valid']
+
+        valdata = PTB(
+                data_dir='data',
+                split='valid',
+                create_data='store_true',
+                max_sequence_length=60,
+                min_occ=1
+            )
+
+        with open('data/ptb.vocab.json', 'r') as file:
+            vocab = json.load(file)
+
+        word2id, id2word = vocab['w2i'], vocab['i2w']
+        self.id2word = {int(key) : id2word[key] for key in id2word.keys()}
+        
+        self.val_loader = DataLoader(
+            dataset=valdata,
+            batch_size=self.parameters['batchSize'],
+            shuffle=False,
+            num_workers=cpu_count()-1,
+            pin_memory=torch.cuda.is_available()
+        )
+
+        self.parseDataLoader()
+
+        self.printFinish()
 
     # now we're looking at loading the dataset from each model.
     def loadDatasetFromModel(self):
-        device = torch.device("cpu")
+        if self.verb:
+            print("Loading dataset from model configurations..", end=" ")
+     
+        if "dataset" in self.parameters:
+            if self.parameters['dataset'].lower() == "penn":
+                self.loadPenn()
+                return
+        
         batchSize = self.parameters['batchSize']
         reduction = self.parameters['reduction']
 
@@ -135,17 +197,33 @@ class Statistics:
         dataset = loadDataset(path=dataset_filepath)
 
         word2id, id2word = dataset['word2id'], dataset['id2word']
+        self.id2word = id2word
         paddingID, sosID = word2id['<pad>'], word2id['<sos>']
         cutoff = dataset['cutoff']
 
         # load validation data.
         val = dataset['validation']
 
-        val_x, val_y = [x[0] for x in val[::reduction]], [x[1] for x in val[::reduction]]
-        valx = batchData(val_x, paddingID, device, batchSize, cutoff)
-        valy = batchData(val_y, paddingID, device, batchSize, cutoff)
-        self.valx_tokens = [convertRealID2Word(id2word, i[0], toString=False) for i in valx]
-        self.valy_tokens = [convertRealID2Word(id2word, i[0], toString=False) for i in valy]
+        self.printFinish()
+
+        valdata = prepDataset(val, reduction, cutoff, train=False, step=reduction)
+
+        self.val_loader = DataLoader(
+            dataset=valdata,
+            batch_size=batchSize,
+            shuffle=False,
+            num_workers=cpu_count()-1,
+            pin_memory=torch.cuda.is_available()
+        )
+
+        self.parseDataLoader()
+
+        if self.verb:
+            print("Loaded",len(valdata),"input validation sequences.")
+
+    def parseDataLoader(self):
+        self.valx_tokens = [convertRealID2Word(self.id2word, batch['input'], toString=False) for batch in self.val_loader]
+        self.valy_tokens = [convertRealID2Word(self.id2word, batch['target'], toString=False) for batch in self.val_loader]
 
     # now we need to load the model results
     def loadModelOutputs(self):
@@ -157,14 +235,17 @@ class Statistics:
                         ]
                     ]
         """
+
+        if self.verb:
+            print("Loading model responses..", end=" ")
     
         folder = os.path.join(self.parent_foldername, self.model_folder, self.model_outputs_folder)
         files = os.listdir(folder)
         
         # retrieve .csv files.
         if len(files) < 1: return
-        parts = re.match(self.output_re, files[0], re.I).groups()
         files = [i for i in files if (i[-4:].lower() == ".csv")]
+        parts = re.match(self.output_re, files[0], re.I).groups()
         # sort by epochs (increasing order)
         numbs = sorted([int(re.findall('\d+', i )[0]) for i in files])
         results = None
@@ -182,6 +263,11 @@ class Statistics:
                     batches.append(batch)
             outputs.append(batches)
         self.outputs = outputs
+        self.printFinish()
+
+    def printFinish(self):
+        if self.verb:
+            print("Done.")
 
     # Rouge Calculation
     @staticmethod
@@ -286,22 +372,33 @@ class Statistics:
         p.join()
         return res_list
 
+    def batchComputeBLEUROUGE(self):
+        self.bleuRougeStats = self.processItems(self.processPredictions, [ep for ep in range(len(self.outputs))])
+        return self.bleuRougeStats
+
     def express(self):
         """
-        Performs all measurement operations
+        Performs all measurement operations from scratch
 
         """
+        print("Processing statistics for", self.model_folder)
         self.loadModelParameters()
         self.loadResults()
         self.loadDatasetFromModel()
         self.loadModelOutputs()
  
         self.plotChart(step=50, ylim=5)
+        if self.verb:
+            print("Calculating BLEU/ROUGE Scores..", end=" ")
+        print(len(self.outputs))
         stats = self.processItems(self.processPredictions, [ep for ep in range(len(self.outputs))])
-        # stats = [self.processPredictions(epoch) for epoch in range(len(self.outputs))]
+        self.printFinish()
         self.chartBLEUROUGE(stats)
         self.dumpStats(stats)
 
 if __name__ == "__main__":
-    s = Statistics("20190416 17-47-35")
+    # s = Statistics("20190416 17-47-35")
+    s = Statistics("20190417 18-00-03")
+    s.dataset_parameters_filename = "dataset_parameters_no_condition.json"
+    s.verb = True
     s.express()

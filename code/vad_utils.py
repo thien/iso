@@ -20,10 +20,13 @@ from shutil import copyfile
 
 import csv
 
-def copyComponentFile(folder_path, dataset_parameters_file="dataset_parameters.json"):
+# https://tex.stackexchange.com/questions/146716/importing-csv-file-into-latex-as-a-table
+
+def copyComponentFile(folder_path, filename="dataset_parameters.json", src_dir=""):
     # copy the dataset parameters into the model directory so we have an idea on
     # what dataset the model parameters are trained with.
-    copyfile(dataset_parameters_file, os.path.join(folder_path, dataset_parameters_file))
+    src = os.path.join(src_dir, filename)
+    copyfile(src, os.path.join(folder_path, filename))
 
 def printParameters(parameters):
     """
@@ -270,7 +273,11 @@ def batchData(dataset, padID, device, batchsize=32, cutoff=50, backwards=False):
 
 def prepDataset(dataset, padID, cutoff=50, train=True, step=1):
     def pad(row, padID, maxLen):
-        return row + [padID for _ in range(maxLen - len(row))]
+        resp = row + [padID for _ in range(maxLen - len(row))]
+        if len(resp) > cutoff:
+            print("Something's gone horribly wrong.")
+            raise Error("wtf?")
+        return resp
     
     # get input lengths
     inp_l = np.array([len(seq[0]) for seq in dataset])
@@ -287,17 +294,16 @@ def prepDataset(dataset, padID, cutoff=50, train=True, step=1):
     if train:
         out_r = np.array([pad(seq, padID, cutoff) for seq in output_reverse])
     # set up variables for use in DataLoader
-    
     if train:
-        return [{"input":inp[i], 
-            "target":out[i],
-            "reverse":out_r[i],
+        return [{"input":np.array(inp[i]), 
+            "target":np.array(out[i]),
+            "reverse":np.array(out_r[i]),
             "input_length":inp_l[i],
             "target_length":out_l[i]
             } for i in range(len(dataset))][::step]
     else:
-        return [{"input":inp[i], 
-            "target":out[i],
+        return [{"input":np.array(inp[i]), 
+            "target":np.array(out[i]),
             "input_length":inp_l[i],
             "target_length":out_l[i]
             } for i in range(len(dataset))][::step]
