@@ -1,6 +1,7 @@
 from vad import VAD
 from vad_utils import *
 from vad_statistics import Statistics
+import svae
 import argparse
 
 import os
@@ -15,6 +16,7 @@ import json
 from shutil import copyfile
 from torch.utils.data import DataLoader
 from multiprocessing import cpu_count
+
 
 class Trainer:
     def __init__(self, args, model_base_dir="models"):
@@ -96,8 +98,26 @@ class Trainer:
             self.model.device = self.device
             self.criterion_r = None
             self.criterion_bow = nn.BCEWithLogitsLoss()
+        elif self.args.model == "bowman":
+            # setup Sentence VAE model described by bowman.
+            self.model = svae.SentenceVAE(
+                embedding,
+                self.vocabularySize,
+                self.embeddingDim,
+                self.args.hidden_size,
+                self.args.latent_size,
+                0,
+                self.sosID,
+                self.eosID,
+                self.paddingID,
+                self.unkID,
+                self.cutoff
+            ).to(self.device)
+            self.model.device = self.device
         else:
             raise ValueError("You didn't implement other models.")
+        self.model.k = self.args.k
+        self.model.x0 = self.args.x0
         # setup loss functions and optimiser
         self.optimiser = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
     
@@ -138,10 +158,10 @@ class Trainer:
             numEvalBatches = len(self.valdata)
 
         self.model.numBatches = numTrainingBatches
+        step = 0
         # setup indexes for each epoch
         for epoch in tqdm(range(self.args.epochs)):
             self.model.train()
-            self.model.epoch = epoch
             train_loader = DataLoader(
                 dataset=self.traindata,
                 batch_size=self.args.batch_size,
@@ -160,14 +180,32 @@ class Trainer:
                 batch['reverse'] = batch['reverse'].to(self.device)
         
                 # get output and loss values
-                _, loss_container = self.model(batch, loss_function, self.criterion_r)
-                loss, ll, kl, aux = loss_container
+                if self.args.model == "bowman":
+                    logp, mean, logv, _ = self.model(batch['input'], batch['input_length'])
+                    ll = svae.recon_loss(logp, batch['target'], batch['input_length'], self.model.nll)
+                    kl, kl_weight = svae.KL(mean, logv, 'linear', step, self.args.k, self.args.x0)
+                    aux = 0.0
+                    step += 1
+                    loss = (ll + kl_weight * kl)/self.args.batch_size
+                else:
+                    self.model.step = step
+                    _, loss_container = self.model(batch, loss_function, self.criterion_r)
+                    loss, ll, kl, aux = loss_container
+
                 # gradient descent step
                 self.optimiser.zero_grad()
                 loss.backward()
+
                 # gradient clip
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.gradient_clip)
                 self.optimiser.step()
+
+                # compute mean loss (by the individual output) for bowman
+                if self.args.model == "bowman":
+                    loss = loss/self.cutoff
+                    ll = (ll.item()/self.args.batch_size)/self.cutoff
+                    kl = (kl.item()/self.args.batch_size)/self.cutoff
+
                 # add losses.
                 losses.append(loss.item())
                 ll_losses.append(ll)
@@ -203,7 +241,10 @@ class Trainer:
                     self.batchNum = n
                     batch['input'] = batch['input'].to(self.device)
                     # get output and loss values
-                    responses = self.model(batch)
+                    if self.args.model == "bowman":
+                        responses, _, _, _ = self.model(batch['input'], batch['input_length'])
+                    else:
+                        responses = self.model(batch)
                     responses = [entry.detach().cpu() for entry in responses]
                     responses = responseID2Word(self.id2word, responses)
                     results.append(responses)
@@ -274,6 +315,8 @@ class Trainer:
         self.cutoff = dataset['cutoff']
         self.paddingID = self.word2id['<pad>']
         self.sosID = self.word2id['<sos>']
+        self.eosID = self.word2id['<eos>']
+        self.unkID = self.word2id['<unk>']
 
         # convert dataset into tensors
         self.embeddingWeights = torch.tensor(weightMatrix, dtype=torch.float)
@@ -311,6 +354,14 @@ def defaultModelName():
     return datetime.datetime.now().strftime("%Y%m%d %H-%M-%S")
 
 if __name__ == "__main__":
+    def str2bool(v):
+        if v.lower() in ('yes', 'true', 't', 'y', '1'):
+            return True
+        elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+            return False
+        else:
+            raise argparse.ArgumentTypeError('Boolean value expected.')
+            
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--name','-n', type=str, default=defaultModelName())
@@ -322,16 +373,19 @@ if __name__ == "__main__":
     parser.add_argument('--epochs','-ep',  type=int, default=10)
     parser.add_argument('--learning_rate', '-lr', type=float, default=0.001)
     parser.add_argument('--gradient_clip', '-cl', type=int, default=1)
-    parser.add_argument('--useBOW','-bow', type=bool, default=True)
+    parser.add_argument('--useBOW','-bow', type=str2bool, default=True)
     parser.add_argument('--reduction', '-r', type=int, default=12)
     parser.add_argument('--device', '-d', type=str, default="cuda")
-    parser.add_argument('--use_latent', '-ul', type=bool, default=True)
+    parser.add_argument('--use_latent', '-ul', type=str2bool, default=True)
     parser.add_argument('--teacher_training_p', '-tp', type=float, default=1.0)
-    parser.add_argument('--pretrained_weights', '-w', type=bool, default=True)
-    parser.add_argument('--save', '-s', type=bool, default=True)
+    parser.add_argument('--pretrained_weights', '-w', type=str2bool, default=True)
+    parser.add_argument('--save', '-s', type=str2bool, default=True)
     parser.add_argument('--penn_path', type=str, default= '../Datasets/Penn')
     parser.add_argument('--amazon_path', type=str, default= '../Datasets/Reviews')
     parser.add_argument('--subtitles_path', type=str, default= '../Datasets/OpenSubtitles')
+    # kl parameters
+    parser.add_argument('-k', '--k', type=float, default=0.0025)
+    parser.add_argument('-x0', '--x0', type=int, default=2500)
 
     args = parser.parse_args()
 

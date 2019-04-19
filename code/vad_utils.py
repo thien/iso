@@ -156,10 +156,13 @@ def recon_loss(y_predicted, y):
     y_onehot = torch.tensor(batch_size, num_classes).zero_()
     return None
 
-def loss_function(epoch,
-                  batch_num,
-                  num_batches,
-                  y_predicted,
+def kl_anneal_function(anneal_function, step, k, x0):
+    if anneal_function == 'logistic':
+        return float(1/(1+np.exp(-k*(step-x0))))
+    elif anneal_function == 'linear':
+        return min(1, step/x0)
+
+def loss_function(y_predicted,
                   y,
                   inference_mu,
                   inference_logvar,
@@ -171,7 +174,10 @@ def loss_function(epoch,
                   pred_bow,
                   use_latent=True,
                   useBOW=True,
-                  criterion_r=None):
+                  criterion_r=None,
+                  step=1,
+                  k=1,
+                  x0=1):
 
     # compute reconstruction loss
     if criterion_r is not None:
@@ -182,17 +188,13 @@ def loss_function(epoch,
 
     # compute KLD
     kl_loss = 0
+    kl_weight = 0
     if use_latent:
         kl_loss = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
         kl_loss = torch.mean(kl_loss)
         # KL Annealing
-        if epoch < 2:
-            kl_cap = 1000
-            # print(epoch, num_batches, batch_num)
-            kl_weight_count = max((epoch-1)*num_batches,0) + batch_num
-            # print("KL_WEIGHT CAP:", kl_weight_count)
-            kl_weight = kl_weight_count / kl_cap
-            kl_loss *= kl_weight
+        kl_weight = kl_anneal_function("linear", step, k, x0)
+        kl_loss *= kl_weight
 
     aux_loss = 0
     if use_latent and useBOW:
@@ -202,10 +204,12 @@ def loss_function(epoch,
         alpha = 10
         aux_loss *= alpha
 
-    return ll_loss, kl_loss, aux_loss
+    return ll_loss, kl_loss, aux_loss, kl_weight
 
 def plotBatchLoss(iteration, losses, kl, aux, folder_path):
+
     x = [i for i in range(1, len(losses)+1)]
+
     labels = ["LL", "KL", "Auxiliary"]
 
     plt.stackplot(x, losses, kl, aux, labels=labels)

@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.utils.rnn as rnn_utils
+from torch.autograd import Variable
+from vad_utils import kl_anneal_function
 
 """
 Adapted from https://github.com/timbmg/Sentence-VAE
@@ -12,30 +14,23 @@ def to_var(x, volatile=False):
     return Variable(x, volatile=volatile)
 
 
-def loss_fn(logp, target, length, mean, logv, anneal_function, step, k, x0):
-    # cut-off unnecessary padding from target, and flatten
-    target = target[:, :torch.max(length)].contiguous().view(-1)
-    logp = logp.view(-1, logp.size(2))
-
-    # Negative Log Likelihood
-    NLL_loss = NLL(logp, target)
-
+def KL(mean, logv, anneal_function, step, k, x0):
     # KL Divergence
-    KL_loss = -0.5 * torch.sum(1 + logv - mean.pow(2) - logv.exp())
-    KL_weight = kl_anneal_function(anneal_function, step, k, x0)
+    kl_loss = -0.5 * torch.sum(1 + logv - mean.pow(2) - logv.exp())
+    kl_weight = kl_anneal_function(anneal_function, step, k, x0)
+    return kl_loss, kl_weight
 
-    return NLL_loss, KL_loss, KL_weight
-
-def kl_anneal_function(anneal_function, step, k, x0):
-    if anneal_function == 'logistic':
-        return float(1/(1+np.exp(-k*(step-x0))))
-    elif anneal_function == 'linear':
-        return min(1, step/x0)
+def recon_loss(logp, target, length, NLL):
+    # cut-off unnecessary padding from target, and flatten
+    target = target[:, :torch.max(length).item()].contiguous().view(-1)
+    logp = logp.view(-1, logp.size(2))
+    # Negative Log Likelihood
+    return NLL(logp, target)
 
 class SentenceVAE(nn.Module):
 
     def __init__(self, embedding, vocab_size, embedding_size, hidden_size, latent_size, word_dropout_rate,
-                sos_idx, eos_idx, pad_idx, unk_idx, max_sequence_length, num_layers=1, bidirectional=False):
+                sos_idx, eos_idx, pad_idx, unk_idx, max_sequence_length, num_layers=1):
 
         super().__init__()
         self.tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.Tensor
@@ -48,8 +43,6 @@ class SentenceVAE(nn.Module):
 
         self.latent_size = latent_size
 
-        self.rnn_type = rnn_type
-        self.bidirectional = bidirectional
         self.num_layers = num_layers
         self.hidden_size = hidden_size
 
@@ -57,15 +50,17 @@ class SentenceVAE(nn.Module):
 
         self.word_dropout_rate = word_dropout_rate
 
-        self.encoder_rnn = rnn.GRU(embedding_size, hidden_size, num_layers=num_layers, bidirectional=self.bidirectional, batch_first=True)
-        self.decoder_rnn = rnn.GRU(embedding_size, hidden_size, num_layers=num_layers, bidirectional=self.bidirectional, batch_first=True)
+        self.encoder_rnn = nn.GRU(embedding_size, hidden_size, num_layers=num_layers, bidirectional=True, batch_first=True)
+        self.decoder_rnn = nn.GRU(embedding_size, hidden_size, num_layers=num_layers, bidirectional=False, batch_first=True)
 
-        self.hidden_factor = (2 if bidirectional else 1) * num_layers
+        # self.hidden_factor = (2 if bidirectional else 1) * num_layers
 
-        self.hidden2mean = nn.Linear(hidden_size * self.hidden_factor, latent_size)
-        self.hidden2logv = nn.Linear(hidden_size * self.hidden_factor, latent_size)
-        self.latent2hidden = nn.Linear(latent_size, hidden_size * self.hidden_factor)
-        self.outputs2vocab = nn.Linear(hidden_size * (2 if bidirectional else 1), vocab_size)
+        self.hidden2mean = nn.Linear(hidden_size * 2 * num_layers, latent_size)
+        self.hidden2logv = nn.Linear(hidden_size * 2 * num_layers, latent_size)
+        self.latent2hidden = nn.Linear(latent_size, hidden_size * num_layers)
+        self.outputs2vocab = nn.Linear(hidden_size, vocab_size)
+
+        self.nll = torch.nn.NLLLoss(reduction='sum', ignore_index=self.pad_idx)
 
     def forward(self, input_sequence, length):
 
@@ -78,13 +73,16 @@ class SentenceVAE(nn.Module):
 
         packed_input = rnn_utils.pack_padded_sequence(input_embedding, sorted_lengths.data.tolist(), batch_first=True)
 
+        # print(packed_input)
+
+        # empty = torch.zeros(self.num_layers*2, batch_size, self.hidden_size).to(self.device)
         _, hidden = self.encoder_rnn(packed_input)
 
-        if self.bidirectional or self.num_layers > 1:
-            # flatten hidden state
-            hidden = hidden.view(batch_size, self.hidden_size*self.hidden_factor)
-        else:
-            hidden = hidden.squeeze()
+        # if self.bidirectional or self.num_layers > 1:
+        #     # flatten hidden state
+        hidden = hidden.view(batch_size, self.hidden_size*self.num_layers*2)
+        # else:
+        #     hidden = hidden.squeeze()
 
         # REPARAMETERIZATION
         mean = self.hidden2mean(hidden)
@@ -97,11 +95,11 @@ class SentenceVAE(nn.Module):
         # DECODER
         hidden = self.latent2hidden(z)
 
-        if self.bidirectional or self.num_layers > 1:
-            # unflatten hidden state
-            hidden = hidden.view(self.hidden_factor, batch_size, self.hidden_size)
-        else:
-            hidden = hidden.unsqueeze(0)
+        # if self.bidirectional or self.num_layers > 1:
+        #     # unflatten hidden state
+        #     hidden = hidden.view(num_layers, batch_size, self.hidden_size)
+        # else:
+        hidden = hidden.unsqueeze(0)
 
         # decoder input
         if self.word_dropout_rate > 0:
@@ -113,7 +111,7 @@ class SentenceVAE(nn.Module):
             decoder_input_sequence = input_sequence.clone()
             decoder_input_sequence[prob < self.word_dropout_rate] = self.unk_idx
             input_embedding = self.embedding(decoder_input_sequence)
-        input_embedding = self.embedding_dropout(input_embedding)
+        # input_embedding = self.embedding_dropout(input_embedding)
         packed_input = rnn_utils.pack_padded_sequence(input_embedding, sorted_lengths.data.tolist(), batch_first=True)
 
         # decoder forward pass
@@ -129,11 +127,5 @@ class SentenceVAE(nn.Module):
         # project outputs to vocab
         logp = nn.functional.log_softmax(self.outputs2vocab(padded_outputs.view(-1, padded_outputs.size(2))), dim=-1)
         logp = logp.view(b, s, self.embedding.num_embeddings)
-
-        if self.training:
-            # loss calculation
-            NLL_loss, KL_loss, KL_weight = loss_fn(logp, batch['target'], batch['input_length'], mean, logv, args.anneal_function, step, args.k, args.x0)
-
-            loss = (NLL_loss + KL_weight * KL_loss)/batch_size
 
         return logp, mean, logv, z

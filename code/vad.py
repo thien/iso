@@ -465,10 +465,7 @@ class VAD(nn.Module):
                     bow_mask = None
 
                 # compute loss
-                ll, kl, aux = loss_function(
-                    self.epoch,
-                    self.batchNum,
-                    self.numBatches,
+                ll, kl, aux, _ = loss_function(
                     decoderOutput,
                     y[:, t],
                     i_mu,
@@ -481,7 +478,10 @@ class VAD(nn.Module):
                     p_bow,
                     self.useLatent,
                     self.useBOW,
-                    criterion_r
+                    criterion_r,
+                    self.step,
+                    self.k,
+                    self.x0
                 )
                 
                 # update loss values
