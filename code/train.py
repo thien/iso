@@ -35,7 +35,7 @@ class Trainer:
         self.device = None
 
     def setup(self):
-        self.args.folder_name = self.args.dataset + " " + self.args.name
+        self.args.folder_name = self.args.name +" "+ self.args.dataset + " " + self.args.model
         self.folder_path = os.path.join(self.args.model_parent_dir, self.args.folder_name)
         self.device = torch.device(self.args.device)
         printParameters(vars(self.args))
@@ -46,11 +46,6 @@ class Trainer:
 
         self.setupDataset()
         self.setupModel()
-        self.train()
-
-        if self.args.save:
-            saveModel(self.model, self.folder_path)
-            self.runStats()
 
     def setupDataset(self):
         if self.args.dataset == "penn":
@@ -81,7 +76,25 @@ class Trainer:
                     self.args.teacher_training_p,
                     useBOW=self.args.useBOW).to(self.device)
             self.model.device = self.device
-            self.criterion_r = None #(could also be criterion_r = nn.CrossEntropyLoss(ignore_index=paddingID))
+            self.criterion_r = None
+            self.criterion_bow = nn.BCEWithLogitsLoss()
+        elif self.args.model == "seq2seq":
+            # since the VAD collapses into a seq2seq with attention
+            # when the KL vanishes, we can force the latent variable to
+            # learn nothing.
+            self.model = VAD(embedding,
+                    self.paddingID,
+                    self.sosID,
+                    self.args.hidden_size,
+                    self.vocabularySize,
+                    1,
+                    False,
+                    self.cutoff,
+                    True, # use bidirectional encoder
+                    self.args.teacher_training_p,
+                    useBOW=False).to(self.device)
+            self.model.device = self.device
+            self.criterion_r = None
             self.criterion_bow = nn.BCEWithLogitsLoss()
         else:
             raise ValueError("You didn't implement other models.")
@@ -141,8 +154,6 @@ class Trainer:
             # iterate through the training batches
             for n, batch in enumerate(tqdm(train_loader)):
                 self.model.batchNum = n
-
-                # print(batch['input'])
 
                 batch['input']   = batch['input'].to(self.device)
                 batch['target']  = batch['target'].to(self.device)
@@ -330,3 +341,6 @@ if __name__ == "__main__":
     brock = Trainer(args)
     brock.setup()
     brock.train()
+    if brock.args.save:
+        saveModel(brock.model, brock.folder_path)
+        brock.runStats()
