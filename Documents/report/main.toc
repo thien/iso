@@ -1,38 +1,50 @@
 \babel@toc {english}{}
-\contentsline {chapter}{\numberline {1}Literature Survey}{2}{chapter.2}
-\contentsline {section}{\numberline {1.1}Artificial Data}{2}{section.3}
-\contentsline {section}{\numberline {1.2}Text Generation}{2}{section.4}
-\contentsline {section}{\numberline {1.3}Language Modelling}{2}{section.5}
-\contentsline {section}{\numberline {1.4}Dataset}{3}{section.9}
-\contentsline {section}{\numberline {1.5}Recurrent Neural Networks}{4}{section.10}
-\contentsline {subsection}{\numberline {1.5.1}LSTMs and GRUs}{4}{subsection.13}
-\contentsline {section}{\numberline {1.6}Autoencoders}{5}{section.16}
-\contentsline {subsection}{\numberline {1.6.1}Variational Autoencoders}{5}{subsection.17}
-\contentsline {subsection}{\numberline {1.6.2}Conditional Variational Autoencoders}{7}{subsection.22}
-\contentsline {section}{\numberline {1.7}Related Work}{7}{section.24}
-\contentsline {subsection}{\numberline {1.7.1}Sequence To Sequence}{7}{subsection.25}
-\contentsline {subsubsection}{Variational Context}{8}{section*.27}
-\contentsline {subsubsection}{Attention Mechanisms}{9}{section*.29}
-\contentsline {chapter}{\numberline {2}Model}{10}{chapter.31}
-\contentsline {section}{\numberline {2.1}Variational Autoregressive Decoders}{10}{section.32}
-\contentsline {subsubsection}{Encoder}{10}{section*.33}
-\contentsline {subsubsection}{Backwards}{11}{section*.35}
-\contentsline {subsubsection}{Attention}{11}{section*.37}
-\contentsline {subsubsection}{Inference Model}{11}{section*.39}
-\contentsline {subsubsection}{Prior Model}{11}{section*.41}
-\contentsline {subsubsection}{Decoder (Variational Autoregressive)}{11}{section*.43}
-\contentsline {subsubsection}{Auxillary Objective}{12}{section*.46}
-\contentsline {subsubsection}{Learning Mechanism}{12}{section*.48}
-\contentsline {subsubsection}{KL Divergence Derivation}{12}{section*.50}
-\contentsline {section}{\numberline {2.2}Data Augmentation}{12}{section.52}
-\contentsline {subsection}{\numberline {2.2.1}Embeddings}{12}{subsection.74}
-\contentsline {subsection}{\numberline {2.2.2}Review Prepropressing}{13}{subsection.75}
-\contentsline {subsection}{\numberline {2.2.3}Polarity Calculation}{13}{subsection.76}
-\contentsline {subsection}{\numberline {2.2.4}Implementation}{13}{subsection.78}
-\contentsline {subsubsection}{Weight Initialisation}{14}{section*.79}
-\contentsline {section}{\numberline {2.3}Optimisation Challenges}{14}{section.80}
-\contentsline {subsection}{\numberline {2.3.1}Teacher Forcing}{14}{subsection.81}
-\contentsline {subsection}{\numberline {2.3.2}KL Annealing}{15}{subsection.82}
-\contentsline {subsection}{\numberline {2.3.3}Word Dropout}{15}{subsection.83}
-\contentsline {section}{\numberline {2.4}Testing Method}{15}{section.84}
-\contentsline {subsection}{\numberline {2.4.1}Measuring Performance}{15}{subsection.85}
+\contentsline {chapter}{\numberline {1}Introduction}{2}{chapter.2}
+\contentsline {chapter}{\numberline {2}Literature Survey}{3}{chapter.3}
+\contentsline {section}{\numberline {2.1}Artificial Data}{3}{section.4}
+\contentsline {section}{\numberline {2.2}Text Generation}{3}{section.5}
+\contentsline {section}{\numberline {2.3}Language Modelling}{3}{section.6}
+\contentsline {section}{\numberline {2.4}Dataset}{4}{section.10}
+\contentsline {section}{\numberline {2.5}Recurrent Neural Networks}{5}{section.11}
+\contentsline {subsection}{\numberline {2.5.1}LSTMs and GRUs}{5}{subsection.14}
+\contentsline {section}{\numberline {2.6}Autoencoders}{6}{section.17}
+\contentsline {subsection}{\numberline {2.6.1}Variational Autoencoders}{6}{subsection.18}
+\contentsline {subsection}{\numberline {2.6.2}Conditional Variational Autoencoders}{8}{subsection.23}
+\contentsline {section}{\numberline {2.7}Related Work}{8}{section.25}
+\contentsline {subsection}{\numberline {2.7.1}Sequence To Sequence}{8}{subsection.26}
+\contentsline {subsubsection}{Variational Context}{9}{section*.28}
+\contentsline {subsubsection}{Attention Mechanisms}{10}{section*.30}
+\contentsline {chapter}{\numberline {3}Model}{11}{chapter.32}
+\contentsline {section}{\numberline {3.1}Variational Autoregressive Decoders}{11}{section.33}
+\contentsline {subsubsection}{Encoder}{11}{section*.34}
+\contentsline {subsubsection}{Backwards}{12}{section*.36}
+\contentsline {subsubsection}{Attention}{12}{section*.38}
+\contentsline {subsubsection}{Inference Model}{12}{section*.40}
+\contentsline {subsubsection}{Prior Model}{12}{section*.42}
+\contentsline {subsubsection}{Decoder (Variational Autoregressive)}{12}{section*.44}
+\contentsline {subsubsection}{Auxillary Objective}{13}{section*.47}
+\contentsline {subsubsection}{Learning Mechanism}{13}{section*.49}
+\contentsline {subsubsection}{KL Divergence Derivation}{13}{section*.51}
+\contentsline {subsubsection}{Weight Initialisation}{13}{section*.53}
+\contentsline {section}{\numberline {3.2}Optimisation Challenges}{14}{section.54}
+\contentsline {subsection}{\numberline {3.2.1}Teacher Forcing}{14}{subsection.55}
+\contentsline {subsection}{\numberline {3.2.2}KL Annealing}{14}{subsection.56}
+\contentsline {subsection}{\numberline {3.2.3}Word Dropout}{15}{subsection.57}
+\contentsline {chapter}{\numberline {4}Experimental Setup}{16}{chapter.58}
+\contentsline {section}{\numberline {4.1}Datasets}{16}{section.59}
+\contentsline {subsection}{\numberline {4.1.1}Amazon Reviews}{16}{subsection.60}
+\contentsline {subsection}{\numberline {4.1.2}OpenSubtitles}{17}{subsection.82}
+\contentsline {subsection}{\numberline {4.1.3}Penn TreeBank}{17}{subsection.83}
+\contentsline {section}{\numberline {4.2}Testing Setup}{17}{section.84}
+\contentsline {subsection}{\numberline {4.2.1}Implementation}{18}{subsection.85}
+\contentsline {subsection}{\numberline {4.2.2}Measuring Performance}{18}{subsection.86}
+\contentsline {chapter}{\numberline {5}Experimental Results}{19}{chapter.89}
+\contentsline {section}{\numberline {5.1}NLL Loss}{19}{section.90}
+\contentsline {section}{\numberline {5.2}KL Loss}{19}{section.92}
+\contentsline {section}{\numberline {5.3}KL Ratio}{20}{section.94}
+\contentsline {section}{\numberline {5.4}BLEU and Rouge}{21}{section.96}
+\contentsline {section}{\numberline {5.5}F1}{21}{section.98}
+\contentsline {section}{\numberline {5.6}Sampling Examples}{21}{section.100}
+\contentsline {section}{\numberline {5.7}Output Variance}{21}{section.101}
+\contentsline {chapter}{\numberline {6}Future Work}{22}{chapter.102}
+\contentsline {chapter}{\numberline {7}Conclusion}{23}{chapter.103}
