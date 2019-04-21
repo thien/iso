@@ -127,11 +127,10 @@ class Trainer:
         """
         # copy dataset parameters
         if self.args.dataset != "penn":
+            filename = "dataset_parameters.json"
             if self.args.dataset == "amazon":
-                filename = "dataset_parameters.json"
                 directory = self.args.amazon_path
             elif self.args.dataset == "subtitles":
-                filename = "subtitles_parameters.json"
                 directory = self.args.subtitles_path
     
             copyComponentFile(self.folder_path, filename, directory)
@@ -173,6 +172,7 @@ class Trainer:
             losses, ll_losses, kl_losses, aux_losses = [], [], [], []
             # iterate through the training batches
             for n, batch in enumerate(tqdm(train_loader)):
+                step += 1
                 self.model.batchNum = n
 
                 batch['input']   = batch['input'].to(self.device)
@@ -185,7 +185,6 @@ class Trainer:
                     ll = svae.recon_loss(logp, batch['target'], batch['input_length'], self.model.nll)
                     kl, kl_weight = svae.KL(mean, logv, 'linear', step, self.args.k, self.args.x0)
                     aux = 0.0
-                    step += 1
                     loss = (ll + kl_weight * kl)/self.args.batch_size
                 else:
                     self.model.step = step
@@ -236,21 +235,28 @@ class Trainer:
             self.model.eval()
             
             results = []
+            variable_results = []
             with torch.no_grad():
                 for n, batch in enumerate(tqdm(val_loader)):
                     self.batchNum = n
                     batch['input'] = batch['input'].to(self.device)
                     # get output and loss values
-                    if self.args.model == "bowman":
-                        responses, _, _, _ = self.model(batch['input'], batch['input_length'])
-                    else:
-                        responses = self.model(batch)
-                    responses = [entry.detach().cpu() for entry in responses]
-                    responses = responseID2Word(self.id2word, responses)
-                    results.append(responses)
+                    for i in range(0,10):
+                        if self.args.model == "bowman":
+                            responses, _, _, _ = self.model(batch['input'], batch['input_length'])
+                        else:
+                            responses = self.model(batch)
+                        
+                        responses = [entry.detach().cpu() for entry in responses]
+                            
+                        if i == 0:
+                            responses = responseID2Word(self.id2word, responses)
+                            results.append(responses)
+                        variable_results.append(responses)
 
             if self.args.save:
                 saveEvalOutputs(self.folder_path, results, epoch)
+                saveEvalOutputs(self.folder_path, variable_results, epoch, folder_name="variable_outputs")
 
             if self.model.device.type == "cuda":
                 torch.cuda.empty_cache()
