@@ -193,8 +193,11 @@ def loss_function(y_predicted,
         kl_loss = gaussian_kld(inference_mu, inference_logvar, prior_mu, prior_logvar)
         kl_loss = torch.mean(kl_loss)
         # KL Annealing
+
         kl_weight = kl_anneal_function("linear", step, k, x0)
+        # print(step, k, x0, kl_weight, kl_loss.item(), end=" ")
         kl_loss *= kl_weight
+        # print(kl_loss.item())
 
     aux_loss = 0
     if use_latent and useBOW:

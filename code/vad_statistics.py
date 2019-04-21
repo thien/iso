@@ -143,20 +143,21 @@ class Statistics:
             print("Loading Penn data..", end=" ")
         # shallow integration of the sentenceVAE codebase s.t. we can
         # load the penn dataset.
-        from sendata_utils import to_var, idx2word, expierment_name, PTB
+        from penn_utils import to_var, idx2word, expierment_name, PTB
+        # from sendata_utils import to_var, idx2word, expierment_name, PTB
         from collections import OrderedDict, defaultdict
 
         splits = ['valid']
 
         valdata = PTB(
-                data_dir='data',
+                data_dir='../Datasets/Penn',
                 split='valid',
                 create_data='store_true',
                 max_sequence_length=60,
                 min_occ=1
             )
 
-        with open('data/ptb.vocab.json', 'r') as file:
+        with open('../Datasets/Penn/ptb.vocab.json', 'r') as file:
             vocab = json.load(file)
 
         word2id, id2word = vocab['w2i'], vocab['i2w']
@@ -164,7 +165,7 @@ class Statistics:
         
         self.val_loader = DataLoader(
             dataset=valdata,
-            batch_size=self.parameters['batchSize'],
+            batch_size=self.parameters['batch_size'],
             shuffle=False,
             num_workers=cpu_count()-1,
             pin_memory=torch.cuda.is_available()
@@ -183,21 +184,24 @@ class Statistics:
             if self.parameters['dataset'].lower() == "penn":
                 self.loadPenn()
                 return
-        
-        batchSize = self.parameters['batchSize']
+
+        batchSize = self.parameters['batch_size']
         reduction = self.parameters['reduction']
 
         # load dataset parameters so we know the location of the datasets.
         filepath = os.path.join(self.parent_foldername,self.model_folder, self.dataset_parameters_filename)
+        
         with open(filepath, "r") as f:
             dataset_parameters = json.load(f)
 
         # load dataset
         dataset_filepath = dataset_parameters['datasetFile']
+
         dataset = loadDataset(path=dataset_filepath)
 
         word2id, id2word = dataset['word2id'], dataset['id2word']
         self.id2word = id2word
+        self.word2id = word2id
         paddingID, sosID = word2id['<pad>'], word2id['<sos>']
         cutoff = dataset['cutoff']
 
@@ -206,7 +210,7 @@ class Statistics:
 
         self.printFinish()
 
-        valdata = prepDataset(val, reduction, cutoff, train=False, step=reduction)
+        valdata = prepDataset(val, paddingID, cutoff, train=False, step=reduction)
 
         self.val_loader = DataLoader(
             dataset=valdata,
@@ -280,7 +284,7 @@ class Statistics:
         for gram in ngram_act:
             if gram not in ref:
                 ref[gram] = 0
-            ref[gram] += 1
+            ref[gram] = 1
         # compute rouge (recall)
         count = sum([1 if gram in ref else 0 for gram in ngram_pred])
         if count > 0:
@@ -294,45 +298,57 @@ class Statistics:
 
     # calculate bleu and rouge scores.
     def processPredictions(self, epoch=-1):
-        bleus = []
+        bleus1 = []
+        bleus2 = []
         rouges_1 = []
         rouges_2 = []
         rouges_3 = []
+
         for batch_num in range(len(self.valy_tokens)-1):
             for seq_num in range(len(self.valy_tokens[0])):
                 condition = self.valx_tokens[batch_num][seq_num]
                 actual    = self.valy_tokens[batch_num][seq_num]
-                predicted = self.outputs[epoch][batch_num][seq_num].split(" ")
-                bleu = sentence_bleu([actual], predicted, weights=[1])
+
+                try:
+                    outputs   = self.outputs[epoch][batch_num][seq_num]
+                    predicted = outputs.split(" ")
+                except:
+                    predicted = []
+                bleu1 = sentence_bleu([actual], predicted, weights=[1])
+                bleu2 = sentence_bleu([actual], predicted, weights=[0.5,0.5])
                 rouge1 = self.calcRouge(actual, predicted, n=1)
                 rouge2 = self.calcRouge(actual, predicted, n=2)
                 rouge3 = self.calcRouge(actual, predicted, n=3)
-                bleus.append(bleu)
+                bleus1.append(bleu1)
+                bleus2.append(bleu2)
                 rouges_1.append(rouge1)
                 rouges_2.append(rouge2)
                 rouges_3.append(rouge3)
 
         stats = {
-            'bleu' : np.mean(bleus),
+            'bleu1' : np.mean(bleus1),
+            'bleu2' : np.mean(bleus2),
             'rouge_1': np.mean(rouges_1),
             'rouge_2': np.mean(rouges_2),
             'rouge_3': np.mean(rouges_3)
         }
 
         # bleu: precision; rouge: recall
-        stats['f1'] = (2 * stats['bleu'] * stats['rouge_1']) / (stats['bleu'] + stats['rouge_1']) 
+        stats['f1'] = (2 * stats['bleu1'] * stats['rouge_1']) / (stats['bleu1'] + stats['rouge_1']) 
 
         return stats
 
     def chartBLEUROUGE(self, statistics):
-        bloos = [i['bleu'] for i in statistics]
+        bloos = [i['bleu1'] for i in statistics]
+        bloos2 = [i['bleu2'] for i in statistics]
         rouges_1 = [i['rouge_1'] for i in statistics]
         rouges_2 = [i['rouge_2'] for i in statistics]
         rouges_3 = [i['rouge_3'] for i in statistics]
         f1 = [i['f1'] for i in statistics]
 
         plt.figure(figsize=(8,5))
-        plt.plot(bloos, label="BLEU")
+        plt.plot(bloos, label="BLEU 1")
+        plt.plot(bloos2, label="BLEU 2")
         plt.plot(rouges_1, label="ROUGE 1")
         plt.plot(rouges_2, label="ROUGE 2")
         plt.plot(rouges_3, label="ROUGE 3")
@@ -398,7 +414,23 @@ class Statistics:
 
 if __name__ == "__main__":
     # s = Statistics("20190416 17-47-35")
-    s = Statistics("20190417 18-00-03")
-    s.dataset_parameters_filename = "dataset_parameters_no_condition.json"
+    # s = Statistics("20190417 18-00-03")
+    # s = Statistics("20190419 13-10-52 amazon vad")
+    # s = Statistics("20190419 17-01-17 subtitles bowman")
+    # s = Statistics("20190419 16-16-21 amazon bowman")
+    s = Statistics("20190419 16-43-15 penn bowman")
+    # s.loadModelParameters()
+    # s.loadDatasetFromModel()
+    # s.loadModelOutputs()
+    # print(len(s.outputs), "outputs")
+
+    # print(np.array(s.outputs).shape)
+    # # print(s.outputs[0][0][0])
+
+    # for i in range(len(s.outputs)):
+    #     # print(i)
+    #     print(s.processPredictions(i))
+    # stats = s.processItems(s.processPredictions, [ep for ep in range(len(s.outputs))])
+    # s.dataset_parameters_filename = "dataset_parameters_no_condition.json"
     s.verb = True
     s.express()
