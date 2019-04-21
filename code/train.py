@@ -235,28 +235,26 @@ class Trainer:
             self.model.eval()
             
             results = []
-            variable_results = []
+            # variable_results = []
             with torch.no_grad():
                 for n, batch in enumerate(tqdm(val_loader)):
                     self.batchNum = n
                     batch['input'] = batch['input'].to(self.device)
                     # get output and loss values
-                    for i in range(0,10):
-                        if self.args.model == "bowman":
-                            responses, _, _, _ = self.model(batch['input'], batch['input_length'])
-                        else:
-                            responses = self.model(batch)
-                        
-                        responses = [entry.detach().cpu() for entry in responses]
-                            
-                        if i == 0:
-                            responses = responseID2Word(self.id2word, responses)
-                            results.append(responses)
-                        variable_results.append(responses)
+                    
+                    if self.args.model == "bowman":
+                        responses, _, _, _ = self.model(batch['input'], batch['input_length'])
+                    else:
+                        responses = self.model(batch)
+                    
+                    responses = [entry.detach().cpu() for entry in responses]
+                    responses = responseID2Word(self.id2word, responses)
+                    results.append(responses)
+                        # variable_results.append(responses)
 
             if self.args.save:
                 saveEvalOutputs(self.folder_path, results, epoch)
-                saveEvalOutputs(self.folder_path, variable_results, epoch, folder_name="variable_outputs")
+                # saveEvalOutputs(self.folder_path, variable_results, epoch, folder_name="variable_outputs")
 
             if self.model.device.type == "cuda":
                 torch.cuda.empty_cache()
