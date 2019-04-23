@@ -253,7 +253,6 @@ GRUs (Gated Recurrent Units; \cite{cho_properties_2014}) are functionally simila
 
 % need citation
 Autoencoders are a specialised form of neural networks where the model attempts to recreate the inputs on the output. Autoencoders typically have  layer in the model where its dimension is smaller than the input space, therefore representing a dimensionality reduction in the data. Autoencoders can be considered to be a non-linear representation of PCA.
-% need reference to PCA
 
 Autoencoders are composed of two different principal components, an encoder network $\alpha$ and a decoder network $\beta$, such that $\alpha : X \rightarrow F$ and $\beta : F \rightarrow X$. Measuring the success of the reconstruction is deduced by a reconstruction loss formula. This reconstruction loss comapres the output of the decoder and compares it against the input of the encoder. The two networks are trained together in a manner that allows them to preserve the input as much as possible.
 
@@ -538,11 +537,11 @@ Also proposed by \cite{bowman_generating_2015}, it involves weakening the decode
 
 \chapter{Experimental Setup}
 
+We compare three neural language models: a baseline model, a VAE Seq2seq (see \ref{variational_context}) and the VAD model. the baseline model represents a encoder-decoder seq2seq network (\cite{serban_hierarchical_2016}) that uses the same architecture base as the VAD but only minimises the standard cross entropy loss (i.e. the BOW loss and KL divergence computations are not computed). We use this approach instead of using a different implementation for two reasons: 1. It is acknowledged earlier that a KL collapse on variational sequential models is effectively equivalent to a RNN language model. (see \ref{optimisation_challenges}) 2. It would be easier to show the disparities on convergence.
 
 \section{Datasets}
 
-We subject the models to three different datasets: Amazon Reviews (\cite{he_ups_2016}), Penn TreeBank (\cite{marcus_building_2002}), and OpenSubtitles (\cite{lison_opensubtitles2016:_2016}).
-
+We subject the models to three different datasets: Amazon Reviews (\cite{he_ups_2016}), Penn TreeBank (\cite{marcus_building_2002}), and OpenSubtitles (\cite{lison_opensubtitles2016:_2016}). 
 
 \subsection{Amazon Reviews}
 
@@ -551,7 +550,7 @@ We subject the models to three different datasets: Amazon Reviews (\cite{he_ups_
 	\lstinputlisting[language=java]{dataset_amazon_1.txt}
 	\lstinputlisting[language=python]{dataset_amazon_2.txt}
 	\caption{A sample review and the augmented data. Note that for each sequence from line 3 onwards has the identity sequence contatenated before it. \label{aug_1}}
-	\end{figure}
+\end{figure}
 
 The Amazon products reviews (\cite{he_ups_2016}) are a set of customer submitted reviews of produts on Amazon.com spanning May 1996 - July 2014. For the purposes of this ISO, we select the electronic products dataset, spanning 1.6m reviews. This is used as the primary indicator of the performance of the models.
 
@@ -565,6 +564,7 @@ Pre-processing includes (1) sentenissation and tokenisation using SpaCy (\cite{h
 
 GloVe Word embeddings (\cite{pennington_glove:_2014}) are used to represent tokens in the dataset, and is also used to determine words to remove. 
 
+For some conditional tags, we augment 
 We compute discrete polarity value $p$ with a rounded ratio $p=round(r_{+}/r_{-},2)$. The polarity word vector is a sum of the polarity value $p$ and the word vector corresponding to the word "polarity".
 
 % talk about conditioning on the sequences
@@ -574,7 +574,6 @@ We intend to augment the dataset such that the sequences are conditioned by the 
 % talk about the distribution of the sequence lengths and unk words
 
 \subsection{OpenSubtitles}
-
 
 \begin{figure}[!ht]
 	\centering
@@ -605,11 +604,7 @@ For quick configuration with the model, we compute initial results with the Penn
 
 % talk about how it's conditioned.
 
-\section{Testing Setup}
-
-We compare three neural language models: a baseline model, a VAE Seq2seq (see \ref{variational_context}) and the VAD model. the baseline model represents a encoder-decoder seq2seq network (\cite{serban_hierarchical_2016}) that uses the same architecture base as the VAD but only minimises the standard cross entropy loss (i.e. the BOW loss and KL divergence computations are not computed). We use this approach instead of using a different implementation for two reasons: 1. It is acknowledged earlier that a KL collapse on variational sequential models is effectively equivalent to a RNN language model. (see \ref{optimisation_challenges}) 2. It would be easier to show the disparities on convergence.
-
-\subsection{Hyperparameter Setup}
+\section{Hyperparameter Setup}
 
 For the sake of comparisons, all models leverage a bidirectional encoder. For variational models we utilise a linear KL annealing with a step size of $2.5\cdot 10^{-5}$ with a threshold of 2000 steps. Dimension sizes for the hidden sizes are 512, with latent sizes being 400, and are not hyperparameterised. The cross entropy loss, KL loss, and BOW losses are normalised by the sequence length. 
 
@@ -619,10 +614,10 @@ As we measure the performance of three fundamentally different neural language a
 
 Datasets were split in a 80:15:5 ratio, for training, validation, and test data respectively. Models were subject to roughly 15 hyperparameter tuning rounds (dependent on the confidence of the optimisation model) using Bayesian Optimisation (\cite{gpyopt_authors_gpyopt:_2016}) where the objective is to minimise the loss. Early stopping is initialised such that the training will end when the mean loss of the validation batch is reached. 
 
-\subsection{Measuring Performance}
+\section{Measuring Performance}
 
 
-\subsubsection{BLEU and ROUGE}
+\subsection{BLEU and ROUGE}
 
 Talk about it being infeasible to cherrypick responses used for classification so we take the mean output and comptue bleu and rouge.
 
@@ -751,6 +746,7 @@ One of the caveats of a research is typically that research direction is open en
 - more measurements
 - BLEU/ROUGE against the most optimal solution but requires extensive memory usage and would take a considerably longer running time due to technical implementation.
 - longer Hyperparameter optimisation
+- augment amazon reviews s.t. the item ID is the mean of the item weights.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Conclusion}
