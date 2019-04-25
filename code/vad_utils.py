@@ -298,6 +298,9 @@ def prepDataset(dataset, padID, cutoff=50, train=True, step=1):
     # (output_reverse_length is the same as output length)
     inp   = np.array([pad(seq[0], padID, cutoff) for seq in dataset])
     out   = np.array([pad(seq[1], padID, cutoff) for seq in dataset])
+    # # print(len(out))
+    # print(out[0])
+    # out   = np.array(out, dtype=np.uint8)
     if train:
         out_r = np.array([pad(seq, padID, cutoff) for seq in output_reverse])
     # set up variables for use in DataLoader
@@ -325,7 +328,7 @@ def saveModels(encoder, backwards, decoder, filepath):
 def saveModel(vad, filepath):
     torch.save(vad.state_dict(), os.path.join(filepath, 'vad.pth'))
 
-def saveEvalOutputs(folder_path, results, epochs, folder_name="outputs"):
+def saveOutputs(folder_path, results, epochs, folder_name="outputs"):
     output_dir = os.path.join(folder_path, folder_name)
     output_dir = initiateDirectory(output_dir)
     filename = "epoch_" + str(epochs) + ".csv"

@@ -2,7 +2,7 @@
 import matplotlib
 # we're only writing to file.
 matplotlib.use('Agg')
-
+import argparse
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -216,8 +216,7 @@ class Statistics:
             dataset=valdata,
             batch_size=batchSize,
             shuffle=False,
-            num_workers=cpu_count()-1,
-            pin_memory=torch.cuda.is_available()
+            num_workers=cpu_count()-1
         )
 
         self.parseDataLoader()
@@ -275,20 +274,20 @@ class Statistics:
 
     # Rouge Calculation
     @staticmethod
-    def calcRouge(act, pred, n=2):
+    def calcRouge(act, pred, n=1):
         # create n-grams
-        ngram_act  = [tuple(act[i:i+n]) for i in range(len(act)-(n-1))]
+        ngram_ref  = [tuple(act[i:i+n]) for  i in range(len(act)-(n-1))]
         ngram_pred = [tuple(pred[i:i+n]) for i in range(len(pred)-(n-1))]
         # create dictionary of reference n-grams to count against.
         ref = {}
-        for gram in ngram_act:
+        for gram in ngram_ref:
             if gram not in ref:
                 ref[gram] = 0
             ref[gram] = 1
         # compute rouge (recall)
-        count = sum([1 if gram in ref else 0 for gram in ngram_pred])
+        count = sum([1 if gram in ref else 0 for gram in set(ngram_pred)])
         if count > 0:
-            return count / len(ngram_act)
+            return count / len(ngram_ref)
         return count
 
     # Mean averaged rouge with 1-3 grams
@@ -413,24 +412,12 @@ class Statistics:
         self.dumpStats(stats)
 
 if __name__ == "__main__":
-    # s = Statistics("20190416 17-47-35")
-    # s = Statistics("20190417 18-00-03")
-    # s = Statistics("20190419 13-10-52 amazon vad")
-    # s = Statistics("20190419 17-01-17 subtitles bowman")
-    # s = Statistics("20190419 16-16-21 amazon bowman")
-    s = Statistics("20190419 16-43-15 penn bowman")
-    # s.loadModelParameters()
-    # s.loadDatasetFromModel()
-    # s.loadModelOutputs()
-    # print(len(s.outputs), "outputs")
+    parser = argparse.ArgumentParser()
 
-    # print(np.array(s.outputs).shape)
-    # # print(s.outputs[0][0][0])
+    parser.add_argument('--model_dir','-m', type=str)
 
-    # for i in range(len(s.outputs)):
-    #     # print(i)
-    #     print(s.processPredictions(i))
-    # stats = s.processItems(s.processPredictions, [ep for ep in range(len(s.outputs))])
-    # s.dataset_parameters_filename = "dataset_parameters_no_condition.json"
+    args = parser.parse_args()
+    args.model_dir 
+    s = Statistics(args.model_dir)
     s.verb = True
     s.express()

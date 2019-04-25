@@ -211,6 +211,10 @@ class Decoder(nn.Module):
             init.xavier_uniform_(self.gru.weight_ih_l0)
             init.xavier_uniform_(self.out.weight)
 
+        # flag set outside of the model to determine whether we're
+        # in testing or not.
+        self.doInference = True
+
     def forward(self, y, encoderOutputs, encoderLengths, previousHidden, device, back=None):
 
         # CALCULATE ATTENTION ---------------------------------
@@ -218,7 +222,8 @@ class Decoder(nn.Module):
 
         # LATENT SAMPLING -------------------------------------
 
-        if self.training:
+        # if self.training:
+        if self.doInference:
             # compute the inference layer
             z, infer_mu, infer_logvar = self.inference(
                 previousHidden, c, back)
@@ -231,7 +236,8 @@ class Decoder(nn.Module):
 
         # AUXILIARY FUNCTION ----------------------------------
 
-        if self.training:
+        # if self.training:
+        if self.doInference:
             sbow = self.cbow(z)
 
         # DECODER COMPONENT -----------------------------------
@@ -253,7 +259,8 @@ class Decoder(nn.Module):
         output = torch.cat((output, c), 1)
         output = self.out(output)
     
-        if self.training:
+        # if self.training:
+        if self.doInference:
             return output, hidden, sbow, infer_mu, infer_logvar, prior_mu, prior_logvar
         else:
             return output, hidden
@@ -384,7 +391,9 @@ class VAD(nn.Module):
     def forward(self, inputs, loss_function=None, criterion_r=None):
         """
         performs a forward pass of the model. Performs different actions
-        based on whether the model is in train() mode or eval() mode.
+        based on whether the loss_function parameter is passed through or
+        not. (It would be in train/eval if loss_function is passed and test
+        if not).
 
         parameters:
         inputs:
@@ -395,7 +404,7 @@ class VAD(nn.Module):
             (x_train, x_lengths)
         """
 
-        if self.training and loss_function is None:
+        if loss_function is None:
             raise Exception('The model is in .training() mode but a loss function was not passed through.')
         
         # set up input (and output if training) data.
@@ -413,7 +422,7 @@ class VAD(nn.Module):
         encoderHidden = self.encoder.initHidden(batchSize).to(self.device)
         encoderOutputs, encoderHidden = self.encoder(x, encoderHidden, xLength)
 
-        if self.training:
+        if loss_function is not None:
             # compute Backwards
             backwardHidden = self.backwards.initHidden(batchSize).to(self.device)
             backwardOutput, backwardHidden = self.backwards(yb, yLength, backwardHidden)
@@ -430,7 +439,7 @@ class VAD(nn.Module):
         teacher_force = False if random.random() > self.teacherTraining else True
 
         range_limit = self.maxSeqLength
-        if self.training:
+        if loss_function is not None:
             range_limit = maxYLength
 
         # Run through the decoder one step at a time. This seems to be common practice across
@@ -438,7 +447,7 @@ class VAD(nn.Module):
         for t in range(range_limit):
 
             # set up backward output variable independently.
-            back = backwardOutput[:, t] if self.training else None
+            back = backwardOutput[:, t] if (loss_function is not None) else None
 
             # perform decoder response at time t
             out = self.decoder(
@@ -450,12 +459,12 @@ class VAD(nn.Module):
                 back=back)
 
             # update variables
-            if self.training:
+            if loss_function is not None:
                 decoderOutput, decoderHidden, p_bow, i_mu, i_logvar, p_mu, p_logvar = out
             else:
                 decoderOutput, decoderHidden = out
 
-            if self.training and loss_function is not None:
+            if loss_function is not None:
                 bowt_mask = (y[:, t] != self.paddingID).detach().float()
 
                 if self.useBOW:
@@ -502,7 +511,7 @@ class VAD(nn.Module):
             else:
                 decoderInput = decoderOutput.argmax(1)
 
-        if self.training:
+        if loss_function is not None:
             # normalise loss values before returning them
             avg_loss    = loss/range_limit
             avg_llloss  = ll_loss.item()/range_limit

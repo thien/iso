@@ -37,7 +37,7 @@ class Trainer:
         self.device = None
 
     def setup(self):
-        self.args.folder_name = self.args.name +" "+ self.args.dataset + " " + self.args.model
+        self.args.folder_name = self.args.name + " " + self.args.dataset + " " + self.args.model
         self.folder_path = os.path.join(self.args.model_parent_dir, self.args.folder_name)
         self.device = torch.device(self.args.device)
         printParameters(vars(self.args))
@@ -121,6 +121,27 @@ class Trainer:
         # setup loss functions and optimiser
         self.optimiser = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
     
+    def loadModel(self):
+        # look up model parameters
+        self.folder_path = os.path.join(self.args.model_parent_dir, self.args.name)
+        if not os.path.isdir(self.folder_path):
+            raise Exception("This model folder does not exist.")
+        # load model parameters
+        param_path = os.path.join(self.folder_path,"model_parameters.json")
+        with open(param_path) as json_file:  
+            params = json.load(json_file)
+        # iterate through the params and load them into the arguments.
+        for parameter in params:
+            if parameter not in ['save', 'test']:
+                setattr(self.args, parameter, params[parameter])
+        # setup the model.
+        self.device = torch.device(self.args.device)
+        printParameters(vars(self.args))
+        self.setupDataset()
+        self.setupModel()
+        # load model weights
+        self.model.load_state_dict(torch.load(os.path.join(self.folder_path,'vad.pth')))
+
     def backup(self):
         """
         Copy parameter json and files for backup
@@ -149,6 +170,7 @@ class Trainer:
             json.dump(vars(self.args), outfile)
    
     def train(self):
+        # get number of batches in each epoch based on the type of dataset
         if self.args.dataset != "penn":
             numTrainingBatches = len(self.traindata[0])
             numEvalBatches = len(self.valdata[0])
@@ -156,88 +178,134 @@ class Trainer:
             numTrainingBatches = len(self.traindata)
             numEvalBatches = len(self.valdata)
 
+        if self.args.model != "bowman":
+            self.model.decoder.doInference = True
         self.model.numBatches = numTrainingBatches
+        # setup kl step
         step = 0
+        # setup inner loop for the outer loop
+        datasets = [("train", self.traindata), ("val", self.valdata)]
+
+        # we return this value in the event the model in question is
+        # being used for hyperparameter optimisation. (We keep the
+        # loss at the end of the epochs.)
+        hyperparam_loss = 0
+
         # setup indexes for each epoch
-        for epoch in tqdm(range(self.args.epochs)):
-            self.model.train()
-            train_loader = DataLoader(
-                dataset=self.traindata,
-                batch_size=self.args.batch_size,
-                shuffle=True,
-                num_workers=cpu_count()-1,
-                pin_memory=torch.cuda.is_available()
-            )
-            # setup loss containers
-            losses, ll_losses, kl_losses, aux_losses = [], [], [], []
-            # iterate through the training batches
-            for n, batch in enumerate(tqdm(train_loader)):
-                step += 1
-                self.model.batchNum = n
-
-                batch['input']   = batch['input'].to(self.device)
-                batch['target']  = batch['target'].to(self.device)
-                batch['reverse'] = batch['reverse'].to(self.device)
-        
-                # get output and loss values
-                if self.args.model == "bowman":
-                    logp, mean, logv, _ = self.model(batch['input'], batch['input_length'])
-                    ll = svae.recon_loss(logp, batch['target'], batch['input_length'], self.model.nll)
-                    kl, kl_weight = svae.KL(mean, logv, 'linear', step, self.args.k, self.args.x0)
-                    aux = 0.0
-                    loss = (ll + kl_weight * kl)/self.args.batch_size
-                else:
-                    self.model.step = step
-                    _, loss_container = self.model(batch, loss_function, self.criterion_r)
-                    loss, ll, kl, aux = loss_container
-
-                # gradient descent step
-                self.optimiser.zero_grad()
-                loss.backward()
-
-                # gradient clip
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.gradient_clip)
-                self.optimiser.step()
-
-                # compute mean loss (by the individual output) for bowman
-                if self.args.model == "bowman":
-                    loss = loss/self.cutoff
-                    ll = (ll.item()/self.args.batch_size)/self.cutoff
-                    kl = (kl.item()/self.args.batch_size)/self.cutoff
-
-                # add losses.
-                losses.append(loss.item())
-                ll_losses.append(ll)
-                kl_losses.append(kl)
-                aux_losses.append(aux)
-                
-                if self.args.save and (n % 10 == 0):
-                    plotBatchLoss(epoch, ll_losses, kl_losses, aux_losses, self.folder_path)
-                    saveLossMeasurements(epoch, self.folder_path, ll_losses, kl_losses, aux_losses)
+        for epoch in tqdm(range(self.args.epochs), desc="epochs"):
+            # swap between train and eval models.
+            for datatype in datasets:
+                label_type, dataset = datatype
             
-            # ---------------------------------
-            # save at the end of the training round.
-            if self.args.save:
-                saveLossMeasurements(epoch, self.folder_path, ll_losses, kl_losses, aux_losses)
-                saveModel(self.model, self.folder_path)
+                if label_type == "train":
+                    self.model.train()
+                else:
+                    self.model.eval()
+                    results = []      
 
-            # ---------------------------------
+                dataloader = DataLoader(
+                    dataset=dataset,
+                    batch_size=self.args.batch_size,
+                    shuffle=True if (label_type == "train") else False,
+                    num_workers=cpu_count()-1,
+                    pin_memory=torch.cuda.is_available()
+                )
+                # setup loss containers
+                losses, ll_losses, kl_losses, aux_losses = [], [], [], []
+                # iterate through the training batches
+                for n, batch in enumerate(tqdm(dataloader, desc=label_type)):
+                    if label_type == "train":
+                        step += 1
+                    self.model.batchNum = n
 
-            val_loader = DataLoader(
-                dataset=self.valdata,
+                    batch['input']   = batch['input'].to(self.device)
+                    batch['target']  = batch['target'].to(self.device)
+                    batch['reverse'] = batch['reverse'].to(self.device)
+            
+                    # get output and loss values
+                    if self.args.model == "bowman":
+                        responses, mean, logv, _ = self.model(batch['input'], batch['input_length'])
+                        # calculate loss
+                        ll = svae.recon_loss(responses, batch['target'], batch['input_length'], self.model.nll)
+                        y_mask = (batch['target'] != self.paddingID).detach().float()
+                        ll = torch.mean(ll * y_mask)
+                        
+                        kl, kl_weight = svae.KL(mean, logv, 'linear', step, self.args.k, self.args.x0)
+                        aux = 0.0
+                        loss = (ll + kl_weight * kl)/self.args.batch_size
+                    else:
+                        self.model.step = step
+                        responses, loss_container = self.model(batch, loss_function, self.criterion_r)
+                        loss, ll, kl, aux = loss_container
+
+                    if label_type == "train":
+                        # gradient descent step
+                        self.optimiser.zero_grad()
+                        loss.backward()
+                        # gradient clip
+                        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.gradient_clip)
+                        self.optimiser.step()
+
+                    # compute mean loss (by the individual output) for bowman
+                    if self.args.model == "bowman":
+                        loss = loss/self.cutoff
+                        ll = (ll.item()/self.args.batch_size)/self.cutoff
+                        kl = (kl.item()/self.args.batch_size)/self.cutoff
+
+                    # interpret outputs
+                    if label_type != "train":
+                        responses = [entry.detach().cpu() for entry in responses]
+                        responses = responseID2Word(self.id2word, responses)
+                        results.append(responses)
+
+                    # add losses.
+                    losses.append(loss.item())
+                    ll_losses.append(ll)
+                    kl_losses.append(kl)
+                    aux_losses.append(aux)
+                    
+                    if label_type == "train":
+                        if self.args.save and (n % 10 == 0):
+                            plotBatchLoss(epoch, ll_losses, kl_losses, aux_losses, self.folder_path)
+                            saveLossMeasurements(epoch, self.folder_path, ll_losses, kl_losses, aux_losses)
+                
+                # save at the end of the training round.
+                if self.args.save:
+                    if label_type == "train":
+                        saveLossMeasurements(epoch, self.folder_path, ll_losses, kl_losses, aux_losses)
+                        saveModel(self.model, self.folder_path)
+                    else:
+                        saveOutputs(self.folder_path, results, epoch)
+
+                if label_type == "train" and self.args.hyp_opt:
+                    # compute average loss
+                    hyperparam_loss = sum(losses)/len(losses)
+
+            # clear cache
+            if self.model.device.type == "cuda":
+                torch.cuda.empty_cache()
+
+            if self.args.hyp_opt:
+                if hyperparam_loss <= self.args.hyp_opt_loss_thresh:
+                    return hyperparam_loss
+        return hyperparam_loss
+
+    def test(self):
+        if self.args.model != "bowman":
+            self.model.decoder.doInference = False
+        self.model.eval()
+        with torch.no_grad():
+            test_loader = DataLoader(
+                dataset=self.testdata,
                 batch_size=self.args.batch_size,
                 shuffle=False,
                 num_workers=cpu_count()-1,
                 pin_memory=torch.cuda.is_available()
-            )
+            ) 
 
-            # evaluate model
-            self.model.eval()
-            
-            results = []
-            # variable_results = []
-            with torch.no_grad():
-                for n, batch in enumerate(tqdm(val_loader)):
+            for i in range(1,11):
+                results = []
+                for n, batch in enumerate(tqdm(test_loader)):
                     self.batchNum = n
                     batch['input'] = batch['input'].to(self.device)
                     # get output and loss values
@@ -250,14 +318,12 @@ class Trainer:
                     responses = [entry.detach().cpu() for entry in responses]
                     responses = responseID2Word(self.id2word, responses)
                     results.append(responses)
-                        # variable_results.append(responses)
+                    
+                saveOutputs(self.folder_path, results, i, folder_name="test_outputs")
+      
+                if self.model.device.type == "cuda":
+                    torch.cuda.empty_cache()
 
-            if self.args.save:
-                saveEvalOutputs(self.folder_path, results, epoch)
-                # saveEvalOutputs(self.folder_path, variable_results, epoch, folder_name="variable_outputs")
-
-            if self.model.device.type == "cuda":
-                torch.cuda.empty_cache()
 
     """
     data loaders.
@@ -283,6 +349,14 @@ class Trainer:
         self.valdata = PTB(
             data_dir=self.args.penn_path,
             split='valid',
+            create_data='store_true',
+            max_sequence_length=self.cutoff,
+            min_occ=1
+        )
+
+        self.valdata = PTB(
+            data_dir=self.args.penn_path,
+            split='test',
             create_data='store_true',
             max_sequence_length=self.cutoff,
             min_occ=1
@@ -316,6 +390,7 @@ class Trainer:
         weightMatrix = dataset['weights']
         train = dataset['train']
         val = dataset['validation']
+        test = dataset['test']
         self.cutoff = dataset['cutoff']
         self.paddingID = self.word2id['<pad>']
         self.sosID = self.word2id['<sos>']
@@ -329,7 +404,8 @@ class Trainer:
      
         # batching data
         self.traindata = prepDataset(train, self.paddingID, self.cutoff, train=True, step=self.args.reduction)
-        self.valdata   = prepDataset(val,   self.paddingID, self.cutoff, train=False, step=self.args.reduction)
+        self.valdata   = prepDataset(val,   self.paddingID, self.cutoff, train=True, step=self.args.reduction)
+        self.testdata  = prepDataset(test,  self.paddingID, self.cutoff, train=False, step=self.args.reduction)
         print("Done.")
 
     """
@@ -357,7 +433,7 @@ class Trainer:
 def defaultModelName():
     return datetime.datetime.now().strftime("%Y%m%d %H-%M-%S")
 
-if __name__ == "__main__":
+def loadDefaultArgs():
     def str2bool(v):
         if v.lower() in ('yes', 'true', 't', 'y', '1'):
             return True
@@ -368,7 +444,8 @@ if __name__ == "__main__":
             
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--name','-n', type=str, default=defaultModelName())
+    default_name = defaultModelName()
+    parser.add_argument('--name','-n', type=str, default=default_name)
     parser.add_argument('--dataset', type=str, default='amazon')
     parser.add_argument('--model', type=str, default='vad')
     parser.add_argument('--hidden_size', "-hs", type=int, default=512)
@@ -378,7 +455,7 @@ if __name__ == "__main__":
     parser.add_argument('--learning_rate', '-lr', type=float, default=0.001)
     parser.add_argument('--gradient_clip', '-cl', type=int, default=1)
     parser.add_argument('--useBOW','-bow', type=str2bool, default=True)
-    parser.add_argument('--reduction', '-r', type=int, default=12)
+    parser.add_argument('--reduction', '-r', type=int, default=16)
     parser.add_argument('--device', '-d', type=str, default="cuda")
     parser.add_argument('--use_latent', '-ul', type=str2bool, default=True)
     parser.add_argument('--teacher_training_p', '-tp', type=float, default=1.0)
@@ -387,18 +464,40 @@ if __name__ == "__main__":
     parser.add_argument('--penn_path', type=str, default= '../Datasets/Penn')
     parser.add_argument('--amazon_path', type=str, default= '../Datasets/Reviews')
     parser.add_argument('--subtitles_path', type=str, default= '../Datasets/OpenSubtitles')
+    parser.add_argument('--load_model', type=str2bool, default=False)
+    parser.add_argument('--test', type=str2bool, default=False)
     # kl parameters
     parser.add_argument('-k', '--k', type=float, default=0.0025)
     parser.add_argument('-x0', '--x0', type=int, default=2500)
+    # svae parameters
+    parser.add_argument('-svae_word_dropout_rate', type=float, default=0.0)
+    parser.add_argument('-hyp_opt', type=str2bool, default=False)
+    parser.add_argument('-hyp_opt_loss_thresh', type=float, default=1.0)
+    # beats annoying error when called in jupyter
+    parser.add_argument('-f', default="?")
 
     args = parser.parse_args()
 
+    args.default_name = default_name
+
     assert args.model   in ['vad', 'seq2seq', 'bowman']
     assert args.dataset in ['amazon', 'penn', 'subtitles']
- 
+    # make sure that if we're loading a model, then the default_name can't be used (as it wouldn't exist)
+    if args.load_model:
+        assert args.name != default_name
+
+    return args
+
+if __name__ == "__main__":
+    args = loadDefaultArgs()
     brock = Trainer(args)
-    brock.setup()
-    brock.train()
-    if brock.args.save:
-        saveModel(brock.model, brock.folder_path)
-        brock.runStats()
+    if args.load_model:
+        brock.loadModel()
+    else:
+        brock.setup()
+        brock.train()
+        if brock.args.save:
+            saveModel(brock.model, brock.folder_path)
+            brock.runStats()
+    if args.test:
+        brock.test()
