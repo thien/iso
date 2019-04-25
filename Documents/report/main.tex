@@ -423,22 +423,12 @@ The encoder works in a similar fashion to the encoder described in the seq2seq n
 	\begin{equation}
 		\begin{split}
 			\overleftarrow{h^d_t} &= \overleftarrow{GRU}(y_{t+1}, \overleftarrow{h^d_{t+1}})
-			% i_t &= \sigma(W_i \cdot [h_{t-1},x_t] + b_i) \\
-			% f_t &= \sigma(W_f \cdot [h_{t-1},x_t] + b_f) \\
-			% o_t &= \sigma(W_o \cdot [h_{t-1},x_t] + b_o) \\
-			% g_t &= \sigma(W_g \cdot [h_{t-1},x_t] + b_g) \\
-			% c_t &= f_t \odot c_{t-1} + i_t \odot g_t \\
-			% h_t &= o_t \odot tanh(c_t) 
 		\end{split}
 	% \quad\leftrightarrow\quad
 		\quad\quad
 		\begin{split}
 			\alpha_{s,t} &= f_{attention}([h^e_d, h^d_{t-1}]) \\
 			c_t &= \sum^m_{s=1}\alpha_{s,t} h^e_s
-			% u_t &= \sigma(W_u \cdot [h_{t-1},x_t] + b_u) \\
-			% r_t &= \sigma(W_r \cdot [h_{t-1},x_t] + b_r) \\
-			% c_t &= tanh(Ww_{t-1}+U(r_t \odot h_{t-1})) \\
-			% h_t &= (1-u_{t})\odot h_{t-1} + u_t \odot c_t
 		\end{split}
 	\end{equation}
 	\caption{Equations for Backwards (left) and Attention (right).}
@@ -447,7 +437,16 @@ The encoder works in a similar fashion to the encoder described in the seq2seq n
 
 The backwards RNN is used to feed additional contextual information for the inference model.  During training, the backwards RNN takes as input the training outputs $y$ and outputs hidden vectors in a reverse, sequential manner. The VAD leverages the attention mechanism in a similar manner, and takes in the input sequence, and is contextualised by the decoder at a given timestep.
 
-\subsection{Inference and Prior Models}
+\subsection{Decoder (Variational Autoregressive)}
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=80mm]{diagrams/vad_decoder.png}
+	\caption{A High level diagram of the decoding component of the VAD. (Diagram from \cite{du_variational_2018})\label{r:vad_decoder}}
+	\end{figure}
+	
+The decoder component of the model comprises multiple components, described in detail below. The sampling mechanism is within this component, which  differs from other variational approaches - earlier approaches sample a latent variable outside the decoder phase.
+
+\subsubsection{Inference and Prior Models}
 
 \begin{figure}[!ht]
 	\label{eqn:inf_prior}
@@ -470,13 +469,15 @@ The backwards RNN is used to feed additional contextual information for the infe
 	\caption{Equations for Inference (left) and Prior (right) models.}
 	\end{figure}
 
-The inference model attempts to learn a conditional posterior distribution $z$ using the output, the attention weights, and the decoder outputs. $z$ is created using the gaussian reparameterisation trick described in Section \ref{reparam_trick}.
+These components belong to the decoder phase, but is described earlier to show the latent sampling mechanism in the model. The inference model attempts to learn a conditional posterior distribution $z$ using the output, the attention weights, and the decoder outputs. $z$ is created using the gaussian reparameterisation trick described in Section \ref{reparam_trick}.
 
 This component stems away from \cite{zhao_learning_2017}, as $\boldsymbol{z}$ is now decomposed into sequential variables $\boldsymbol{z} = \{z_1,...,z_t\}$, which are generated at each time step of the decoder phase. $z_t$ is conditioned by the backwards hidden vector $h^d_{t}$. \cite{du_variational_2018} suggests that this conditioning allows the latent variables to be guided for long-term generation.
 
 The prior network is restricted to using observable variables during testing of the model to generate $z_t$ using only observable data. It is designed in a similar fashion to the decoder network where the input variables are concatenated together. Note that the prior is no longer a standard gaussian; this particular component would learn to approximate the posterior distribution.
 
-\subsection{Decoder (Variational Autoregressive)}
+
+\subsubsection{Forward RNN}
+
 
 \begin{equation}
 	\begin{split}
@@ -485,7 +486,7 @@ The prior network is restricted to using observable variables during testing of 
 	\end{split}
 \end{equation}
 
-The decoder then takes in the temporally conditioned $z_t$, alongside the previous output $y_{t-1}$ and the context vector produced from the attention mechanism $c_t$ to produce the output.
+The decoder then takes in the temporally conditioned $z_t$, alongside the previous output $y_{t-1}$ and the context vector produced from the attention mechanism $c_t$ to produce the output. 
 
 \subsection{Auxillary Objective}
 \label{aux_obj}
@@ -690,7 +691,7 @@ The intent of measuring the KL Ratio is such that we would be able to see a good
 
 % what is it? how is it measured? what does it say
 
-\section{BLEU and Rouge}
+\section{BLEU and ROUGE}
 
 Note that from this section onwards, we will be looking at the performance against the test splits of the datasets. 
 
@@ -715,7 +716,10 @@ Interestingly, we observe that the bowman model overfits heavily, with a low BLE
 	\centering
 	\includegraphics[width=150mm]{results/f1.pdf}
 	\caption{F1\textsubscript{1-gram} scores across the three models; higher is better.\label{r:f1}}
-  \end{figure}
+	\end{figure}
+	
+The VAD performs the best with the Penn and Subtitles dataset, and is tied for the Amazon dataset. This suggests that the VAD can learn properties of both.
+In addition to the non-zero KL divergence, suggests that it retains sufficient properties of the model 
 
 % what is it? how is it measured? what does it say
 
@@ -732,29 +736,23 @@ In additional to quantitiative measurements, we also generate example resonses f
 As some of our models are based on bayesian inference, we sample five outputs and hand pick the most optimal responses out of each of the relevant models. 
 
 
-\chapter{Future Work}
+\chapter{Evaluation and Future Work}
 
+Although it is the case that some of the datasets were different,  scores are lackluster for all models compared to their respsective results in their original papers. This can be attributed to two causes: (1) The dataset sizes used for the models are too small, and (2) hyperparameter optimistaion was too short in duration. In hindsight, increasing both should provide a clear potential performance across the models. 
 
 \begin{itemize}  
 \item Generated responses may not necessarily be indicative of the data it is modelled against.
 \item Although there are mechanisms to control the vanishing KL problem, it is yet to be seen how universally applicable it would be.
 \item The amount of hyperparameter tuning is considerably larger than other neural models due to the inclusion of additional mechanisms for controlling the vanishing KL.
+\item Further testing of the additional components introduced to the VAE should be measured independently to measure their influence to the KL loss. 
+\item BLEU/ROUGE on the best output instead of an average of the whole sequence would be preferred but requires extensive memory usage and would take a considerably longer running time due to technical implementation.
+\item The Amazon reviews sequence data could have more experimentation. For instance, the ISIN/Item ID could be represented as a single word token as opposed to broken down by character level, and the  embedding value could be the mean of the embedding values of the character level tokens.
+\item There is a potential for improving the KL performance by masking the SBOW matrix to the predicted output, such that the reconstruction loss would be a directly influenced by the auxiliary function.
+\item An additional measurement could be used to determine whether the language models could pass off as a replacement to the original dataset. A classification model could be used to segregate sentences between the dataset and model generated samples. 
 \end{itemize}
 
-- further testing of the additional components introduced by the VAE should take place to measure their influence to the KL loss.
-- Statistical inference should be used to understand the direction of the KL divergence further.
-- 
-
-One of the caveats of a research is typically that research direction is open ended. 
-- talk about how you could potentially increase the KL weight by merging the SBOW with the reconstruction loss
-
-- use nn to classify performance of outputs to detect realisticness of data
-- apply to gan to improve model performance
-- more measurements
-- BLEU/ROUGE on the most output instead of an average of the whole sequence but requires extensive memory usage and would take a considerably longer running time due to technical implementation.
-- longer Hyperparameter optimisation
-- augment amazon reviews s.t. the item ID is the mean of the item weights.
-- explore completely generative sequences end to end.
+% - apply to gan to improve model performance
+% - explore completely generative sequences end to end.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Conclusion}
@@ -768,7 +766,7 @@ One of the caveats of a research is typically that research direction is open en
 
 %In this paper, a novel variational autoregressive decoder is proposed to improve the performance of VAE-based models for open-domain response generation. By injecting the variational inference into the RNN-based decoder and applying carefully designed conditional variables and auxiliary objective for latent variables, the proposed model is expected to better modeling semantic informa- tion of text in conversations. Quantitative and qualitative experimental results show clear perfor- mance improvement of the proposed model over competitive baselines. In future works, we will explore the use of other attributes of responses such as Part-of-Speech (POS) tags and chunking sequences as additional conditions for better re- sponse generation.
 
-In conclusion, we explored a neural language model that could potentially be used for the purposes of encompassing the lexical variety of the original dataset. By understanding the limitations of the model and how to augment the components in a manner that allow them to work in unison, we conclude that through quantitiative and qualitative experimental results, alongside other references, the VAD can be sensibly considered for the task at hand. In future works, the model could be extended such that it would produce stronger and more lexically coherent discourses in a similar fashion as the dataset. One avenue for exploration could be related to  adversarial approaches.
+In conclusion, we explored a neural language model that could potentially be used for the purposes of encompassing the lexical variety of the original dataset. By understanding the limitations of the model and how to augment the components in a manner that allow them to work in unison, we conclude that through quantitiative and qualitative experimental results, alongside other references, the VAD can be sensibly considered for the task at hand. In future works, the model could be extended such that it would produce stronger and more lexically coherent discourses in a similar fashion as the dataset. One avenue for exploration could be related to adversarial approaches.
 
 % With that being said, the model is not without any caveats:
 
