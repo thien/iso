@@ -21,7 +21,7 @@
 \contentsline {subsubsection}{Decoder}{15}{section*.47}
 \contentsline {subsubsection}{Inference and Prior Models}{16}{section*.49}
 \contentsline {subsubsection}{Forward RNN}{16}{section*.52}
-\contentsline {subsection}{\numberline {3.1.2}Auxillary Objective}{17}{subsection.54}
+\contentsline {subsection}{\numberline {3.1.2}Auxiliary Objective}{17}{subsection.54}
 \contentsline {subsection}{\numberline {3.1.3}Learning Mechanism}{17}{subsection.56}
 \contentsline {section}{\numberline {3.2}Optimisation Challenges}{17}{section.59}
 \contentsline {subsection}{\numberline {3.2.1}KL Annealing}{18}{subsection.60}
