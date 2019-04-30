@@ -132,6 +132,7 @@ Recently, variational models have shown potential from both theoretical and prac
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Literature Survey}
+\label{lit_survey}
 
 To provide context into the literature survey, we assume a scenario where a client requests the use of our dataset. Granting the client access to the data could be inappropiate for a variety of reasons, ranging from the exposure of the privacy of people within the dataset, to the impracticalities of transferring large files to the client. The objective is to provide some alternative mechanism such that value can be deduced from the data, but the privacy of the users in our original dataset is maintained.
 
@@ -188,7 +189,7 @@ That being said, one of the caveats of n-grams is that it fails to capture spars
 
 Later on, modern language models began to revolve around the use of neural networks (\cite{bengio_neural_2001}), which started with a multi-layer perceptron (MLP) that formed the premise of word prediction. The model would take as input a series of one hot values, representing words, and would predict another word in a similar one-hot fashion. The use of neural networks in language modelling is often called Neural Language Modelling, of NLM for short.
 
-Neural Networks are non-linear computational metaphors of the brain that model arbitary relationships between input and output vectors. A textbook architecture of a neural network revolves around the multi-layer perceptron. Note that the input and output vectors are of a fixed dimension. Neural Networks evaluate an input using forward propagation, to produce an output. Traditionally, neural networks are trained to produce optimal outputs via the use of backpropagation. 
+Neural Networks are non-linear computational metaphors of the brain that model arbitrary relationships between input and output vectors. A textbook architecture of a neural network revolves around the multi-layer perceptron. Note that the input and output vectors are of a fixed dimension. Neural Networks evaluate an input using forward propagation, to produce an output. Traditionally, neural networks are trained to produce optimal outputs via the use of backpropagation. 
 
 \section{Recurrent Neural Networks}
 \label{rnn}
@@ -339,11 +340,11 @@ In a VAE, the decoder cannot typically produce outputs of a particular condition
 	\caption{A model architecture for a CVAE, which includes the label being fed into the encoder and decoder networks. \label{cvae_diagram}}
 \end{figure}
 
-During training time, a condition (represented by some arbitary vector) is fed at the same time to the encoder and decoder. After training, to generate an output that depends on $y$ we feed that datum to the decoder along with a random point in the latent space sampled from a standard normal distribution.
+During training time, a condition (represented by some arbitrary vector) is fed at the same time to the encoder and decoder. After training, to generate an output that depends on $y$ we feed that datum to the decoder along with a random point in the latent space sampled from a standard normal distribution.
 
 Samples can be generated from the conditional distribution $p(x|y)$. By changing the value of $y$, we can get corresponding samples $x \sim p(x|y)$. The system no longer relies on the latent space to encode what output is necessary; instead the latent space encodes other information that can distinguish itself based on the differing $y$ values.
 
-In terms of implementation, it happens to be more feasible to concatenate the conditioning variable to the input prior to feeding them into the encoder. In the event of inference (where samples are generated independently of the encoder), one can concatenate $y$ with some arbitary conditional vector $z$ into the decoder to generate outputs. This keeps the model from needing to adjust its architectural characteristics in order to accomadate the conditioning variables.
+In terms of implementation, it happens to be more feasible to concatenate the conditioning variable to the input prior to feeding them into the encoder. In the event of inference (where samples are generated independently of the encoder), one can concatenate $y$ with some arbitrary conditional vector $z$ into the decoder to generate outputs. This keeps the model from needing to adjust its architectural characteristics in order to accomadate the conditioning variables.
 
 \section{Related Work}
 
@@ -429,20 +430,20 @@ One of the paper's novel contribution is an auxiliary function described as a ba
 
 % mention the limitations of Seq2seq for your problem and ways they could be addressed (VAEs, etc.), describe the VAE approach and your motivation to pick it, introduce the VAE paper you work with in details.
 
-In this chapter we focus on the variational autoregressive decoder (VAD). It builds on the knowledge found in the literature review, and the model itself is a combination of the components and models described above. To help fully understand the capabilities of the VAD, we subject it to a series of datasets to understand how it works and its performance against them. The VAD has been shown to encapsulate a distribution of the data within the latent parameters moreso than the CVAE Seq2Seq, and retains a higher KL ratio respective to its overall loss function. This model is used as the candidate  mechanism for encapsulating the dataset (for our problem domain), which could be sent to clients as a means of solving our case scenario.
+In this chapter we focus on an approach called the Variational Autoregressive Decoder (VAD). The model itself is a combination of the components and models described in the literature review (Chapter \ref{lit_survey}). To better understand the capabilities of the VAD, we subject it to a series of datasets to understand how it works and its performance against them. The VAD has been shown to better encapsulate a distribution of the data within the latent parameters than the CVAE Seq2Seq, and retains a higher KL ratio respective to its overall loss function. This model is used as the candidate mechanism for encapsulating the dataset (for our problem domain), which could be sent to clients.
 
 \section{Variational Autoregressive Decoders}
 
-Variational Autoregressive Decoders (VADs; \cite{du_variational_2018}) extends CVAEs by introducing multiple latent variables into the autoregressive Decoder at different time-steps. This allows the decoder to produce a multimodal distribution of text sequences, allowing a greater variety of responses to be produced than what is possible with the approach by the CVAE Seq2Seq.
+Variational Autoregressive Decoders (VADs; \cite{du_variational_2018}) extends CVAE Seq2Seq by introducing multiple latent variables into the autoregressive Decoder at different time-steps. This allows the decoder to produce a multimodal distribution of text sequences, allowing a greater variety of responses to be produced than what is possible with the CVAE Seq2Seq.
 
 \begin{figure}[!ht]
 		
 	\centering
 	\includegraphics[width=100mm]{diagrams/vad.pdf}
-	\caption{An abstracted model of the VAD model, where the encoder (pink) takes in the input sequence, orange represents the backwards model, green represents the latent, context generation, and the decoder (blue) shows the output sequence.\label{vad_abstract}}
+	\caption{An abstracted diagram of the VAD model, where the encoder (pink) takes in the input sequence, orange represents the backwards model, green represents the latent context generation, and the decoder (blue) shows the output sequence.\label{vad_abstract}}
 	\end{figure}
 
-VADs use the vanilla Seq2Seq architecture as the base (Section \ref{seq2seq}) taking as input, sequences $x = \{x_1, x_2, ..., x_n\}$, and $y = \{y_1, y_2, ..., y_m\}$ representing the query and response sequences respectively. Both the encoder and decoder utilise GRUs, with the encoder utilising a bidirectional GRU, and the decoder being unidirectional. For each timestep $t$, each GRU in the decoder network is encoded with hidden state $h^d_t$. The components of the model are broken down into their subsections below.
+VADs use the vanilla Seq2Seq architecture as the base (Section \ref{seq2seq}) taking as input, sequences $x = \{x_1, x_2, ..., x_n\}$, and $y = \{y_1, y_2, ..., y_m\}$ representing the query and response sequences respectively. Both the encoder and decoder use GRUs, with the encoder utilising a bidirectional GRU, and the decoder being unidirectional. For each timestep $t$, each GRU in the decoder network is encoded with hidden state $h^d_t$. The components of the model are broken down into their subsections below.
 
 \subsection{Architecture}
 % need a diagram
@@ -458,7 +459,7 @@ VADs use the vanilla Seq2Seq architecture as the base (Section \ref{seq2seq}) ta
 \end{split}
 \end{align}
 
-The encoder works in a similar fashion to the encoder described in the Seq2Seq network. The only changes here we see is that the encoder described in the implementation leverages bi-directionality. Similarly to the Seq2Seq and other recurrent language models, the last hidden vector is passed through as the initial hidden vector for the decoder model.
+The encoder works in a similar fashion to the encoder described in the Seq2Seq network. The only difference being that the encoder described in the implementation leverages bi-directionality. Similarly to the Seq2Seq and other recurrent language models, the last hidden vector is passed through as the initial hidden vector for the decoder model.
 
 \subsubsection{Backwards and Attention}
 
@@ -481,7 +482,7 @@ The encoder works in a similar fashion to the encoder described in the Seq2Seq n
 	\end{figure}
 
 
-The backwards RNN (only activated during training) is used to feed additional contextual information to the inference model.  During training, the backwards RNN takes as input the training outputs $y$ and outputs hidden vectors in a reverse, sequential manner. The VAD leverages the attention mechanism in a similar manner, and takes in the input sequence, and is contextualised by the decoder at a given timestep.
+The backwards RNN (only activated during training) is used to feed additional contextual information to the inference model.  During training, the backwards RNN takes as input the training outputs $y$ and outputs hidden vectors in a reverse, sequential manner. The VAD leverages the attention mechanism in a similar fashion to Seq2Seq; it  takes in the input sequence, and is contextualised by the decoder's previous hidden output at each time step.
 
 \subsubsection{Decoder}
 \begin{figure}[!ht]
@@ -490,7 +491,7 @@ The backwards RNN (only activated during training) is used to feed additional co
 	\caption{A High level diagram of the decoding component of the VAD. (Diagram from \cite{du_variational_2018})\label{r:vad_decoder}}
 	\end{figure}
 	
-The decoder component of the model comprises multiple sub-components, each of which are described in detail below. The sampling mechanism is within this decoder, which differs from other variational approaches - earlier approaches sample a latent variable outside the decoder phase.
+The decoder component of the model comprises multiple sub-components, each of which are described in detail below. The sampling mechanism is within this decoder, which differs from other variational approaches - Earlier approaches sample a latent variable outside the decoder phase.
 
 \subsubsection{Inference and Prior Models}
 
@@ -542,12 +543,12 @@ One of the novel contributions of the model is the use of a temporally contextua
 	log [p_\xi(y_{bow(t+1,T)}|z_{t:T}) ] = log  \frac{e^{f_{z_{t}}}}{\sum^V_j e^{f_{j}}}
 \end{equation}
 
-The intuition is that this auxiliary objective would help to improve the KL divergence, as the latent variables would capture the information from a different perspective (\cite{du_variational_2018}).
+The intuition is that this auxiliary objective helps to improve the KL divergence, as the latent variables would capture the information from a different perspective (\cite{du_variational_2018}).
 
 \subsection{Learning Mechanism}
 
 
-VADs uses the ELBO (Equation \ref{eqn:elbo})\footnote{As the KL divergence no longer compares the latent variable against a standard gaussian, we derive the equation to allow gradient propagation between two arbitary distribution. This can be seen in the Appendix (Section \ref{kl_derivation}).} and a weighted negative log likelihood loss of the auxillary objective, controlled by $\alpha$. This loss is computed at each timestep, and is then summed at the end of the sequence generation during the decoder stage. During training and evaluation, we sample both the inference and prior models to facilitate measuring the loss.
+VADs uses the ELBO (Equation \ref{eqn:elbo})\footnote{As the KL divergence no longer compares the latent variable against a standard gaussian, we derive the equation to allow gradient propagation between two arbitrary distribution. This can be seen in the Appendix (Section \ref{kl_derivation}).} and a weighted negative log likelihood loss of the auxillary objective, controlled by $\alpha$. This loss is computed at each timestep, and is then summed at the end of the sequence generation during the decoder stage. During training and evaluation, we sample both the inference and prior models to facilitate measuring the loss.
 % The KL divergence allows the model to perform discourse generation using the prior mdoel, by forcing it to decode plausible sentences from every point in the latent space that has some reasonable odds under the prior (\cite{bowman_generating_2015}).
 
 \begin{equation}
@@ -564,51 +565,51 @@ During implementation, it was found that the auxiliary loss weight $\alpha$ typi
 \section{Optimisation Challenges}
 \label{optimisation_challenges}
 
-In addition to the fact that recurrent networks themselves are difficult to train (see Section \ref{rnn}), it may occasionally be the case that with variational models, the sampled latent variable $z$ is often ignored during training. Ideally, a model that encodes useful information in $z$ will have a non-zero KL divergence term in addition to a relatively small cross-entropy term. 
+In addition to the fact that recurrent networks themselves are difficult to train (see Section \ref{rnn}), it may occasionally be the case that with variational models, the sampled latent variable $z$ is often ignored during training. Ideally, a model that encodes useful information in $z$ will have a non-zero KL divergence term in addition to a relatively small negative log likelihood loss. 
 
 Due to the sensitivity of the latent component, early implementations of the VAD would often ignore $z$ and go after the low hanging fruit during the learning process of the decoder. $z$ would encorporate a lack of relevant information and is essentially ignored. That is not to say that the model does not learn - it would rather allocate more learning weight to the information from other inputs such as the attention mechanism and the encoder's hidden value.
 
-The absence of learning in $z$ results in a KL collapse such that the KL loss reaches zero, indicates that the posterior distribution of $z$ to ``collapse'' under the prior. This effectively renders $z$ to be ignored, and thus the model is then effectively equivalent to an RNN language model. (\cite{bowman_generating_2015}) Although we explain one of the mechanisms used to prevent KL collapse with the auxiliary objective (see Section \ref{aux_obj}), we will also discuss some additional approaches to overcome learning difficulties, primarily around $z$, but also for the model overall.
+The absence of learning in $z$ results in a KL collapse (or Vanishing KL), such that the KL loss reaches zero, indicating that the posterior distribution of $z$ has ``collapsed'' under the prior. This effectively renders $z$ to be ignored, and thus the model is then effectively equivalent to an RNN language model. (\cite{bowman_generating_2015}) Although we explain one of the mechanisms used to prevent KL collapse with the auxiliary objective (see Section \ref{aux_obj}), we will also discuss some additional approaches to overcome learning difficulties, primarily around $z$, but also for the model overall.
 
 \subsection{KL Annealing}
 
-A simple approach by \cite{bowman_generating_2015}, it involves adding a variable weight to the KL term in the cost function during training. Initially, the weight is zero, forcing the model to encode as much information into the latent variable as much as it can. The weight is then gradually increased, eventually reaching 1. At this stage the weighted cost function is equivalent to the ELBO loss. This could be thought of as annealing from a regular autoencoder towards a variational one.
+KL Annealing is a simple approach by \cite{bowman_generating_2015}, it involves adding a variable weight to the KL term in the cost function during training. Initially, the weight is zero, forcing the model to encode as much information into the latent variable as it can. The weight is then gradually increased, eventually reaching 1. At this stage the weighted cost function is equivalent to the ELBO loss. This could be thought of as annealing from a regular autoencoder towards a variational one.
 
 That being said, Bowman et al. exposes a variety of additional hyperparameters including the step size, the total number of steps, the step rate (for instance, a linear progression or a logistic). For the sake of simplicity, we explore a linear approach with a fixed linear progression.
 
 \subsection{Word Dropout}
-Also proposed by \cite{bowman_generating_2015}, it involves weakening the decoder by removing some conditioning information during training. This is done by randomly replacing a fraction of the conditioned-on word tokens with a generic unknown token UNK, which forces the model to depend on the latent variable $z$ for prediction. This works in a similar fashion to the standard dropout (\cite{srivastava_dropout:_2014}) where connections are dropped between layers of a network, but is applied to the input data of a recurrent cell. We do not explore this technique further for the VAD as a case by \cite{bowman_generating_2015} suggests that it could distrupt the performance of the model when the drop rate is suffiently high.
+Also proposed by \cite{bowman_generating_2015}, Word Dropout involves weakening the decoder by removing some conditioning information during training. This is done by randomly replacing a fraction of the conditioned-on word tokens with a generic unknown token UNK, which forces the model to depend on the latent variable $z$ for prediction. This works in a similar fashion to the standard dropout (\cite{srivastava_dropout:_2014}) where connections are dropped between layers of a network, but is instead applied to the input data of a recurrent cell. We do not explore this technique further for the VAD as a case by \cite{bowman_generating_2015} suggests that it could distrupt the performance of the model when the drop rate is suffiently high.
 
 \chapter{Experimental Setup}
 
-To explore the performance of the VAD, we benchmark its performance against two other models: a baseline model, and the Bowman model (see Section \ref{variational_context}). The Seq2Seq model and the Bowman models were chosen for comparision not necesssarily to compare state-of-the-art performance but to verify the correctness of the implementations against our VAD model. We do not implement the CVAE Seq2Seq model as it is not the focus of the ISO.
+To explore the performance of the VAD, we benchmark its performance against two other models: a baseline model, and the Bowman model (see Section \ref{variational_context}). The Seq2Seq model and the Bowman models were chosen for comparision not necesssarily to compare state-of-the-art performance but to verify the correctness of the implementations of our VAD model. We do not implement the CVAE Seq2Seq model as it is not the focus of this ISO.
 
-The baseline model represents a encoder-decoder Seq2Seq network (\cite{sutskever_sequence_2014}; Section \ref{seq2seq}) that uses the same architectural base as the VAD but only minimises the standard cross entropy loss (i.e. the BOW loss and KL divergence computations are not computed). We use this approach instead of using a different implementation as it was discussed earlier in the paper that a KL collapse on variational models is effectively equivalent to a recurrent language model.
+The baseline model represents a vanilla encoder-decoder Seq2Seq network (\cite{sutskever_sequence_2014}; Section \ref{seq2seq}) that uses the same architectural base as the VAD but only minimises the standard negative log likelihood loss (i.e. the KL divergence computations are not computed). We use this approach since KL collapse on variational models is effectively equivalent to a recurrent language model.
 
-As stated earlier, the Bowman model is primarily designed for language modeling, whereas the VAD is designed for response generation. With this prior knowledge it was expected that the VAE Seq2seq model would perform worse than the VAD model for all tasks, but it remains important as to understand from a variational standpoint, what a KL baseline should be.
+As stated earlier, the Bowman model is primarily designed for language modeling, whereas the VAD is designed for response generation. With this prior knowledge it was expected that the VAE Seq2seq model would perform worse than the VAD model for all tasks, but it remains important to understand from a variational standpoint, what a KL baseline should be.
 
 % With the VAE seq2seq model, it is not necessarily designed with the intention of neural response generation, and that it was expected that the VAE seq2seq model would perform poorly in our scenario. However, to standardise the measurements for results, we pad the sequences such that it would still be useful for measuring the expected KL and reconstruction losses for a simple recurrent language model.
 
 \subsection*{Weight Initialisation}
 
-Typically, we intend to have the weights asymmetricly generate; i.e. we would have random starting positions for gradient descent, which would enable us to have a better chance to find the minimum as opposed to having starting points that would somewhat correlate to each other.
+Typically, we intend to have the weights asymmetricly generated; i.e. have random starting positions for gradient descent, which would enable us to have a better chance of finding the minimum as opposed to having starting points that would somewhat correlate with each other.
 
-\cite{glorot_understanding_2010} proposed to initialise the weights based on a gaussian $Var(w)=\mathcal{N}(0,\frac{2}{|n_{in}| + |n_{out}| })$ where $w$ represents a layer in a network, and $|n_{in}|$ represents the number of neurons feeding into it, and similarly so for $|n_{out}|$. Note this descript uses a gaussian distribution, but this could also be uniform. This method has shown a lot of success for sigmoidal and tanh based activation functions. We initialise all weights for all models with this approach.
+\cite{glorot_understanding_2010} proposed to initialise the weights based on a gaussian $Var(w)=\mathcal{N}(0,\frac{2}{|n_{in}| + |n_{out}| })$ where $w$ represents a layer in a network, and $|n_{in}|$ represents the number of neurons feeding into it, and similarly so for $|n_{out}|$. Note this descript uses a gaussian distribution, but this could also be uniform. This method has shown a lot of success for sigmoidal and tanh based activation functions. We initialise the weights for all models with this approach.
 
 \subsection*{Teacher Forcing}
 
 Teacher Forcing (\cite{williams_learning_1989}) is a concept of using real target outputs for the next input in the decoder sequence of RNNs as opposed to using the decoder's prediction. This causes the model to converge faster, but may exhibit instability when the trained network is exploited. Typically, this can be controlled with a probability $p$ such that the decoder sequence has a $p$ chance of using teacher forcing during training.
 
-With teacher forced decoders, outputs that read with coherent grammer can be observed, but the generated responses can wander far from the correct response; i.e. with some $p<1$, some outputs from the decoder at some timestep would be correct, but the others would have a chance to completely change the semantics of the output. As the purposes of the paper is to explore ariticial texts, we set $p=1$ to the VAD and Seq2Seq, but not the Bowman model as it is not applicable\footnote{As stated earlier, the responses generated in its entirety with one operation, and not necessarily through a recurrent step.}.
+With teacher forced decoders, outputs that read with coherent grammer can be observed, but the generated responses can wander far from the correct response; i.e. with some $p<1$, some outputs from the decoder at some timestep would be correct, but the others would have a chance to completely change the semantics of the output. As the purposes of this paper is to explore artificial texts, we set the VAD and Seq2Seq teaching probabilities $p=1$, but not the Bowman model as it is not applicable\footnote{As stated earlier, the responses are generated in its entirety in one operation, and not necessarily seperated with  recurrent steps.}.
 
 \subsection*{Word Embeddings}
 \label{word_embeddings}
 
-To feed inputs into the model, we leverage the use of word embeddings. Within the NLP domain, word embeddings refer to vector based representations of words (or tokens) such that a semantic analysis can be performed between words. For the purposes of our models, all leverage the GloVe (\cite{pennington_glove:_2014}) word embedding set with a dimension size of 50.
+To feed inputs into the model, we leverage the use of word embeddings. Within the NLP domain, word embeddings refer to vector based representations of words (or tokens) such that a semantic analysis can be performed between words. For the purposes of our models, they all  leverage the GloVe (\cite{pennington_glove:_2014}) word embedding set with a dimension size of 50.
 
 \section{Datasets}
 
-We subject the models to three different datasets: Amazon Reviews (\cite{he_ups_2016}), Penn TreeBank (\cite{marcus_building_2002}), and OpenSubtitles (\cite{lison_opensubtitles2016:_2016}). Each dataset serves a different purpose; we describe them in their respective sections.
+We subject the models to three different datasets: Amazon Reviews (\cite{he_ups_2016}), Penn TreeBank (\cite{marcus_building_2002}), and OpenSubtitles (\cite{lison_opensubtitles2016:_2016}). Each dataset serves a different purpose, which are described in their respective sections.
 
 \subsection{Amazon Reviews}
 
@@ -619,16 +620,21 @@ We subject the models to three different datasets: Amazon Reviews (\cite{he_ups_
 	\caption{A sample review and the augmented data. Note that for each sequence from line 3 onwards has the identity sequence contatenated before it. \label{ex_dataset:amazon}}
 \end{figure}
 
-The Amazon products reviews (\cite{he_ups_2016}) comprises a set of customer submitted reviews of products on the popular consumer e-commerce Amazon.com, spanning May 1996 - July 2014. For the purposes of this ISO, we select the electronic products dataset, spanning 1.6m reviews, but due to computational constraints, we work on a subset of this dataset as reviews would also need to be broken down into sequences of sentences. This dataset is used as the primary indicator of the performance of the models in their capability for text generation, and the capabilities of encompassing lexical variety, as described in the original objective of the ISO. The objective of the models were to produce the next sentence from the previous sentence. 
+The Amazon products reviews (\cite{he_ups_2016}) comprises a set of customer submitted reviews of products on the popular consumer e-commerce Amazon.com, spanning May 1996 - July 2014. For the purposes of this ISO, we select the electronic products dataset, spanning 1.6m reviews, but due to computational constraints, we work on a subset of this dataset as reviews would also need to be broken down into sequences of sentences. This dataset is used as the primary indicator of the performance of the models in their capability for text generation, and the capabilities of encompassing lexical variety, as described in the original objective of the ISO. The objective of the models were to produce the next sentence from the previous sentence. Pre-processing includes:
 
 % Sentences are split by periods. Tokens are represented as words or individual punctuation marks. Additional tags are introduced. Lowercase. The product is represnted by an ASIN, which effectively represents the item ID. this is split by characters.
 % talk about tokenisation with SpaCy
 
-Pre-processing includes (1) sentenisation and tokenisation using SpaCy (\cite{honnibal_spacy_2017}); (2) concatenation of sequence conditioning on the input sequences; (3) filtering tokens based on whether they exist in GloVe; (4) keeping the top 10K frequent tokens of the vocabulary; (5) removing sequences where the ``\textless{}unk\textgreater'' tags in the sequences represent a ratio of greater than 0.1; and (6) removing sequences that are greater than a length of 60. Each input sentence is conditioned by the Item ID, review rating (of a score from 1-5), and a polarity value (calculated from Amazon's ``helpful'' values) consisting of $-1$ to $+1$ with an increment of $0.1$.
+\begin{enumerate}  
+	\item Sentenisation and tokenisation using SpaCy (\cite{honnibal_spacy_2017}).
+	\item Concatenation of sequence conditioning on the input sequences.
+	\item Filtering tokens based on whether they exist in GloVe.
+	\item Keeping the top 10K frequent tokens of the vocabulary.
+	\item Removing sequences where the ``\textless{}unk\textgreater'' tags in the sequences represent a ratio of greater than 0.1.
+	\item Removing sequences that are greater than a length of 60. 
+\end{enumerate}
 
-% use GloVe Word embeddings
-
-GloVe Word embeddings (\cite{pennington_glove:_2014}) are used to represent tokens in the dataset, and is also used to determine words to remove, as it also contains a vocabulary corpus. The polarity value is computed $p$ with a two decimal place rounded ratio $p=round(helpful_{+}/helpful_{-},2)$. The polarity word vector is a sum of the polarity value $p$ and the word vector corresponding to the word ``polarity''. This works in a similar fashion for the rating word embedding (which does not require calculating a ratio). Item IDs (recogised by Amazon as ASINs) are split character wise.
+Each input sentence is conditioned by the Item ID, review rating (of a score from 1-5), and a polarity value (calculated from Amazon's ``helpful'' values) consisting of $-1$ to $+1$ with an increment of $0.1$. GloVe Word embeddings are used to represent tokens in the dataset. The polarity value  $p$ is computed with a two decimal place rounded ratio $p=round(helpful_{+}/helpful_{-},2)$. The polarity word vector is a sum of the polarity value $p$ and the word vector corresponding to the word ``polarity''. This works in a similar fashion for the rating word embedding (which does not require calculating a ratio). Item IDs (recogised by Amazon as ASINs) are split character wise.
 
 \subsection{OpenSubtitles}
 
@@ -639,9 +645,17 @@ GloVe Word embeddings (\cite{pennington_glove:_2014}) are used to represent toke
 	\caption{A sample review and the augmented data. Note that for each sequence from line 3 onwards has the identity sequence contatenated before it. \label{ex_dataset:subs}}
 	\end{figure}
 
-The OpenSubtitles dataset (\cite{lison_opensubtitles2016:_2016}) is used as a measurement in a similar fashion to the amazon dataset, but does not involve any item descriptive conditioning concatenated to the input sequence. They are configured in a similar fashion to the amazon dataset, described above. GloVe is also used. We use this to measure the effectiveness of the models on discourse generation without the use of additional contextual information. The goal for the models was to predict the next subtitle line, given a previous subtitle line.
+The OpenSubtitles dataset (\cite{lison_opensubtitles2016:_2016}) is used as a measurement in a similar fashion to the Amazon dataset, but does not involve any item descriptive conditioning concatenated to the input sequence. They are configured in a similar fashion to the Amazon dataset, described above. GloVe is also used. We use this to measure the effectiveness of the models on discourse generation without the use of additional contextual information. The goal for the models was to predict the next subtitle line, given a previous subtitle line. Pre-processing works in a similar fashion to the amazon dataset. It includes:
 
-Pre-processing works in a similar fashion to the amazon dataset. It includes (1) sentenisation and tokenisation using SpaCy (\cite{honnibal_spacy_2017}); (2) concatenation of sequence conditioning on the input sequences; (3) keeping the top 10K frequent word types af the vocabulary; (4) removing sequences where the "\textless{}unk\textgreater" tags in the sequences represent a ratio of greater than 0.1; (5), and finally removing sequences that are greater than a length of 60. 
+
+\begin{enumerate}  
+	\item Sentenisation and tokenisation using SpaCy (\cite{honnibal_spacy_2017}).
+	\item Concatenation of sequence conditioning on the input sequences.
+	\item Filtering tokens based on whether they exist in GloVe.
+	\item Keeping the top 10K frequent tokens of the vocabulary.
+	\item Removing sequences where the ``\textless{}unk\textgreater'' tags in the sequences represent a ratio of greater than 0.1.
+	\item Removing sequences that are greater than a length of 60. 
+\end{enumerate}
 
 \subsection{Penn TreeBank}
 
@@ -651,15 +665,26 @@ Pre-processing works in a similar fashion to the amazon dataset. It includes (1)
 	\caption{A sample review and the augmented data. Note that for each sequence from line 3 onwards has the identity sequence contatenated before it. \label{ex_dataset:ptb}}
 	\end{figure}
 
-To verify implementation validation, we compute initial results with the Penn Tree-Bank Dataset. (\cite{marcus_building_2002}) This dataset is typically used for verification of model performance for generative models; the dataset consists of sequences which are the same for the input and output. (See \ref{ex_dataset:ptb}) For the purposes of the ISO, we used the exemplar dataset which consists of 43K sequences. Pre-processing includes (1) tokenisation using NLTK; (2) trimming sequences that are greater than a length of 60; (3) replacing tokens with \textless{}unk\textgreater where the token does not exist in the vocabulary. For this particular dataset, we do not use any pre-trained word-embeddings; as the purposes of this dataset does not necessarily benefit from its addition. The purpose of this dataset is to measure the models reconstructive capabilities as a regular autoencoder. Models would use this dataset to repeat the input as the output sequence.
+To verify implementation validation, we compute initial results with the Penn Tree-Bank Dataset. (\cite{marcus_building_2002}) This dataset is typically used for verification of model performance for generative models; the dataset consists of sequences which are the same for the input and output. (See \ref{ex_dataset:ptb}) For the purposes of this ISO, we used the exemplar dataset which consists of 43K sequences. Pre-processing includes (1) tokenisation using NLTK; (2) trimming sequences that are greater than a length of 60; (3) replacing tokens with \textless{}unk\textgreater where the token does not exist in the vocabulary. 
+
+
+\begin{enumerate}  
+	\item Sentenisation and tokenisation using SpaCy (\cite{honnibal_spacy_2017}).
+	\item Tokenisation with NLTK (\cite{bird_natural_nodate}).
+	\item Trimming sequences that are greater than a length of 60. 
+	\item Collecting the most frequent 10K words in the dataset to create the vocabulary.
+	\item Replacing tokens with ``\textless{}unk\textgreater'' where the token does not exist in the vocabulary.
+\end{enumerate}
+
+For this particular dataset, we do not use any pre-trained word-embeddings; as the purposes of this dataset does not necessarily benefit from its addition. The purpose of this dataset is to measure the models reconstructive capabilities as a regular autoencoder. Models would use this dataset to repeat the input as the output sequence.
 
 \section{Training Setup}
 
-For the sake of comparisons, all models leverage a bidirectional encoder. For variational models we utilise a linear KL annealing with a step size of $2.5\cdot 10^{-5}$ with a threshold of 2000 steps. Dimension sizes for the hidden sizes are 512, with latent sizes being 400. The cross entropy loss, KL loss, and BOW losses are normalised by the sequence length. 
+For the sake of comparisons, all models leverage a single bidirectional encoder. For variational models we utilise a linear KL annealing with a step size of $2.5\cdot 10^{-5}$ with a threshold of 2000 steps. Dimension sizes for the hidden layer is 512, with the latent vector size  being 400. The negative log likelihood loss (NLL), KL loss, and BOW losses are normalised by the sequence length. 
 
-All models use the Adam optimiser (\cite{kingma_adam:_2014}) with a base learning rate of 0.001; subject to hyperparameterisation. As we measure the performance of three fundamentally different neural language architectures, we performed hyperparameter tuning for each of the models independently.
+All models use the Adam optimiser (\cite{kingma_adam:_2014}) with a base learning rate of 0.001; subject to hyperparameterisation. As we measure the performance of three fundamentally different neural language architectures, we performed hyperparameter tuning for each of the models independently. All models are trained for 10 epochs to reduce the chances of overfitting.
 
-Datasets were split in a 80:15:5 ratio, for training, validation, and test data respectively. Models were subject to roughly 15 hyperparameter tuning rounds (dependent on the confidence of the optimisation model) using Bayesian Optimisation (\cite{gpyopt_authors_gpyopt:_2016}) where the objective is to minimise the loss. Early stopping is initialised such that the training will end when the mean loss of the validation batch is reached below an overall loss of $1.0$. 
+Datasets were split in a 80:15:5 ratio, for training, validation, and test data respectively. Models were subject to roughly 15 hyperparameter tuning rounds (dependent on the confidence of the optimisation model) using Bayesian Optimisation (\cite{gpyopt_authors_gpyopt:_2016}) where the objective was to minimise the ELBO (or NLL for the case of Seq2Seq). Early stopping is initialised such that the training will end when the mean loss of the validation batch reaches below an overall loss of $1.0$. 
 
 \section{Evaluation Measurements}
 
@@ -671,7 +696,7 @@ To quantify the performance of the models, we measure KL loss during training. (
 
 \subsection{BLEU and ROUGE}
 
-It is often the case to use subject human guided, hand-picked results for emperical measurements but due to a variety of constraints for the ISO this would not be feasible. Alternatively, we subject the models generated responses to shallow and automatic linguistic metrics such as the BLEU (\cite{papineni_bleu:_2001}) and ROUGE (\cite{lin_rouge:_2004}) emperical scores. We measure the BLEU and ROUGE at each epoch to quantify the quality of our responses as it learns. These measurements are used alongside the Loss, and human analysis of the results. These metrics compare the generated responses against the labelled results; such that a higher score encompasses a greater similarity to the dataset.
+It is often the case to use subject human guided, hand-picked results for emperical measurements but due to a variety of constraints for the ISO this would not be feasible. Alternatively, we subject the models generated responses to shallow and automatic linguistic metrics such as the BLEU (\cite{papineni_bleu:_2001}) and ROUGE (\cite{lin_rouge:_2004}) emperical scores. We measure the BLEU and ROUGE at each epoch to quantify the quality of our responses as it learns. These measurements are used alongside the Loss, and human analysis of the results. These metrics compare the generated responses against the labelled results; such that a higher score encompasses a greater similarity to the original dataset.
 
 BLEU (\cite{papineni_bleu:_2001}) is originally defined to measure $n$-gram precision $p_n$ of two text based sequences, by summing the $n$-gram matches for every hypothesis sentence $S$ in the test corpus $C$. ROUGE is used in a similar fashion for recall. Both BLEU and ROUGE have the option to compute the n-gram match for several sizes of n-grams, but for simplicity we reduce it to uni-grams.
 
@@ -708,7 +733,7 @@ To understand an overall picture of the model performance, we also measure the h
 \subsection{Semantic Similarity}
 
 \begin{algorithm}[!ht]
-	\label{similarity}
+	% \label{semantic_variance}
 	\begin{algorithmic}[1]
 	\Procedure{Semantic Variance}{}
 
@@ -730,7 +755,7 @@ To understand an overall picture of the model performance, we also measure the h
 	\end{algorithmic}
 	\end{algorithm}
 
-Additionally, to measure the variation in responses, we calculate the semantic similarity between the generated outputs. For the purposes of this ISO, we simplify the semantic similarity measurements by leveraging pre-trained word embeddings, and calculating euclidean distances between vectors. The algorithm is described above.
+Additionally, to measure the variation in responses, we calculate the semantic variance between the generated outputs. For the purposes of this ISO, we simplify the semantic similarity measurements by leveraging pre-trained word embeddings, and calculating euclidean distances between vectors. The algorithm is described above.
 
 Typically, the larger the distance, the more varied the responses. a semantic variance score of zero would suggest no diversity between the responses. In ideal conditions, large variances are observed. As we use the GloVe embeddings, each dimension in the embedding has a value range of $[-1,1]$, leading to a theoretical maximum semantic similarity distance of $2$.
 
@@ -742,7 +767,7 @@ Typically, the larger the distance, the more varied the responses. a semantic va
 \section{Model Optimisation}
 \subsection{NLL Loss}
 
-As we compare loss values for variational and non-variational models, we split the ELBO Loss (See Equation \ref{eqn:elbo}) into their constituents parts and analyse them independently to provide a better understanding of the performance of the models. The measurements below are taken from the average loss over the training batches for each epoch.
+As we compare loss values for variational and non-variational models, we split the ELBO Loss (See Equation \ref{eqn:elbo}) into its constituent parts and analyse them independently to provide a better understanding of the overall performance of the models. The measurements below are taken from the average loss over the training batches for each epoch.
 
 \begin{figure}[!ht]
 	\centering
@@ -751,9 +776,9 @@ As we compare loss values for variational and non-variational models, we split t
   \end{figure}
 
 % what is it? how is it measured? what does it say
-With the Penn TreeBank dataset, The results shown are not necessarily surprising. As there are less weights to learn, it was expected that Seq2Seq model would converge faster than the other models. Additionally, varational models are expected to perform worse than discrete models as the sampling mechanism will produce some variation in the responses. With that being said, interestingly the Bowman model performed the worst on the Penn dataset.
+With the Penn TreeBank dataset, The results shown are not particularly surprising. As there are less weights to learn, it was expected that Seq2Seq model would converge faster than the other models. Additionally, varational models are expected to perform worse than discrete models as the sampling mechanism will produce some variation in the responses. Interestingly the Bowman model performed the worst on the Penn dataset.
 
-Interestingly, for the Amazon and Subtitles dataset, we observe that the Bowman model converges somewhat dubiously  quickly, but the other statistics show that the bowman model has understood little about the dataset. The VAD and Seq2Seq has performed within expectations in terms of relative learning.
+For the Amazon and Subtitles dataset, we observe that the Bowman model converges somewhat dubiously  quickly, but the other statistics show that the bowman model has understood little about the dataset. The VAD and Seq2Seq has performed within expectations in terms of relative learning.
 % talk about the fact that this is not a good start anyway
 
 % \subsection{KL Loss}
@@ -793,7 +818,9 @@ Note that from this section onwards, we will be looking at the performance again
 
 % what is it? how is it measured? what does it say
 
-With the BLEU and ROUGE scores, Surprisingly, for the Penn Dataset, the VAD is stronger than the other models by a consdierable margin, suggesting that it performs very strongly as an autoencoder. Although it also performs considerably better on the Subtitles dataset, The VAD is somewhat comparable with the Seq2Seq model on the Amazon dataset.
+Surprisingly, results for the Penn Dataset (Figure \ref{r:bleu_rouge}, left), the VAD is stronger than the other models by a considerable margin for both BLEU and ROUGE suggesting that it performs very strongly as an autoencoder. The VAD also performs considerably better on the Subtitles dataset  (Figure \ref{r:bleu_rouge}, right) against Seq2Seq, indicating its applicability for conditional response generation.
+
+The VAD is somewhat comparable with Seq2Seq on the Amazon dataset  (Figure \ref{r:bleu_rouge}, center). This is somewhat contradictory to its performance on the Subtitles dataset, which may indicate some issue with how the Amazon dataset is initialised.
 
 Unexpectedly the Bowman model performs considerably poorly against the Penn Dataset. Under further investigation with the Sampling examples, we see that the Bowman model does indeed capture the high level features, but the outputs do not reflect that of the input. Attempts to verify the authenticity of the results also confirm this. \footnote{The Bowman Model was tested on a popular GitHub implementation, which can be found on \href{https://github.com/timbmg/Sentence-VAE}{https://github.com/timbmg/Sentence-VAE.}
 } For the other datasets, it was expected that this model would perform poorly by design, for reasons stated earlier (see Section \ref{variational_context}). 
@@ -806,9 +833,9 @@ Unexpectedly the Bowman model performs considerably poorly against the Penn Data
 	\caption{F1\textsubscript{1-gram} scores across the three models; higher is better.\label{r:f1}}
 	\end{figure}
 	
-The VAD performs the best with the Penn and Subtitles dataset, and is tied for the Amazon dataset. This strikes as particularly interesting, as it was originally hypothesized that additional conditional information could have helped to guide the responses. This could indicate some potential problems with how the Amazon dataset is formatted. 
+The VAD performs the best with the Penn and Subtitles dataset, and is tied for the Amazon dataset. This strikes as particularly interesting, as it was originally hypothesized that additional conditional information could have helped to guide the responses.
 
-Interestingly, the conditional datasets (Amazon and Subtitles) seems somewhat punishing for the models, with objectively low F1 scores across. When compared to the example responses in Section \label{sampling_examples}, we notice that the responses are somewhat related and coherent for the VAD and Seq2Seq. One possible reason is due to the open-endedness of responses in both of these datasets, where some fixed dialog may typically lead to multiple responses\footnote{e.g. With the Subtitles dataset, a query with "who is it?" could elicit a variety of responses.}.
+Interestingly, the conditional datasets (Amazon and Subtitles) seem somewhat punishing for the models, with objectively low F1 scores. When compared to the example responses in Section \label{sampling_examples}, we notice that the responses are somewhat related and coherent for the VAD and Seq2Seq. One possible reason for is due to the open-endedness of responses in both of these datasets, where some fixed dialogue may typically lead to multiple responses\footnote{e.g. With the Subtitles dataset, a query with "who is it?" could elicit a variety of responses.}.
 
 % what is it? how is it measured? what does it say
 
@@ -822,11 +849,11 @@ Interestingly, the conditional datasets (Amazon and Subtitles) seems somewhat pu
 
 We can clearly see the disparity of the results between the models, with the VAD performing the best across the datasets. High variance for the Seq2Seq model on the Amazon and Subtitles dataset puts more confidence on the suggestion made earlier about one-to-many responses. 
 
-The Penn dataset represents a case where the latent sampling comes into play and shows a scenario it does increase the variance in the results, for the Bowman model. Otherwise, for the other datasets, the bowman model naturally underperforms and leaves much to be desired.
+The Penn dataset represents a case where the latent sampling comes into play and shows a scenario it does increase the variance in the results, for the Bowman model. Otherwise, for the other datasets, the Bowman model naturally underperforms and leaves much to be desired.
 
 \subsection{Sampling Examples}
 \label{sampling_examples}
-Table \ref{qualitative_table} shows the outputs generated from the three models, against the three datasets. As some of our models are based on bayesian inference, we sample ten outputs and hand pick the most interesting responses from the datasets from each of the relevant models. 
+Table \ref{qualitative_table} shows some of the outputs generated from the three models, against the three datasets. As some of our models are based on bayesian inference, we sample ten outputs and hand pick the most interesting responses from the datasets from each of the relevant models. 
 
 \begin{table}[!ht]
 	\centering
@@ -845,7 +872,7 @@ Table \ref{qualitative_table} shows the outputs generated from the three models,
 	\label{qualitative_table}
 \end{table}
 
-For the subtitles dataset, it was observed that the VAD generated linguistically superior and a more plausible set of results as compared to the Seq2Seq network. These results compliment the quantitiatve measurements observed earlier.
+For the Subtitles dataset, it was observed that the VAD generated linguistically superior and more plausible results compared to the Seq2Seq network. These results compliment the quantitiative measurements observed earlier.
 
 On the contrary, all models performed less admirably on the Amazon dataset. The Seq2Seq and VAD model produces somewhat coherent responses but generates relatively generic responses, or does not leverage the contexts provided by the query enough.
 
@@ -853,7 +880,7 @@ The Bowman model failed to generate remotely coherent responses for the Open Sub
 
 \chapter{Evaluation and Future Work}
 
-Although it is the case that some of the datasets were different and varying in purpose, scores are weaker for all models compared to their portrayed potential in their respective papers. This could primarily be attributed to two causes: (1) The dataset sizes used for the models were too small (as they were reduced to accomadate feasible training times), and (2) hyperparameter optimisation was too short in duration. In hindsight, increasing both should provide a clearer potential performance across the models.
+Although some of the datasets were different and varying in purpose, scores are weaker for all models compared to their portrayed potential in their respective papers. This could primarily be attributed to two causes: (1) The dataset sizes used for the models were too small (as they were reduced to accomodate feasible training times), or (2) hyperparameter optimisation was too short in duration. In hindsight, increasing both should provide a clearer potential performance across the models, but the timescale and computational resources for the project was limited and could not afford the ability to scale up.
 
 Further work should be taken to understand the influence of the BOW loss. Attempts to contact the the authors of the VAD paper have been unsuccessful, and it remains unclear what the influence of the $\alpha$ is in regards to the weight of the BOW loss. Initial experiments have shown a positive correlation with the KL divergence when $\alpha$ is increased, but details remain uncertain. An assorted set of additional comments are below:
 
@@ -865,7 +892,7 @@ Further work should be taken to understand the influence of the BOW loss. Attemp
 \item The amount of hyperparameter tuning for the VAD is considerably larger than other neural models due to the inclusion of additional mechanisms for controlling the vanishing KL.
 \item Further testing of the additional components introduced to the VAE should be measured independently to measure their influence to the KL loss. 
 \item BLEU/ROUGE calculations should have been taken on the best output instead of an average of the whole sequence, but required extensive memory usage and would take a considerably longer running time due to technical implementation. In hindsight, this should have been considered as an additional measurement to improve the robustness of the results.
-\item The Amazon reviews sequence data could have more experimentation. For instance, the ISIN/Item ID could be represented as a single word token as opposed to broken down by character level, and the  embedding value could be the mean of the embedding values of the character level tokens. Alternatively, the item identities could be insterted into the model through another input to the decoder, as opposed to concatenating it onto the input sequence. 
+\item The Amazon reviews sequence data could have more experimentation. For instance, the ISIN/Item ID could be represented as a single word token as opposed to broken down by character level, and the  embedding value could be the mean of the embedding values of the character level tokens. Alternatively, the item identities could be inserted into the model through another input to the decoder, as opposed to concatenating it onto the input sequence. 
 \item There is a potential for improving the KL performance by masking the SBOW matrix to the predicted output, such that the reconstruction loss would be a directly influenced by the auxiliary function.
 \item An additional measurement could be used to determine whether the language models could pass off as a replacement to the original dataset. A classification model could be used to segregate sentences between the dataset and model generated samples. 
 \end{itemize}
@@ -893,7 +920,7 @@ Further work should be taken to understand the influence of the BOW loss. Attemp
 
 %In this paper, a novel variational autoregressive decoder is proposed to improve the performance of VAE-based models for open-domain response generation. By injecting the variational inference into the RNN-based decoder and applying carefully designed conditional variables and auxiliary objective for latent variables, the proposed model is expected to better modeling semantic informa- tion of text in conversations. Quantitative and qualitative experimental results show clear perfor- mance improvement of the proposed model over competitive baselines. In future works, we will explore the use of other attributes of responses such as Part-of-Speech (POS) tags and chunking sequences as additional conditions for better re- sponse generation.
 
-In conclusion, we explored a neural language model in detail that could potentially be used for the purposes of encompassing the lexical lexical of the original dataset. We have discussed the limitations of the model and used them to augment the components in a manner that allow them to work in unison. By subjecting them to quantitiative and qualitative experimental results, we discover that the VAD can be sensibly considered for the task at hand. In future works, the model could be extended such that it would produce stronger and more lexically coherent discourses in a similar fashion as the dataset. One particularly interesting avenue for exploration could be related to adversarial approaches, which could be used in unison with the model to improve the diversity of artficial text generation.
+In conclusion, we explored a neural language model in detail that could potentially be used for the purposes of encompassing the lexical variety of the original dataset. We have discussed the limitations of the model and used them to augment the components in a manner that allow them to work in unison. By subjecting them to quantitiative and qualitative experimental results, we discover that the VAD can be sensibly considered for the task at hand. In future works, the model could be extended such that it would produce stronger and more lexically coherent discourses in a similar fashion as the dataset. One particularly interesting avenue for exploration could be related to adversarial approaches, which could be used in unison with the model to improve the diversity of artficial text generation.
 
 % With that being said, the model is not without any caveats:
 
