@@ -189,7 +189,7 @@ class Trainer:
         # we return this value in the event the model in question is
         # being used for hyperparameter optimisation. (We keep the
         # loss at the end of the epochs.)
-        hyperparam_loss = 0
+        hyperparam_loss = 9
 
         # setup indexes for each epoch
         for epoch in tqdm(range(self.args.epochs), desc="epochs"):
@@ -213,7 +213,7 @@ class Trainer:
                 # setup loss containers
                 losses, ll_losses, kl_losses, aux_losses = [], [], [], []
                 # iterate through the training batches
-                for n, batch in enumerate(tqdm(dataloader, desc=label_type)):
+                for n, batch in enumerate(tqdm(dataloader, desc=label_type + " VL:" + str(round(hyperparam_loss,2)))):
                     if label_type == "train":
                         step += 1
                     self.model.batchNum = n
@@ -265,7 +265,7 @@ class Trainer:
                     aux_losses.append(aux)
                     
                     if label_type == "train":
-                        if self.args.save and (n % 10 == 0):
+                        if self.args.save and (n % self.args.save_every == 0):
                             plotBatchLoss(epoch, ll_losses, kl_losses, aux_losses, self.folder_path)
                             saveLossMeasurements(epoch, self.folder_path, ll_losses, kl_losses, aux_losses)
                 
@@ -277,9 +277,8 @@ class Trainer:
                     else:
                         saveOutputs(self.folder_path, results, epoch)
 
-                if label_type == "train" and self.args.hyp_opt:
-                    # compute average loss
-                    hyperparam_loss = sum(losses)/len(losses)
+                # compute average loss
+                hyperparam_loss = sum(losses)/len(losses)
 
             # clear cache
             if self.model.device.type == "cuda":
@@ -303,7 +302,7 @@ class Trainer:
                 pin_memory=torch.cuda.is_available()
             ) 
 
-            for i in range(1,11):
+            for i in tqdm(range(1,11), desc="test"):
                 results = []
                 for n, batch in enumerate(tqdm(test_loader)):
                     self.batchNum = n
@@ -354,7 +353,7 @@ class Trainer:
             min_occ=1
         )
 
-        self.valdata = PTB(
+        self.testdata = PTB(
             data_dir=self.args.penn_path,
             split='test',
             create_data='store_true',
@@ -466,6 +465,7 @@ def loadDefaultArgs():
     parser.add_argument('--subtitles_path', type=str, default= '../Datasets/OpenSubtitles')
     parser.add_argument('--load_model', type=str2bool, default=False)
     parser.add_argument('--test', type=str2bool, default=False)
+    parser.add_argument('--save_every', type=int, default=50)
     # kl parameters
     parser.add_argument('-k', '--k', type=float, default=0.0025)
     parser.add_argument('-x0', '--x0', type=int, default=2500)

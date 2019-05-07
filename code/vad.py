@@ -404,8 +404,8 @@ class VAD(nn.Module):
             (x_train, x_lengths)
         """
 
-        if loss_function is None:
-            raise Exception('The model is in .training() mode but a loss function was not passed through.')
+        # if loss_function is None and self.training():
+        #     raise Exception('The model is in .training() mode but a loss function was not passed through.')
         
         # set up input (and output if training) data.
         # we also set up loss values if needed.
