@@ -3,44 +3,49 @@
 \contentsline {chapter}{\numberline {2}Literature Survey}{3}{chapter.3}
 \contentsline {section}{\numberline {2.1}Text Generation}{3}{section.4}
 \contentsline {section}{\numberline {2.2}Language Modelling}{4}{section.5}
-\contentsline {section}{\numberline {2.3}Recurrent Neural Networks}{5}{section.9}
-\contentsline {subsection}{\numberline {2.3.1}LSTMs and GRUs}{6}{subsection.14}
-\contentsline {section}{\numberline {2.4}Autoencoders}{7}{section.17}
-\contentsline {subsection}{\numberline {2.4.1}Variational Autoencoders}{8}{subsection.18}
-\contentsline {subsection}{\numberline {2.4.2}Conditional Variational Autoencoders}{9}{subsection.24}
-\contentsline {section}{\numberline {2.5}Related Work}{10}{section.26}
-\contentsline {subsection}{\numberline {2.5.1}Sequence To Sequence}{10}{subsection.27}
-\contentsline {subsubsection}{Attention Mechanism}{11}{section*.29}
-\contentsline {subsection}{\numberline {2.5.2}Variational Sequence To Sequence}{12}{subsection.31}
-\contentsline {subsection}{\numberline {2.5.3}Conditional Variational Sequence to Sequence}{12}{subsection.33}
-\contentsline {chapter}{\numberline {3}Model}{13}{chapter.34}
-\contentsline {section}{\numberline {3.1}Variational Autoregressive Decoders}{13}{section.35}
-\contentsline {subsection}{\numberline {3.1.1}Encoder}{13}{subsection.37}
-\contentsline {subsection}{\numberline {3.1.2}Backwards and Attention}{14}{subsection.39}
-\contentsline {subsection}{\numberline {3.1.3}Inference and Prior Models}{14}{subsection.42}
-\contentsline {subsection}{\numberline {3.1.4}Decoder (Variational Autoregressive)}{15}{subsection.45}
-\contentsline {subsection}{\numberline {3.1.5}Auxillary Objective}{15}{subsection.47}
-\contentsline {subsection}{\numberline {3.1.6}Learning Mechanism}{15}{subsection.49}
-\contentsline {section}{\numberline {3.2}Optimisation Challenges}{16}{section.52}
-\contentsline {subsection}{\numberline {3.2.1}KL Annealing}{16}{subsection.53}
-\contentsline {subsection}{\numberline {3.2.2}Word Dropout}{17}{subsection.54}
-\contentsline {subsection}{\numberline {3.2.3}Teacher Forcing}{17}{subsection.55}
-\contentsline {chapter}{\numberline {4}Experimental Setup}{18}{chapter.56}
-\contentsline {section}{\numberline {4.1}Datasets}{19}{section.58}
-\contentsline {subsection}{\numberline {4.1.1}Amazon Reviews}{19}{subsection.59}
-\contentsline {subsection}{\numberline {4.1.2}OpenSubtitles}{20}{subsection.81}
-\contentsline {subsection}{\numberline {4.1.3}Penn TreeBank}{20}{subsection.86}
-\contentsline {section}{\numberline {4.2}Hyperparameter Setup}{21}{section.91}
-\contentsline {section}{\numberline {4.3}Measuring Performance}{22}{section.92}
-\contentsline {subsection}{\numberline {4.3.1}BLEU and ROUGE}{22}{subsection.93}
-\contentsline {chapter}{\numberline {5}Experimental Results}{23}{chapter.98}
-\contentsline {section}{\numberline {5.1}NLL Loss}{23}{section.99}
-\contentsline {section}{\numberline {5.2}KL Loss}{24}{section.101}
-\contentsline {section}{\numberline {5.3}KL Ratio}{24}{section.103}
-\contentsline {section}{\numberline {5.4}BLEU and Rouge}{25}{section.105}
-\contentsline {section}{\numberline {5.5}F1}{25}{section.107}
-\contentsline {section}{\numberline {5.6}Output Variance}{25}{section.109}
-\contentsline {section}{\numberline {5.7}Sampling Examples}{26}{section.110}
-\contentsline {chapter}{\numberline {6}Future Work}{27}{chapter.111}
-\contentsline {chapter}{\numberline {7}Conclusion}{28}{chapter.112}
-\contentsline {section}{\numberline {7.1}KL Divergence Derivation}{32}{section.115}
+\contentsline {section}{\numberline {2.3}Recurrent Neural Networks}{5}{section.10}
+\contentsline {subsection}{\numberline {2.3.1}LSTMs and GRUs}{7}{subsection.16}
+\contentsline {section}{\numberline {2.4}Autoencoders}{7}{section.19}
+\contentsline {subsection}{\numberline {2.4.1}Variational Autoencoders}{8}{subsection.20}
+\contentsline {subsection}{\numberline {2.4.2}Conditional Variational Autoencoders}{9}{subsection.27}
+\contentsline {section}{\numberline {2.5}Related Work}{10}{section.29}
+\contentsline {subsection}{\numberline {2.5.1}Sequence To Sequence}{10}{subsection.30}
+\contentsline {subsubsection}{Attention Mechanism}{11}{section*.32}
+\contentsline {subsection}{\numberline {2.5.2}Variational Sequence To Sequence}{11}{subsection.34}
+\contentsline {subsection}{\numberline {2.5.3}Conditional Variational Sequence to Sequence}{13}{subsection.36}
+\contentsline {chapter}{\numberline {3}Model}{14}{chapter.38}
+\contentsline {section}{\numberline {3.1}Variational Autoregressive Decoders}{14}{section.39}
+\contentsline {subsection}{\numberline {3.1.1}Architecture}{15}{subsection.41}
+\contentsline {subsubsection}{Encoder}{15}{section*.42}
+\contentsline {subsubsection}{Backwards and Attention}{15}{section*.44}
+\contentsline {subsubsection}{Decoder}{15}{section*.47}
+\contentsline {subsubsection}{Inference and Prior Models}{16}{section*.49}
+\contentsline {subsubsection}{Forward RNN}{16}{section*.52}
+\contentsline {subsection}{\numberline {3.1.2}Auxiliary Objective}{17}{subsection.54}
+\contentsline {subsection}{\numberline {3.1.3}Learning Mechanism}{17}{subsection.56}
+\contentsline {section}{\numberline {3.2}Optimisation Challenges}{17}{section.59}
+\contentsline {subsection}{\numberline {3.2.1}KL Annealing}{18}{subsection.60}
+\contentsline {subsection}{\numberline {3.2.2}Word Dropout}{18}{subsection.61}
+\contentsline {chapter}{\numberline {4}Experimental Setup}{19}{chapter.62}
+\contentsline {section}{\numberline {4.1}Datasets}{20}{section.67}
+\contentsline {subsection}{\numberline {4.1.1}Amazon Reviews}{20}{subsection.68}
+\contentsline {subsection}{\numberline {4.1.2}OpenSubtitles}{22}{subsection.96}
+\contentsline {subsection}{\numberline {4.1.3}Penn TreeBank}{22}{subsection.107}
+\contentsline {section}{\numberline {4.2}Training Setup}{23}{section.117}
+\contentsline {section}{\numberline {4.3}Evaluation Measurements}{24}{section.118}
+\contentsline {subsection}{\numberline {4.3.1}KL Ratio}{24}{subsection.119}
+\contentsline {subsection}{\numberline {4.3.2}BLEU and ROUGE}{24}{subsection.120}
+\contentsline {subsection}{\numberline {4.3.3}Semantic Similarity}{25}{subsection.125}
+\contentsline {chapter}{\numberline {5}Experimental Results}{26}{chapter.126}
+\contentsline {section}{\numberline {5.1}Model Optimisation}{26}{section.127}
+\contentsline {subsection}{\numberline {5.1.1}NLL Loss}{26}{subsection.128}
+\contentsline {subsection}{\numberline {5.1.2}KL Ratio}{27}{subsection.130}
+\contentsline {section}{\numberline {5.2}Linguistic Analysis}{27}{section.132}
+\contentsline {subsection}{\numberline {5.2.1}BLEU and ROUGE}{27}{subsection.133}
+\contentsline {subsection}{\numberline {5.2.2}F1}{28}{subsection.136}
+\contentsline {subsection}{\numberline {5.2.3}Output Variance}{29}{subsection.139}
+\contentsline {subsection}{\numberline {5.2.4}Sampling Examples}{29}{subsection.141}
+\contentsline {chapter}{\numberline {6}Evaluation and Future Work}{31}{chapter.143}
+\contentsline {chapter}{\numberline {7}Conclusion}{32}{chapter.144}
+\contentsline {chapter}{\numberline {8}Appendix}{36}{chapter.146}
+\contentsline {section}{\numberline {8.1}KL Divergence Derivation}{36}{section.147}
