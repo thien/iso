@@ -1,4 +1,4 @@
-% \documentclass{beamer}
+%\documentclass{beamer}
 
 \documentclass[aspectratio=169, 11pt]{beamer}
 
@@ -12,6 +12,7 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning, fit, arrows.meta}
 \usepackage{amsmath,amssymb}
+\usepackage{ulem} % for strike throughs
 
 % \setmonofont{Inconsolata}
 \usepackage{listings}
@@ -62,9 +63,9 @@
 \frame{\titlepage}
 
 % % table of contents
-% \begin{frame}{Overview}
-% \tableofcontents
-% \end{frame}
+\begin{frame}{Overview}
+\tableofcontents
+\end{frame}
   
 % purpose of this iso
 \section{Objective} 
@@ -78,7 +79,7 @@
 \end{frame}
 
 % language models
-\section{Literature Survey}
+\section{Background}
 \begin{frame}{Language Models}
     \cite{dyer_conditional_2017} describes an unconditional language model as assigning a probability to a sequence of words,  $w = (w_1, w_2, ..., w_{i-1})$. This probability can be decomposed using the chain rule:
 
@@ -114,86 +115,86 @@
 \end{frame}
 
 % different types of RNN architectures
-\begin{frame}
-  \begin{figure}[!ht]
-    \centering
-    \includegraphics[width=100mm]{diagrams/rnn.jpeg}
-    \caption{From left to right: (1) an MLP. (2,3,4,5)  examples of different styles of recurrent neural networks, describing the different types of input and output combinations. (Diagram from \cite{karpathy_unreasonable_2015}). \label{rnn_shapes}} 
-  \end{figure}
-\end{frame}
+% \begin{frame}
+%   \begin{figure}[!ht]
+%     \centering
+%     \includegraphics[width=100mm]{diagrams/rnn.jpeg}
+%     \caption{From left to right: (1) an MLP. (2,3,4,5)  examples of different styles of recurrent neural networks, describing the different types of input and output combinations. (Diagram from \cite{karpathy_unreasonable_2015}). \label{rnn_shapes}} 
+%   \end{figure}
+% \end{frame}
 
-% GRUs and LSTMs
-\begin{frame}{LSTMs and GRUs}
-  % https://www.cc.gatech.edu/~san37/post/dlhc-rnn/
-  \begin{figure}[!ht]
-    \centering
-    \includegraphics[width=100mm]{diagrams/presentation/lstm_gru.png}
-  \end{figure}
-  % both are designed to circumvent the vanishing/exploding gradients
-  % improving long term dependency problems
-  % These gated architectures regulate the flow of information coming to and from the cell, helping to mitigate the issue of gradient sensitivity and improving long range dependencies. Gates of the cell are parameterised and therefore learnable.
-\end{frame}
+% % GRUs and LSTMs
+% \begin{frame}{LSTMs and GRUs}
+%   % https://www.cc.gatech.edu/~san37/post/dlhc-rnn/
+%   \begin{figure}[!ht]
+%     \centering
+%     \includegraphics[width=100mm]{diagrams/presentation/lstm_gru.png}
+%   \end{figure}
+%   % both are designed to circumvent the vanishing/exploding gradients
+%   % improving long term dependency problems
+%   % These gated architectures regulate the flow of information coming to and from the cell, helping to mitigate the issue of gradient sensitivity and improving long range dependencies. Gates of the cell are parameterised and therefore learnable.
+% \end{frame}
 
 % Rectangles represent vectors, with red being the input, blue the output, and green representing the state of the RNNs.
-\begin{frame}{Word Embeddings}
-  \begin{block}{How do you represent words?}
-    \begin{itemize}
-      \item You have tens of thousands of words.
-      \item How do you mark the relationships between them?
-      \item Feeding them into neural networks is not necessarily feasible.
-    \end{itemize}
-  \end{block}
-\end{frame}
+% \begin{frame}{Word Embeddings}
+%   \begin{block}{How do you represent words?}
+%     \begin{itemize}
+%       \item You have tens of thousands of words.
+%       \item How do you mark the relationships between them?
+%       \item Feeding them into neural networks is not necessarily feasible.
+%     \end{itemize}
+%   \end{block}
+% \end{frame}
 
-\begin{frame}{Word Embeddings}
-  \begin{columns}
-    % equations on the left
-    \begin{column}{0.5\textwidth}
-      \begin{itemize}
-        \item Converts words to vectors.
-        \item Models relationships of words based their co-occurence.
-        \item Trained in an unsupervised skip-gram neural network.
-      \end{itemize}
-    \end{column}
-    % diagram on the right
-    \begin{column}{0.5\textwidth}
-      \begin{figure}[!ht]
-        \centering
-        \includegraphics[width=80mm]{diagrams/presentation/word2vec_chris.png}
-        \end{figure}
-    \end{column}
-  \end{columns}
-\end{frame}
+% \begin{frame}{Word Embeddings}
+%   \begin{columns}
+%     % equations on the left
+%     \begin{column}{0.5\textwidth}
+%       \begin{itemize}
+%         \item Converts words to vectors.
+%         \item Models relationships of words based their co-occurence.
+%         \item Trained in an unsupervised skip-gram neural network.
+%       \end{itemize}
+%     \end{column}
+%     % diagram on the right
+%     \begin{column}{0.5\textwidth}
+%       \begin{figure}[!ht]
+%         \centering
+%         \includegraphics[width=80mm]{diagrams/presentation/word2vec_chris.png}
+%         \end{figure}
+%     \end{column}
+%   \end{columns}
+% \end{frame}
 
 
-% autoencoders
-\begin{frame}{Word Embeddings}
-  % A NN that learns a representation of the input data.
-  \begin{figure}[!ht]
-    \centering
-    \includegraphics[width=80mm]{diagrams/presentation/word2vec_example.png}
-    \end{figure}
-\end{frame}
+% % autoencoders
+% \begin{frame}{Word Embeddings}
+%   % A NN that learns a representation of the input data.
+%   \begin{figure}[!ht]
+%     \centering
+%     \includegraphics[width=80mm]{diagrams/presentation/word2vec_example.png}
+%     \end{figure}
+% \end{frame}
 
-% autoencoders
-\begin{frame}{Autoencoders}
-  % A NN that learns a representation of the input data.
-  \begin{columns}
-    \begin{column}{0.5\textwidth}
-      \begin{itemize}
-        \item Attempts to faithfully recreate the inputs at the output.
-        \item Learns the properties of the input data.
-        \item Typically has a layer where its dimension is smaller than the input space - called the latent layer.
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \begin{figure}[!ht]
-        \centering
-        \includegraphics[width=75mm]{diagrams/autoencoder.png}
-        \end{figure}
-    \end{column}
-  \end{columns}
-\end{frame}
+% % autoencoders
+% \begin{frame}{Autoencoders}
+%   % A NN that learns a representation of the input data.
+%   \begin{columns}
+%     \begin{column}{0.5\textwidth}
+%       \begin{itemize}
+%         \item Attempts to faithfully recreate the inputs at the output.
+%         \item Learns the properties of the input data.
+%         \item Typically has a layer where its dimension is smaller than the input space - called the latent layer.
+%       \end{itemize}
+%     \end{column}
+%     \begin{column}{0.5\textwidth}
+%       \begin{figure}[!ht]
+%         \centering
+%         \includegraphics[width=75mm]{diagrams/autoencoder.png}
+%         \end{figure}
+%     \end{column}
+%   \end{columns}
+% \end{frame}
 
 \begin{frame}{Recurrent Language Model - Seq2Seq}
   \begin{figure}
@@ -201,6 +202,7 @@
 \includegraphics[width=100mm]{diagrams/seq2seq.pdf}
 \caption{An abstracted model of the Seq2Seq architecture, where the encoder (pink) takes in the input sequence, and the decoder (blue) shows the output sequence. The encoder outputs are effectively ignored. \label{seq2seq_diagram}}
 \end{figure}
+% lots of contention about how generic the responses are and it can most likely be attributed to the lack of variation in the responses.
 \end{frame}
 
 % variational autoencoders
@@ -216,12 +218,12 @@
 \begin{frame}{\textbf{E}vidence \textbf{L}ower \textbf{Bo}und (ELBO)}
   \begin{equation}
     \label{eqn:elbo}
-    \mathcal{L}(\theta, \phi, x, z) = \mathbb{E}_{q \phi (z|x)}[log \thinspace p_{\theta}(x|z)] - D_{KL}(q_{\phi}(z|x)\thinspace||\thinspace p(z)) \leq log (p(x))
+    \mathcal{L}(\theta, \phi, x, z) = \begingroup\color{teal}\mathbb{E}_{q \phi (z|x)}[log \thinspace p_{\theta}(x|z)] \endgroup - \begingroup\color{purple}D_{KL}(q_{\phi}(z|x)\thinspace||\thinspace p(z))\endgroup \leq log (p(x))
   \end{equation}
   \begin{block}{Two Parts:}
     \begin{itemize}
-      \item Reconstruction Loss (Smaller is better.)
-      \item Distribution divergence (Not actually a loss function - Larger is better!)
+      \item \begingroup\color{teal}Reconstruction Loss \endgroup (Smaller is better.)
+      \item \begingroup\color{purple}KL divergence \endgroup (Not actually a loss function - Larger is better!)
     \end{itemize}
   \end{block}
 \end{frame}
@@ -246,31 +248,61 @@
 \begin{frame}{Conditional Variational Recurrent Language Model}
   \begin{figure}[!ht]
     \centering
-    \includegraphics[width=100mm]{diagrams/cvae_seq2seq.png}
+    \includegraphics[width=120mm]{diagrams/cvae_seq2seq.png}
     \caption{The structure of the CVAE language model. (Diagram from \cite{zhao_learning_2017}). \label{cvae_seq2seq}}
   \end{figure}
 \end{frame}
 
 \begin{frame}{Conditional Variational Recurrent Language Model}
-  \begin{block}{Recognition and Prior Networks}
-    Used to encode posterior and priors.
-  \end{block}
-  \begin{block}{Bag of Words Loss}
-    Mechanism to improve the KL divergence.
-  \end{block}
-  \begin{block}{Still samples the latent variable once.}
-    Considered to reduce expressivity of the responses.
-  \end{block}
+  \begin{columns}
+    % equations on the left
+    \begin{column}{0.5\textwidth}
+      \begin{block}{Recognition and Prior Networks}
+        Used to encode posterior and priors.
+      \end{block}
+      \begin{block}{Bag of Words Loss}
+        Mechanism to improve the KL divergence.
+      \end{block}
+      \begin{block}{Still samples the latent variable once.}
+        Considered to reduce expressivity of the responses.
+      \end{block}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{figure}[!ht]
+        \centering
+        \includegraphics[width=60mm]{diagrams/cvae_latent.png}
+        \caption{latent distributions of the CVAE.}
+        \end{figure}
+    \end{column}
+  \end{columns}
+
 \end{frame}
 
 % current model
 \section{Model Analysis}
-\begin{frame}{The Variational Autoregressive Decoder}
-  \begin{itemize}
-    \item Extension of the CVAE Seq2Seq model.
-    \item Utilises \textbf{multi-modal latent sampling}.
-    \item Updates the BOW Model.
-  \end{itemize}
+\begin{frame}{The Variational Autoregressive Decoder\footnote{\tiny Diagrams from \cite{du_variational_2018}}}
+  \begin{columns}
+    % equations on the left
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item Extension of the CVAE Seq2Seq model.
+        \item Utilises \textbf{multi-modal latent sampling}.
+      \end{itemize}
+      \begin{figure}[!ht]
+        \centering
+        \includegraphics[width=60mm]{diagrams/vad_latent.png}
+        \caption{Unimodal (left) and multimodal latent distributions (right).}
+        \end{figure}
+    \end{column}
+    % right
+    \begin{column}{0.5\textwidth}
+  \begin{figure}[!ht]
+    \centering
+    \includegraphics[width=50mm]{diagrams/vad_high.png}
+    \caption{A High level diagram of the VAD.}
+    \end{figure}
+  \end{column}
+\end{columns}
 \end{frame}
 
 
@@ -278,7 +310,7 @@
 \begin{frame}{Decoder}
   \begin{figure}[!ht]
     \centering
-    \includegraphics[width=80mm]{diagrams/vad_decoder.png}
+    \includegraphics[width=60mm]{diagrams/vad_decoder.png}
     \caption{A High level diagram of the decoding component of the VAD. (Diagram from \cite{du_variational_2018})\label{r:vad_decoder}}
     \end{figure}
 \end{frame}
@@ -355,19 +387,23 @@
 \end{frame}
 
 % testing
-\section{Test Setup}
+\section{Experimentation Setup}
 
 \subsection{Datasets}
 \begin{frame}{Datasets}
 
   \begin{block}{Penn TreeBank} 
-  Model validation dataset. Models would recreate the input sequence.
+  Model validation dataset. Models would recreate the input sequence. Example:\\
+  \footnotesize{big investment banks refused to step up to the plate $\rightarrow$ big investment banks refused to step up to the plate}
   \end{block}
   \begin{block}{Open Subtitles} 
-  Conditioned sequences. Models would use one subtitle sentence to predict the next sentence.
+  Conditioned sequences. Models would use one subtitle sentence to predict the next sentence. Example:\\
+  \footnotesize{your paycheck ? $\rightarrow$ back off tucker , you don ' t sketch regulations .}
   \end{block}
   \begin{block}{Amazon Reviews} 
   Conditioned and contextual sequences. Models would use one sentence to predict the next sentence.
+  Example:\\
+  \footnotesize{\textbf{context} the kindle is velcroed in so it ' s nice and secure . $\rightarrow$ very glad i brought this !}
   \end{block}
 \end{frame}
 
@@ -379,69 +415,69 @@
   \end{block}
   \begin{block}{Methods}
   \begin{itemize}
-    \item Bag of Words Loss
-    \item KL Annealing
-    \item Word Dropouts
+    \item KL Annealing (\cite{bowman_generating_2015})
+    \item \sout{Word Dropouts (\cite{bowman_generating_2015})}
+    \item Bag of Words Loss (\cite{zhao_learning_2017}, \cite{du_variational_2018})
   \end{itemize}
   \end{block}
   \end{frame}
 
-\subsection{Measurements}
-% quantitative measurements
-\begin{frame}{Quantitative Measurements}
-\small
+% \subsection{Measurements}
+% % quantitative measurements
+% \begin{frame}{Quantitative Measurements}
+% \small
 
-  \begin{equation*}
-    \label{eqn:elbo}
-    ELBO = \mathcal{L}(\theta, \phi, x, z) = \mathbb{E}_{q \phi (z|x)}[log \thinspace p_{\theta}(x|z)] - D_{KL}(q_{\phi}(z|x)\thinspace||\thinspace p(z))
-  \end{equation*}
+%   \begin{equation*}
+%     \label{eqn:elbo}
+%     ELBO = \mathcal{L}(\theta, \phi, x, z) = \mathbb{E}_{q \phi (z|x)}[log \thinspace p_{\theta}(x|z)] - D_{KL}(q_{\phi}(z|x)\thinspace||\thinspace p(z))
+%   \end{equation*}
   
-    \begin{equation*}
-      \begin{split}
-        BLEU_n = \frac
-        {\sum_{S\in C} \sum_{ngram\in S} Count_{clip}(ngram)}
-        {\sum_{S\in C} \sum_{ngram\in S} Count(ngram)}
-      \end{split}
-    % \quad\leftrightarrow\quad
-      \quad\quad
-      \begin{split}
-        ROUGE_n = \frac
-        {\sum_{S\in C} \sum_{ngram\in S} Count_{matched}(ngram)}
-        {\sum_{S\in C} \sum_{ngram\in S} Count(ngram)}
-      \end{split}
-    \end{equation*}
+%     \begin{equation*}
+%       \begin{split}
+%         BLEU_n = \frac
+%         {\sum_{S\in C} \sum_{ngram\in S} Count_{clip}(ngram)}
+%         {\sum_{S\in C} \sum_{ngram\in S} Count(ngram)}
+%       \end{split}
+%     % \quad\leftrightarrow\quad
+%       \quad\quad
+%       \begin{split}
+%         ROUGE_n = \frac
+%         {\sum_{S\in C} \sum_{ngram\in S} Count_{matched}(ngram)}
+%         {\sum_{S\in C} \sum_{ngram\in S} Count(ngram)}
+%       \end{split}
+%     \end{equation*}
 
 
-    \begin{equation*}
-      f1_{n} = 2 \cdot \frac{BLEU_n \cdot ROUGE_n}{BLEU_n + ROUGE_n}
-    \end{equation*}
+%     \begin{equation*}
+%       f1_{n} = 2 \cdot \frac{BLEU_n \cdot ROUGE_n}{BLEU_n + ROUGE_n}
+%     \end{equation*}
 
-\end{frame}
+% \end{frame}
 
-% semantic variance
-\begin{frame}{Semantic Variance}
+% % semantic variance
+% \begin{frame}{Semantic Variance}
 
-    \begin{algorithmic}[1]
-    \Procedure{Semantic Variance}{}
+%     \begin{algorithmic}[1]
+%     \Procedure{Semantic Variance}{}
   
-    \State $\textit{query} \gets \text{input }\textit{sequence}$
-    \State $\textit{resp} \gets \text{[]}$
+%     \State $\textit{query} \gets \text{input }\textit{sequence}$
+%     \State $\textit{resp} \gets \text{[]}$
     
   
-    \For{\textit{i} $=1$ to $n$ } 
-      \State $r_i \gets \text{model(}\textit{query}\text{)}$
-      \State $r_i \gets \text{[}\text{embedding}\text{(} token \text{) for } token $\emph{ in }$r_i$\text{]}
-      % \State $r_i \gets \textit{mean}\text{(}r_i\text{)}$
-      \State $\textit{resp}\text{[}\textit{i}\text{]} \gets \textit{mean}\text{(}r_i\text{)}$
-    \EndFor 
+%     \For{\textit{i} $=1$ to $n$ } 
+%       \State $r_i \gets \text{model(}\textit{query}\text{)}$
+%       \State $r_i \gets \text{[}\text{embedding}\text{(} token \text{) for } token $\emph{ in }$r_i$\text{]}
+%       % \State $r_i \gets \textit{mean}\text{(}r_i\text{)}$
+%       \State $\textit{resp}\text{[}\textit{i}\text{]} \gets \textit{mean}\text{(}r_i\text{)}$
+%     \EndFor 
   
-    \State \emph{m} $\gets \textit{mean} \text{(} \textit{resp} \text{)}$
+%     \State \emph{m} $\gets \textit{mean} \text{(} \textit{resp} \text{)}$
   
-    \State \Return $\textit{max}\text{(}\textit{euclidean}\text{(}m, r_{i=1 \text{ to } n}\text{))}$
-    \EndProcedure
-    \end{algorithmic}
+%     \State \Return $\textit{max}\text{(}\textit{euclidean}\text{(}m, r_{i=1 \text{ to } n}\text{))}$
+%     \EndProcedure
+%     \end{algorithmic}
 
-\end{frame}
+% \end{frame}
 
 % results
 \section{Results}
@@ -467,7 +503,7 @@
   \begin{figure}[!ht]
     \centering
     \includegraphics[width=130mm]{results/bleu1.pdf}
-    \caption{BLEU\textsubscript{1} scores of the three models across the three datasets; higher is better.\label{r:bleu}}
+    \caption{BLEU\textsubscript{1} scores (Modified Precision) of the three models across the three datasets; higher is better.\label{r:bleu}}
     \end{figure}  
 \end{frame}
 
@@ -475,7 +511,7 @@
   \begin{figure}[!ht]
     \centering
     \includegraphics[width=130mm]{results/rouge_1.pdf}
-    \caption{ROUGE\textsubscript{1} scores of the three models across the three datasets; higher is better.\label{r:rouge}}
+    \caption{ROUGE\textsubscript{1} (Modified Recall) scores of the three models across the three datasets; higher is better.\label{r:rouge}}
     \end{figure}  
 \end{frame}
 
@@ -631,15 +667,19 @@
   \begin{block}{It is possible!}
     The VAD has shown to express variety in responses, greater so than the VAD and the Seq2Seq models.
   \end{block}
-  \begin{block}{Performance could be improved}
-    The amazon dataset could be better augmented to improve VAD performance.
-  \end{block}
   \begin{block}{Future Work}
-    Experimentation on the SBOW, Augmentation for an Adversarial approach.
+    Experimentation on the SBOW, Adaptation for an Adversarial approach.
   \end{block}
-  
 \end{frame} 
 
+\begin{frame}{End of Presentation}
+  \begin{block}{Any Questions?}
+    Please ask!
+  \end{block}
+  \begin{block}{Source Code}
+    https://github.com/thien/iso
+  \end{block}
+\end{frame}
 
 \section*{References}
 \begin{frame}[allowframebreaks]
