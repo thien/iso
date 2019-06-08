@@ -1,7 +1,0 @@
-IDENTITY: ['7', '2', '1', '4', '0', '4', '7', '9', '7', '7', 'rating_5.0', 'polarity_-0.1']
-
-['<sos>', 'love', 'it', '<sor>']
-['this', 'fits', 'my', '7', 'inch', 'kindle', 'fire', 'hd', 'perfectly', '!', 'i', 'love', 'it', '.']
-['it', 'even', 'has', 'a', 'slot', 'for', 'a', 'stylus', '.']
-['the', 'kindle', 'is', 'velcroed', 'in', 'so', 'it', "'", 's', 'nice', 'and', 'secure', '.']
-['very', 'glad', 'i', 'bought', 'this', '!', '<eos>']

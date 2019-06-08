@@ -1,2 +1,0 @@
-"<sos> ya ! <eos>" -> "<sos> write to your <unk> and hurry that up . <eos>"
-"<sos> your paycheck ? <eos>" -> "<sos> back off tucker , you don ' t sketch regulations . <eos>"
