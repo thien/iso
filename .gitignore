@@ -1,4 +1,5 @@
 code/models/*
+.ipynb_checkpoints
 code/datasets
 env
 code/__pycache__/*
