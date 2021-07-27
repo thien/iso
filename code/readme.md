@@ -6,6 +6,7 @@ This requires `Python 3.9.1` and it is recommended to install using a virtual en
 	source env/bin/activate
 	pip install -U pip wheel
 	pip install -r requirements.txt
+	python -m spacy download en_core_web_sm
 	
 Scripts to download the datasets and assets imply that you're using some form of Unix, otherwise you can read the files and grab the URLs.
 		
